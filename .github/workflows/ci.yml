@@ -68,6 +68,10 @@ jobs:
           spring:
             datasource:
               password: 12345678
+          
+          app:
+            crypto:
+              key: 1234567890123456
 
           jwt:
             secret: ${{ secrets.JWT_SECRET_KEY }}
