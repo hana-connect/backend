@@ -49,19 +49,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Create application.properties
+      - name: Create CI config files
         run: |
           mkdir -p src/main/resources
-          echo "spring.application.name=hanaconnect" > src/main/resources/application.properties
-          echo "spring.datasource.url=jdbc:mysql://127.0.0.1:3306/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8" >> src/main/resources/application.properties
-          echo "spring.datasource.username=hanaconnect" >> src/main/resources/application.properties
-          echo "spring.datasource.password=12345678" >> src/main/resources/application.properties
-          echo "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver" >> src/main/resources/application.properties
-          echo "spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect" >> src/main/resources/application.properties
-          echo "spring.jpa.hibernate.ddl-auto=update" >> src/main/resources/application.properties
-          echo "spring.jpa.properties.hibernate.format_sql=true" >> src/main/resources/application.properties
-          echo "application.security.jwt.secret-key=${{ secrets.JWT_SECRET_KEY }}" >> src/main/resources/application.properties
-          echo "application.security.jwt.expiration=2592000000" >> src/main/resources/application.properties
+
+          cat > src/main/resources/application.properties <<EOF
+          spring.application.name=hanaconnect
+          spring.datasource.url=jdbc:mysql://127.0.0.1:3306/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+          spring.datasource.username=hanaconnect
+          spring.datasource.password=12345678
+          spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+          spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+          spring.jpa.hibernate.ddl-auto=update
+          spring.jpa.properties.hibernate.format_sql=true
+          EOF
+
+          cat > src/main/resources/security.yml <<EOF
+          spring:
+            datasource:
+              password: 12345678
+
+          jwt:
+            secret: ${{ secrets.JWT_SECRET_KEY }}
+          EOF
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
