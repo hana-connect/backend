@@ -7,19 +7,16 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3308/hanarodb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3308/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: hanaconnect
-    password: 12345678
 
   jpa:
     hibernate:
       ddl-auto: create
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-
     show-sql: true
     defer-datasource-initialization: true
-
     properties:
       hibernate:
         jdbc:
@@ -37,7 +34,6 @@ spring:
   flyway:
     enabled: false
     baseline-on-migrate: true
-
 
   web:
     resources:
