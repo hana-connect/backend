@@ -39,8 +39,8 @@ public class SwaggerConfig {
 		return new Info()
 			.version("0.1.0")
 			.title("SpringDemo APIs")
-			.description("Hanaro 8 Project API Documents")
-			.contact(new Contact().name("BE Team").email("hana8@hanabank.com"))
+			.description("Hana Connect Project API Documents")
+			.contact(new Contact().name("BE Team").email("hanaconnect@hanabank.com"))
 			.license(new License().name("Apache 2.0"));
 	}
 
