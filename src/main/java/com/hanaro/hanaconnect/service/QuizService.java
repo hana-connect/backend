@@ -100,10 +100,8 @@ public class QuizService {
 		if (question.getStatus() == QuizQuestionStatus.READY) {
 			question.submitAnswer(selectedIndex);
 			quizSet.increaseSolvedCount();
-	}
+		}
 
-		question.submitAnswer(selectedIndex);
-		quizSet.increaseSolvedCount();
 	}
 
 	// 문제 이탈 처리
