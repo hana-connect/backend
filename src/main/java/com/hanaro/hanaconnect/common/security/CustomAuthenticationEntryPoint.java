@@ -6,11 +6,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
