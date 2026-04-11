@@ -25,7 +25,7 @@ public class AuthService {
 
 	public LoginResponseDTO login(LoginRequestDTO request) {
 		Member member = memberRepository.findById(request.getMemberId())
-			.orElseThrow(() -> new BadCredentialsException("회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("회원을 찾을 수 없습니다."));
 
 		if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
 			throw new BadCredentialsException("간편비밀번호가 일치하지 않습니다.");

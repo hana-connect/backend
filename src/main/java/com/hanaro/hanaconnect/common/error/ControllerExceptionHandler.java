@@ -99,4 +99,37 @@ public class ControllerExceptionHandler {
 				"서버 에러가 발생했습니다."
 			));
 	}
+
+	@ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+	public ResponseEntity<CustomAPIResponse<?>> handleBadCredentialsException(
+		org.springframework.security.authentication.BadCredentialsException e) {
+
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+			.body(CustomAPIResponse.createFail(
+				HttpStatus.UNAUTHORIZED.value(),
+				e.getMessage()
+			));
+	}
+
+	@ExceptionHandler(jakarta.persistence.EntityNotFoundException.class)
+	public ResponseEntity<CustomAPIResponse<?>> handleEntityNotFoundException(
+		jakarta.persistence.EntityNotFoundException e) {
+
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+			.body(CustomAPIResponse.createFail(
+				HttpStatus.NOT_FOUND.value(),
+				e.getMessage()
+			));
+	}
+
+	@ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+	public ResponseEntity<CustomAPIResponse<?>> handleAccessDeniedException(
+		org.springframework.security.access.AccessDeniedException e) {
+
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+			.body(CustomAPIResponse.createFail(
+				HttpStatus.FORBIDDEN.value(),
+				"접근 권한이 없습니다."
+			));
+	}
 }
