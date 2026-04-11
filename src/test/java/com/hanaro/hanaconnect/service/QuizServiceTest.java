@@ -28,15 +28,15 @@ class QuizServiceTest {
 	@Autowired
 	private QuizQuestionRepository quizQuestionRepository;
 
-	// 문제가 잘 들어가는지
+	// 퀴즈 생성 테스트
 	@Test
-	void test1() {
+	void createTodayQuizTest() {
 		quizService.createTodayQuiz(1L, LocalDate.now());
 	}
 
-	// 답제출 테스트
+	// 정답 제출 테스트
 	@Test
-	void test2() {
+	void submitCorrectAnswerTest() {
 		Long childId = 2L;
 		LocalDate today = LocalDate.now();
 
@@ -58,9 +58,9 @@ class QuizServiceTest {
 		assertThat(savedQuizSet.getStatus()).isEqualTo(QuizSetStatus.IN_PROGRESS);
 	}
 
-	// 오답제출 테스트
+	// 오답 제출 테스트
 	@Test
-	void test3() {
+	void submitWrongAnswerTest() {
 		Long childId = 3L;
 		LocalDate today = LocalDate.now();
 
@@ -85,19 +85,14 @@ class QuizServiceTest {
 
 	// 퀴즈 완료 테스트
 	@Test
-	void test4() {
+	void completeQuizTest() {
 		Long childId = 4L;
 		LocalDate today = LocalDate.now();
 
 		QuizSet quizSet = quizService.createTodayQuiz(childId, today);
 
-		// 1번 문제 정답 제출
 		quizService.submitAnswer(quizSet.getId(), 1, 2);
-
-		// 2번 문제 정답 제출
 		quizService.submitAnswer(quizSet.getId(), 2, 1);
-
-		// 3번 문제 정답 제출
 		quizService.submitAnswer(quizSet.getId(), 3, 0);
 
 		QuizSet savedQuizSet = quizSetRepository.findById(quizSet.getId())
@@ -115,9 +110,9 @@ class QuizServiceTest {
 		assertThat(questions.get(2).getStatus()).isEqualTo(QuizQuestionStatus.CORRECT);
 	}
 
-	//문제이탈_테스트
+	// 문제 이탈 테스트
 	@Test
-	void test5() {
+	void abandonQuestionTest() {
 		Long childId = 5L;
 		LocalDate today = LocalDate.now();
 
@@ -134,7 +129,6 @@ class QuizServiceTest {
 			.orElseThrow();
 
 		assertThat(question.getStatus()).isEqualTo(QuizQuestionStatus.WRONG);
-
 		assertThat(savedQuizSet.getSolvedCount()).isEqualTo(1);
 		assertThat(savedQuizSet.getStatus()).isEqualTo(QuizSetStatus.IN_PROGRESS);
 	}
