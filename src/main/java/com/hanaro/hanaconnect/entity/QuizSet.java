@@ -82,4 +82,15 @@ public class QuizSet extends BaseEntity {
 		}
 	}
 
+	// 더미 테스트!!!
+	public static QuizSet create(Long childId, LocalDate quizDate, Integer totalCount) {
+		QuizSet quizSet = new QuizSet();
+		quizSet.childId = childId;
+		quizSet.quizDate = quizDate;
+		quizSet.status = QuizSetStatus.NOT_STARTED;
+		quizSet.totalCount = totalCount;
+		quizSet.solvedCount = 0;
+		return quizSet;
+	}
+
 }

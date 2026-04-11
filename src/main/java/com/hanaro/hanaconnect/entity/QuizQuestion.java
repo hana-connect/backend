@@ -84,4 +84,23 @@ public class QuizQuestion extends BaseEntity {
 	public void assignQuizSet(QuizSet quizSet) {
 		this.quizSet = quizSet;
 	}
+
+	// 더미테스트!
+	public static QuizQuestion create(
+		Integer questionOrder,
+		String question,
+		String choices,
+		Integer correctIndex,
+		String hint
+	) {
+		QuizQuestion quizQuestion = new QuizQuestion();
+		quizQuestion.questionOrder = questionOrder;
+		quizQuestion.question = question;
+		quizQuestion.choices = choices;
+		quizQuestion.correctIndex = correctIndex;
+		quizQuestion.selectedIndex = null;
+		quizQuestion.status = QuizQuestionStatus.READY;
+		quizQuestion.hint = hint;
+		return quizQuestion;
+	}
 }

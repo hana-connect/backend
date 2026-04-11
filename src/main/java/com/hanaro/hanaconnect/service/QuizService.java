@@ -44,12 +44,37 @@ public class QuizService {
 	 */
 	@Transactional
 	public QuizSet createTodayQuiz(Long childId, LocalDate quizDate) {
-		// TODO: QuizSet 생성
-		// TODO: AI 또는 더미 데이터로 QuizQuestion 3개 생성
-		// TODO: quizSet.addQuestion(question) 연결
-		// TODO: 저장 후 반환
-		throw new UnsupportedOperationException("아직 구현되지 않았습니다.");
-		// return null;
+		QuizSet quizSet = QuizSet.create(childId, quizDate, 3);
+
+		QuizQuestion q1 = QuizQuestion.create(
+			1,
+			"다음 중 아이가 최근 가장 좋아한 활동은 무엇일까요?",
+			"[\"그림 그리기\", \"블록 놀이\", \"영상 통화\", \"산책\"]",
+			2,
+			"가족과 함께한 활동이에요."
+		);
+
+		QuizQuestion q2 = QuizQuestion.create(
+			2,
+			"아이와 최근 함께한 일로 알맞은 것은 무엇일까요?",
+			"[\"책 읽기\", \"사진 찍기\", \"외식하기\", \"퍼즐 맞추기\"]",
+			1,
+			"기념으로 남길 수 있는 활동이에요."
+		);
+
+		QuizQuestion q3 = QuizQuestion.create(
+			3,
+			"다음 중 아이가 좋아하는 간식은 무엇일까요?",
+			"[\"바나나\", \"딸기\", \"쿠키\", \"우유\"]",
+			0,
+			"과일이에요."
+		);
+
+		quizSet.addQuestion(q1);
+		quizSet.addQuestion(q2);
+		quizSet.addQuestion(q3);
+
+		return quizSetRepository.save(quizSet);
 	}
 
 	// 현재 풀어야 할 문제 조회 -> READY 상태 문제 중 questionOrder가 가장 작은 문제 반환
