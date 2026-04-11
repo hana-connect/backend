@@ -1,14 +1,10 @@
 package com.hanaro.hanaconnect.common.error;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,70 +12,67 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class ControllerExceptionHandler {
 
 	@ExceptionHandler(IllegalArgumentException.class)
-	public ResponseEntity<CustomAPIResponse<?>> handleIllegalExceptionHandler(IllegalArgumentException e) {
-
+	public ResponseEntity<CustomAPIResponse<?>> handleIllegalArgumentException(IllegalArgumentException e) {
 		return ResponseEntity.badRequest()
 			.body(CustomAPIResponse.createFail(
 				HttpStatus.BAD_REQUEST.value(),
-				e.getMessage()
+				Objects.toString(e.getMessage(), "잘못된 요청입니다.")
 			));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<CustomAPIResponse<?>> handleNotValidExceptionHandler(MethodArgumentNotValidException e) {
+	public ResponseEntity<CustomAPIResponse<?>> handleMethodArgumentNotValidException(
+		MethodArgumentNotValidException e) {
 
-		Map<String, String> map = e.getBindingResult().getFieldErrors().stream()
-			.collect(Collectors.toMap(
-				FieldError::getField,
-				fe -> Objects.toString(fe.getDefaultMessage(), "Not Valid!"),
-				(existing, newValue) -> existing + ", " + newValue,
-				LinkedHashMap::new
-			));
+		String message = e.getBindingResult().getAllErrors().stream()
+			.findFirst()
+			.map(fe -> Objects.toString(fe.getDefaultMessage(), "잘못된 요청입니다."))
+			.orElse("잘못된 요청입니다.");
 
 		return ResponseEntity.badRequest()
 			.body(CustomAPIResponse.createFail(
 				HttpStatus.BAD_REQUEST.value(),
-				map,
-				"Validation Error"
+				message
 			));
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
-	public ResponseEntity<CustomAPIResponse<?>> handleViolationExceptionHandler(ConstraintViolationException e) {
+	public ResponseEntity<CustomAPIResponse<?>> handleConstraintViolationException(
+		ConstraintViolationException e) {
 
-		Map<String, String> map = e.getConstraintViolations().stream()
-			.collect(Collectors.toMap(
-				v -> v.getPropertyPath().toString(),
-				v -> Objects.toString(v.getMessage(), "Violation Value!"),
-				(existing, newValue) -> existing + ", " + newValue
-			));
+		String message = e.getConstraintViolations().stream()
+			.findFirst()
+			.map(v -> Objects.toString(v.getMessage(), "잘못된 요청입니다."))
+			.orElse("잘못된 요청입니다.");
 
 		return ResponseEntity.badRequest()
 			.body(CustomAPIResponse.createFail(
 				HttpStatus.BAD_REQUEST.value(),
-				map,
-				"Validation Error"
+				message
 			));
 	}
 
 	@ExceptionHandler(AuthorizationDeniedException.class)
-	public ResponseEntity<CustomAPIResponse<?>> handleAccessDeniedException(AuthorizationDeniedException e) {
+	public ResponseEntity<CustomAPIResponse<?>> handleAuthorizationDeniedException(
+		AuthorizationDeniedException e) {
+
 		return ResponseEntity.status(HttpStatus.FORBIDDEN)
 			.body(CustomAPIResponse.createFail(
 				HttpStatus.FORBIDDEN.value(),
-				e.getMessage()
+				"접근 권한이 없습니다."
 			));
 	}
 
-
 	@ExceptionHandler(NoHandlerFoundException.class)
-	public ResponseEntity<CustomAPIResponse<?>> handleNotFoundException(NoHandlerFoundException e) {
+	public ResponseEntity<CustomAPIResponse<?>> handleNoHandlerFoundException(
+		NoHandlerFoundException e) {
 
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 			.body(CustomAPIResponse.createFail(
@@ -88,9 +81,41 @@ public class ControllerExceptionHandler {
 			));
 	}
 
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<CustomAPIResponse<?>> handleOthersExceptionHandler(Exception e) {
+	@ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+	public ResponseEntity<CustomAPIResponse<?>> handleBadCredentialsException(
+		org.springframework.security.authentication.BadCredentialsException e) {
 
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+			.body(CustomAPIResponse.createFail(
+				HttpStatus.UNAUTHORIZED.value(),
+				Objects.toString(e.getMessage(), "인증에 실패했습니다.")
+			));
+	}
+
+	@ExceptionHandler(EntityNotFoundException.class)
+	public ResponseEntity<CustomAPIResponse<?>> handleEntityNotFoundException(
+		EntityNotFoundException e) {
+
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+			.body(CustomAPIResponse.createFail(
+				HttpStatus.NOT_FOUND.value(),
+				Objects.toString(e.getMessage(), "대상을 찾을 수 없습니다.")
+			));
+	}
+
+	@ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+	public ResponseEntity<CustomAPIResponse<?>> handleSpringAccessDeniedException(
+		org.springframework.security.access.AccessDeniedException e) {
+
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+			.body(CustomAPIResponse.createFail(
+				HttpStatus.FORBIDDEN.value(),
+				"접근 권한이 없습니다."
+			));
+	}
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<CustomAPIResponse<?>> handleException(Exception e) {
 		e.printStackTrace();
 
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
