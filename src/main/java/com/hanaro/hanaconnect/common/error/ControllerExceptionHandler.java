@@ -31,7 +31,7 @@ public class ControllerExceptionHandler {
 	public ResponseEntity<CustomAPIResponse<?>> handleMethodArgumentNotValidException(
 		MethodArgumentNotValidException e) {
 
-		String message = e.getBindingResult().getFieldErrors().stream()
+		String message = e.getBindingResult().getAllErrors().stream()
 			.findFirst()
 			.map(fe -> Objects.toString(fe.getDefaultMessage(), "잘못된 요청입니다."))
 			.orElse("잘못된 요청입니다.");
