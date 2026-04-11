@@ -97,6 +97,11 @@ public class QuizService {
 		QuizQuestion question = quizQuestionRepository.findByQuizSetIdAndQuestionOrder(quizSetId, questionOrder)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 문제입니다."));
 
+		if (question.getStatus() == QuizQuestionStatus.READY) {
+			question.submitAnswer(selectedIndex);
+			quizSet.increaseSolvedCount();
+	}
+
 		question.submitAnswer(selectedIndex);
 		quizSet.increaseSolvedCount();
 	}
