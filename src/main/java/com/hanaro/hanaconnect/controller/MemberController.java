@@ -32,7 +32,7 @@ public class MemberController {
 		WalletResponseDTO walletResponseDTO = memberService.getMyWallet(principal.getMemberId());
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(CustomAPIResponse.createSuccess(200, walletResponseDTO, "내 지갑 잔액 조회를 성공했습니다.")
+			.body(CustomAPIResponse.createSuccess(200, walletResponseDTO, "내 지갑 잔액 조회에 성공했습니다.")
 		);
 	}
 }
