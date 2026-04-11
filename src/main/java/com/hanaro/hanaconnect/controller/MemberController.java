@@ -26,13 +26,17 @@ public class MemberController {
 	// 아이디를 따로 받지 않으므로 JWT 안에 들어있는 정보로만 사용자 식별 가능
 	// JWT로 사용자 확인하기 위해 AuthenticationPrincipal 사용
 	@GetMapping("/wallet")
-	public ResponseEntity<CustomAPIResponse<?>> getMyWallet(
+	public ResponseEntity<CustomAPIResponse<WalletResponseDTO>> getMyWallet(
 		@AuthenticationPrincipal TokenMemberPrincipal principal
 	) {
 		WalletResponseDTO walletResponseDTO = memberService.getMyWallet(principal.getMemberId());
 
-		return ResponseEntity.status(HttpStatus.OK)
-			.body(CustomAPIResponse.createSuccess(200, walletResponseDTO, "내 지갑 잔액 조회에 성공했습니다.")
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				walletResponseDTO,
+				"내 지갑 잔액 조회에 성공했습니다."
+			)
 		);
 	}
 }
