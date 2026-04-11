@@ -62,4 +62,26 @@ public class QuizQuestion extends BaseEntity {
 
 	@Column(name = "hint", length = 255)
 	private String hint;
+
+	// 답 제출 확인
+	public void submitAnswer(Integer selectedIndex){
+		this.selectedIndex = selectedIndex;
+
+		if(this.correctIndex.equals(selectedIndex)){
+			this.status = QuizQuestionStatus.CORRECT;
+		} else {
+			this.status = QuizQuestionStatus.WRONG;
+		}
+
+	}
+
+	// 중간에 이탈 시 -> 오답 처리
+	public void markWrong() {
+		this.status = QuizQuestionStatus.WRONG;
+	}
+
+	// quizSet 연결 메서드
+	public void assignQuizSet(QuizSet quizSet) {
+		this.quizSet = quizSet;
+	}
 }

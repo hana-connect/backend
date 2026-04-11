@@ -59,4 +59,27 @@ public class QuizSet extends BaseEntity {
 	@Column(name = "solved_count", nullable = false)
 	private Integer solvedCount;
 
+	// 문제 추가
+	public void addQuestion(QuizQuestion question){
+		this.questions.add(question);
+		question.assignQuizSet(this);
+	}
+
+	// 푼 문제수 증가
+	public void increaseSolvedCount(){
+		this.solvedCount += 1;
+		updateStatus();
+	}
+
+	// 상태 업데이트
+	public void updateStatus() {
+		if (this.solvedCount == 0) {
+			this.status = QuizSetStatus.NOT_STARTED;
+		} else if (this.solvedCount < this.totalCount){
+			this.status = QuizSetStatus.IN_PROGRESS;
+		} else {
+			this.status = QuizSetStatus.COMPLETED;
+		}
+	}
+
 }
