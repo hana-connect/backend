@@ -19,16 +19,18 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class AuthService {
 
+	private static final String LOGIN_FAILED_MESSAGE = "아이디 또는 비밀번호가 올바르지 않습니다.";
+
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtTokenProvider jwtTokenProvider;
 
 	public LoginResponseDTO login(LoginRequestDTO request) {
 		Member member = memberRepository.findById(request.getMemberId())
-			.orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new BadCredentialsException(LOGIN_FAILED_MESSAGE));
 
 		if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
-			throw new BadCredentialsException("간편비밀번호가 일치하지 않습니다.");
+			throw new BadCredentialsException(LOGIN_FAILED_MESSAGE);
 		}
 
 		TokenMemberPrincipal principal = new TokenMemberPrincipal(
