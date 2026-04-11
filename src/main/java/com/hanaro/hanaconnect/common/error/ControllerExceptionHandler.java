@@ -66,7 +66,7 @@ public class ControllerExceptionHandler {
 		return ResponseEntity.status(HttpStatus.FORBIDDEN)
 			.body(CustomAPIResponse.createFail(
 				HttpStatus.FORBIDDEN.value(),
-				Objects.toString(e.getMessage(), "접근 권한이 없습니다.")
+				"접근 권한이 없습니다."
 			));
 	}
 
