@@ -1,13 +1,7 @@
 package com.hanaro.hanaconnect.service;
 
-import java.math.BigDecimal;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.dto.WalletResponseDTO;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.MemberRepository;

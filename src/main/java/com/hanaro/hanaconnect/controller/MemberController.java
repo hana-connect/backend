@@ -1,9 +1,7 @@
 package com.hanaro.hanaconnect.controller;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,9 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
 import com.hanaro.hanaconnect.dto.WalletResponseDTO;
-import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.service.MemberService;
-import com.hanaro.hanaconnect.service.MemberServiceImpl;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "유저 관련", description = "내 지갑 잔액 조회") // 추가로 api에 대한 설명 description 작성해주세용~
+@Tag(name = "유저 관련", description = "내 지갑 잔액 조회") // 추가로 api에 대한 설명 description에 작성해주세용~
 public class MemberController {
 	private final MemberService memberService;
 
