@@ -24,15 +24,12 @@ public class MemberServiceImpl implements MemberService{
 	private final MemberRepository memberRepository;
 
 	@Override
-	public ResponseEntity<CustomAPIResponse<?>> getMyWallet(Long memberId) {
+	public WalletResponseDTO getMyWallet(Long memberId) {
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 
-		WalletResponseDTO walletResponseDTO = WalletResponseDTO.builder()
+		return WalletResponseDTO.builder()
 			.walletMoney(member.getWalletMoney())
 			.build();
-
-		return ResponseEntity.status(HttpStatus.OK)
-			.body(CustomAPIResponse.createSuccess(200, walletResponseDTO, "내 지갑 잔액 조회를 성공했습니다."));
 	}
 }
