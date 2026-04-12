@@ -5,7 +5,6 @@ spring:
   config:
     import:
       - classpath:security.yml
-      - optional:file:.env[.properties]
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -14,7 +13,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: true
@@ -76,8 +75,3 @@ springdoc:
   api-docs:
     enabled: true
     path: /hanaconnect/api-docs
-
-quiz-ai:
-  api-key: ${QUIZ_OPENAI_API_KEY:dummy-key}
-  model: gpt-4.1-mini
-  base-url: https://api.openai.com/v1
