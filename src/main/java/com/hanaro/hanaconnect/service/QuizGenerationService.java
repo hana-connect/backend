@@ -99,6 +99,8 @@ public class QuizGenerationService {
 					.orElseThrow(() -> new RuntimeException("이미 생성된 퀴즈 조회에 실패했습니다.", e));
 			}
 
+		} catch (RuntimeException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException("AI 퀴즈 생성에 실패했습니다.", e);
 		}
