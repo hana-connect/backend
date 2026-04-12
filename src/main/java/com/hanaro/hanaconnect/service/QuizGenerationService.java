@@ -16,7 +16,7 @@ import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.QuizSetRepository;
 
 import lombok.RequiredArgsConstructor;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; 
 
 @Service
 @RequiredArgsConstructor
