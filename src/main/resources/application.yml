@@ -3,7 +3,8 @@ spring:
     name: hanaconnect
 
   config:
-    import: classpath:security.yml
+    import:
+      - classpath:security.yml
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -2,6 +2,7 @@ package com.hanaro.hanaconnect;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -16,9 +17,11 @@ import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.security.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.PhoneName;
+import com.hanaro.hanaconnect.repository.PhoneNameRepository;
+import com.hanaro.hanaconnect.entity.Mission;
 import com.hanaro.hanaconnect.entity.Relation;
 import com.hanaro.hanaconnect.repository.MemberRepository;
-import com.hanaro.hanaconnect.repository.PhoneNameRepository;
+import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -33,10 +36,13 @@ public class InitLoader implements ApplicationRunner {
 	private final PhoneNameRepository phoneNameRepository;
 	private final AccountCryptoService accountCryptoService;
 	private final PasswordEncoder passwordEncoder;
+	private final MissionRepository missionRepository;
 
 	@Override
 	@Transactional
 	public void run(@Nullable ApplicationArguments args) {
+
+		//이미 회원이 있으면 추가하지 않음
 		if (memberRepository.count() > 0) {
 			return;
 		}
@@ -94,6 +100,8 @@ public class InitLoader implements ApplicationRunner {
 		phoneNameRepository.save(createPhoneName(parent1, kid1, "우리 아들"));
 		phoneNameRepository.save(createPhoneName(parent2, kid1, "손주"));
 		phoneNameRepository.save(createPhoneName(parent2, parent1, "딸"));
+    
+    createSampleMissions(kid1, parent1);
 	}
 
 	private Member createMember(
@@ -130,5 +138,51 @@ public class InitLoader implements ApplicationRunner {
 			.whom(whom)
 			.whomName(whomName)
 			.build();
-	}
+  }
+  
+  private void createSampleMissions(Member kid, Member parent) {
+    missionRepository.saveAll(List.of(
+      Mission.builder()
+        .kid(kid)
+        .parent(parent)
+        .name("부모님께 인사하기")
+        .isCompleted(true)
+        .build(),
+
+      Mission.builder()
+        .kid(kid)
+        .parent(parent)
+        .name("심부름 다녀오기")
+        .isCompleted(true)
+        .build(),
+
+      Mission.builder()
+        .kid(kid)
+        .parent(parent)
+        .name("용돈 기록 작성하기")
+        .isCompleted(true)
+        .build(),
+
+      Mission.builder()
+        .kid(kid)
+        .parent(parent)
+        .name("방 정리하기")
+        .isCompleted(true)
+        .build(),
+
+      Mission.builder()
+        .kid(kid)
+        .parent(parent)
+        .name("식사 후 설거지 돕기")
+        .isCompleted(true)
+        .build(),
+
+      Mission.builder()
+        .kid(kid)
+        .parent(parent)
+        .name("오늘 소비 내역 확인하기")
+        .isCompleted(true)
+        .build()
+    ));
+  }
 }

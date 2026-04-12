@@ -28,4 +28,5 @@ public interface RelationRepository extends JpaRepository<Relation, Long> {
 	""")
 	List<ConnectMemberResponseDTO> findParents(@Param("memberId") Long memberId);
 
+	boolean existsByParent_IdAndKid_Id(Long parentId, Long kidId);
 }

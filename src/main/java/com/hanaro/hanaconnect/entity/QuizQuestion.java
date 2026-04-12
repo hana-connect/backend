@@ -1,9 +1,13 @@
 package com.hanaro.hanaconnect.entity;
 
+import java.util.List;
+
+import com.hanaro.hanaconnect.common.converter.StringListConverter;
 import com.hanaro.hanaconnect.common.entity.BaseEntity;
 import com.hanaro.hanaconnect.common.enums.QuizQuestionStatus;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -46,9 +50,10 @@ public class QuizQuestion extends BaseEntity {
 	@Column(name = "question", nullable = false, columnDefinition = "TEXT")
 	private String question;
 
-	// json : mysql이면 가능
+	// json : mysql이면 가능 / convert :
+	@Convert(converter = StringListConverter.class)
 	@Column(name = "choices", nullable = false, columnDefinition = "JSON")
-	private String choices;
+	private List<String> choices;
 
 	@Column(name = "correct_index", nullable = false)
 	private Integer correctIndex;
@@ -89,7 +94,7 @@ public class QuizQuestion extends BaseEntity {
 	public static QuizQuestion create(
 		Integer questionOrder,
 		String question,
-		String choices,
+		List<String> choices,
 		Integer correctIndex,
 		String hint
 	) {
