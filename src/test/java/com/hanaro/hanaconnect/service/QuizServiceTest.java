@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.hanaro.hanaconnect.common.enums.QuizQuestionStatus;
+import com.hanaro.hanaconnect.dto.QuizEntryResponseDTO;
 import com.hanaro.hanaconnect.entity.QuizQuestion;
 import com.hanaro.hanaconnect.entity.QuizSet;
 import com.hanaro.hanaconnect.repository.QuizQuestionRepository;
@@ -21,29 +22,26 @@ class QuizServiceTest {
 
 	@Autowired
 	private QuizService quizService;
-
-	@Autowired
-	private QuizQuestionRepository quizQuestionRepository;
-
+	
 	// AI 퀴즈 생성 테스트
 	@Test
 	void aiQuizGenerationTest() {
-		Long childId = 1L; // TODO: 테스트 전용 fixture로 생성한 childId로 교체
+		// InitLoader 기준
+		// parent id = 1, kid id = 2
+		Long parentId = 1L;
+		Long childId = 2L;
 
-		QuizSet quizSet = quizService.getOrCreateTodayQuiz(childId);
+		QuizEntryResponseDTO response = quizService.enterTodayQuiz(parentId, childId);
 
-		assertThat(quizSet).isNotNull();
+		assertThat(response).isNotNull();
+		assertThat(response.getQuizSetId()).isNotNull();
+		assertThat(response.getQuestions()).hasSize(3);
 
-		List<QuizQuestion> questions = quizQuestionRepository
-			.findByQuizSetIdOrderByQuestionOrderAsc(quizSet.getId());
-
-		assertThat(questions).hasSize(3);
-
-		for (QuizQuestion question : questions) {
+		for (QuizEntryResponseDTO.QuestionItem question : response.getQuestions()) {
 			assertThat(question.getQuestion()).isNotBlank();
 			assertThat(question.getChoices()).hasSize(4);
-			assertThat(question.getCorrectIndex()).isBetween(0, 3);
 			assertThat(question.getStatus()).isEqualTo(QuizQuestionStatus.READY);
+			assertThat(question.getSelectedIndex()).isNull();
 		}
 	}
 }
