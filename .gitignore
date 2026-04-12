@@ -10,6 +10,7 @@ tmp
 upload
 secure
 mysql
+.env
 
 db.properties
 *security.properties

@@ -3,7 +3,9 @@ spring:
     name: hanaconnect
 
   config:
-    import: classpath:security.yml
+    import:
+      - classpath:security.yml
+      - optional:file:.env[.properties]
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -74,3 +76,8 @@ springdoc:
   api-docs:
     enabled: true
     path: /hanaconnect/api-docs
+
+quiz-ai:
+  api-key: ${QUIZ_OPENAI_API_KEY}
+  model: gpt-4.1-mini
+  base-url: https://api.openai.com/v1
