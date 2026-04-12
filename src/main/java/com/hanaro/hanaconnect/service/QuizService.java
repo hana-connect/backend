@@ -39,8 +39,6 @@ public class QuizService {
 
 	/*
 	 * 오늘 퀴즈 생성
-	 * - 현재는 더미 데이터로 3문제 생성
-	 * - 이후 AI 생성 브랜치에서 문제 생성 로직으로 교체 예정
 	 */
 	@Transactional
 	public QuizSet createTodayQuiz(Long childId, LocalDate quizDate) {
