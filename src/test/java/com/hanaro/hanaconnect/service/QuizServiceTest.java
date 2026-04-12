@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -23,6 +25,7 @@ class QuizServiceTest {
 	private QuizQuestionRepository quizQuestionRepository;
 
 	// AI 퀴즈 생성 테스트
+	// @Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
 	@Test
 	void aiQuizGenerationTest() {
 		Long childId = 1L;

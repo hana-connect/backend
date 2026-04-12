@@ -30,6 +30,9 @@ public class QuizAiClient {
 
 	// prompt를 OpenAI에 보내고 -> 퀴즈 JSON 문자열 받아오기
 	public String generateQuizFromAi(String prompt) {
+		if (apiKey == null || apiKey.isBlank()) {
+			throw new IllegalStateException("OpenAI API 키가 설정되지 않았습니다.");
+		}
 		// 요청 Body 만들기 (OpenAI에 보내는 JSON 만들기)
 		Map<String, Object> requestBody = Map.of(
 
