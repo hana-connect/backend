@@ -1,14 +1,16 @@
 package com.hanaro.hanaconnect.service;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.ai.QuizAiClient;
 import com.hanaro.hanaconnect.dto.QuizGenerationResponseDTO;
 import com.hanaro.hanaconnect.entity.Mission;
@@ -18,7 +20,7 @@ import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.QuizSetRepository;
 
 import lombok.RequiredArgsConstructor;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 @Service
 @RequiredArgsConstructor
@@ -90,7 +92,12 @@ public class QuizGenerationService {
 			}
 
 			// 9. 저장
-			return quizSetRepository.save(quizSet);
+			try {
+				return quizSetRepository.save(quizSet);
+			} catch (DataIntegrityViolationException e) {
+				return quizSetRepository.findByChildIdAndQuizDate(kidId, quizDate)
+					.orElseThrow(() -> new RuntimeException("이미 생성된 퀴즈 조회에 실패했습니다.", e));
+			}
 
 		} catch (Exception e) {
 			throw new RuntimeException("AI 퀴즈 생성에 실패했습니다.", e);
