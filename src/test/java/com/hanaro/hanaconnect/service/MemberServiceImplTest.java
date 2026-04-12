@@ -26,7 +26,7 @@ import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 
 // @ActiveProfiles("test") // test에서는 InitLoader 실행 안되게
-@Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
+@Disabled("로컬 환경에서만 호출 테스트 실행")
 @SpringBootTest
 class MemberServiceImplTest {
 
