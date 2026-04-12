@@ -16,7 +16,7 @@ import com.hanaro.hanaconnect.entity.QuizQuestion;
 import com.hanaro.hanaconnect.entity.QuizSet;
 import com.hanaro.hanaconnect.repository.QuizQuestionRepository;
 
-// @Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
+@Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
 @SpringBootTest
 class QuizServiceTest {
 
