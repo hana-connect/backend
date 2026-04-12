@@ -25,7 +25,7 @@ class QuizServiceTest {
 	private QuizQuestionRepository quizQuestionRepository;
 
 	// AI 퀴즈 생성 테스트
-	// @Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
+	@Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
 	@Test
 	void aiQuizGenerationTest() {
 		Long childId = 1L;
