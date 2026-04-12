@@ -130,6 +130,11 @@ jobs:
             api-docs:
               enabled: true
               path: /hanaconnect/api-docs
+
+          quiz-ai:
+            api-key: dummy-key
+            model: gpt-4.1-mini
+            base-url: https://api.openai.com/v1
           EOF
 
           cat > src/main/resources/security.yml <<EOF
