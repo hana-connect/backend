@@ -78,6 +78,6 @@ springdoc:
     path: /hanaconnect/api-docs
 
 quiz-ai:
-  api-key: ${QUIZ_OPENAI_API_KEY:}
+  api-key: ${QUIZ_OPENAI_API_KEY}
   model: gpt-4.1-mini
   base-url: https://api.openai.com/v1
