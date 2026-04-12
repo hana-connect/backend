@@ -1,5 +1,7 @@
 package com.hanaro.hanaconnect.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO;
 import com.hanaro.hanaconnect.dto.WalletResponseDTO;
 import com.hanaro.hanaconnect.service.MemberService;
 
@@ -18,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "유저 관련", description = "내 지갑 잔액 조회") // 추가로 api에 대한 설명 description에 작성해주세용~
+@Tag(name = "유저 관련", description = "내 지갑 잔액 조회/부모 리스트 조회") // 추가로 api에 대한 설명 description에 작성해주세용~
 public class MemberController {
 	private final MemberService memberService;
 
@@ -37,6 +40,21 @@ public class MemberController {
 				walletResponseDTO,
 				"내 지갑 잔액 조회에 성공했습니다."
 			)
+		);
+	}
+
+	@GetMapping("/parents")
+	public ResponseEntity<CustomAPIResponse<List<ConnectMemberResponseDTO>>> getParents(
+		@AuthenticationPrincipal TokenMemberPrincipal principal
+	) {
+		List<ConnectMemberResponseDTO> connectMemberResponseDTO = memberService.getParents(principal.getMemberId());
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				connectMemberResponseDTO,
+				"부모 리스트 조회에 성공했습니다."
+				)
 		);
 	}
 }

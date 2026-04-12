@@ -1,8 +1,12 @@
 package com.hanaro.hanaconnect.entity;
 
 import com.hanaro.hanaconnect.common.entity.BaseEntity;
+import com.hanaro.hanaconnect.common.enums.MemberRole;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Table(
 	name = "relation",
 	uniqueConstraints = {
-		@UniqueConstraint(columnNames = {"parent_id", "kid_id"})
+		@UniqueConstraint(columnNames = {"member_id", "connect_member_id"})
 	}
 )
 public class Relation extends BaseEntity {
@@ -35,10 +39,14 @@ public class Relation extends BaseEntity {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "parent_id", nullable = false)
-	private Member parent;
+	@JoinColumn(name = "member_id", nullable = false)
+	private Member member;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kid_id", nullable = false)
-	private Member kid;
+	@JoinColumn(name = "connect_member_id", nullable = false)
+	private Member connectMember;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "connect_member_role", nullable = false)
+	private MemberRole connectMemberRole;
 }

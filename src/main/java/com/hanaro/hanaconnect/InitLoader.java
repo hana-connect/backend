@@ -1,7 +1,5 @@
 package com.hanaro.hanaconnect;
 
-import org.springframework.boot.ApplicationRunner;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -10,12 +8,17 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.security.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Member;
+import com.hanaro.hanaconnect.entity.PhoneName;
+import com.hanaro.hanaconnect.entity.Relation;
 import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.repository.PhoneNameRepository;
+import com.hanaro.hanaconnect.repository.RelationRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,33 +27,101 @@ import lombok.RequiredArgsConstructor;
 public class InitLoader implements ApplicationRunner {
 
 	private final MemberRepository memberRepository;
+	private final RelationRepository relationRepository;
+	private final PhoneNameRepository phoneNameRepository;
 	private final AccountCryptoService accountCryptoService;
 	private final PasswordEncoder passwordEncoder;
 
 	@Override
+	@Transactional
 	public void run(@Nullable ApplicationArguments args) {
-
-		// 이미 회원이 있으면 추가하지 않음
 		if (memberRepository.count() > 0) {
 			return;
 		}
 
-		String rawPassword = "123456";
-		String rawAccount = "11122223333";
-		String encryptedAccount = accountCryptoService.encrypt(rawAccount);
+		String encodedPassword = passwordEncoder.encode("123456");
 
-		String encodedPassword = passwordEncoder.encode(rawPassword);
+		Member kid1 = createMember(
+			"홍길동",
+			encodedPassword,
+			LocalDate.of(2010, 1, 2),
+			"11122223333",
+			MemberRole.KID
+		);
 
-		Member member = Member.builder()
-			.name("홍길동")
+		Member parent1 = createMember(
+			"김엄마",
+			encodedPassword,
+			LocalDate.of(1980, 5, 19),
+			"22233334444",
+			MemberRole.PARENT
+		);
+
+		Member parent2 = createMember(
+			"이할머니",
+			encodedPassword,
+			LocalDate.of(1952, 8, 31),
+			"33344445555",
+			MemberRole.PARENT
+		);
+
+		memberRepository.save(kid1);
+		memberRepository.save(parent1);
+		memberRepository.save(parent2);
+
+		// kid1 입장에서 보이는 연결
+		relationRepository.save(createRelation(kid1, parent1));
+		relationRepository.save(createRelation(kid1, parent2));
+
+		// parent1 입장에서 보이는 연결
+		relationRepository.save(createRelation(parent1, kid1));
+		relationRepository.save(createRelation(parent1, parent2));
+
+		// parent2 입장에서 보이는 연결
+		relationRepository.save(createRelation(parent2, kid1));
+		relationRepository.save(createRelation(parent2, parent1));
+
+		phoneNameRepository.save(createPhoneName(kid1, parent1, "우리 엄마"));
+		phoneNameRepository.save(createPhoneName(kid1, parent2, "외할머니"));
+		phoneNameRepository.save(createPhoneName(parent1, parent2, "친정 엄마"));
+		phoneNameRepository.save(createPhoneName(parent1, kid1, "우리 아들"));
+		phoneNameRepository.save(createPhoneName(parent2, kid1, "손주"));
+		phoneNameRepository.save(createPhoneName(parent2, parent1, "딸"));
+	}
+
+	private Member createMember(
+		String name,
+		String encodedPassword,
+		LocalDate birthday,
+		String rawVirtualAccount,
+		MemberRole memberRole
+	) {
+		String encryptedAccount = accountCryptoService.encrypt(rawVirtualAccount);
+
+		return Member.builder()
+			.name(name)
 			.password(encodedPassword)
-			.birthday(LocalDate.of(2010, 1, 2))
+			.birthday(birthday)
 			.virtualAccount(encryptedAccount)
 			.walletMoney(BigDecimal.ZERO)
-			.memberRole(MemberRole.KID)
+			.memberRole(memberRole)
 			.role(Role.USER)
 			.build();
+	}
 
-		memberRepository.save(member);
+	private Relation createRelation(Member member, Member connectMember) {
+		return Relation.builder()
+			.member(member)
+			.connectMember(connectMember)
+			.connectMemberRole(connectMember.getMemberRole())
+			.build();
+	}
+
+	private PhoneName createPhoneName(Member who, Member whom, String whomName) {
+		return PhoneName.builder()
+			.who(who)
+			.whom(whom)
+			.whomName(whomName)
+			.build();
 	}
 }

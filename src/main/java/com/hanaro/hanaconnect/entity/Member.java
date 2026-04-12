@@ -59,16 +59,6 @@ public class Member extends BaseEntity {
 	@OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
 	private House house;
 
-	// 내가 부모인 관계들
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@Builder.Default
-	private List<Relation> parentRelations = new ArrayList<>();
-
-	// 내가 아이인 관계들
-	@OneToMany(mappedBy = "kid", fetch = FetchType.LAZY)
-	@Builder.Default
-	private List<Relation> kidRelations = new ArrayList<>();
-
 	// 내가 연결한 계좌들
 	@OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
 	@Builder.Default
