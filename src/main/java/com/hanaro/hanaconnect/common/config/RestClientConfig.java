@@ -17,4 +17,9 @@ public class RestClientConfig {
 		return RestClient.builder()
 			.requestFactory(requestFactory);
 	}
+
+	@Bean
+	public ObjectMapper objectMapper() {
+		return new ObjectMapper();
+	}
 }
