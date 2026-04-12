@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
+@Profile("!test") // 서비스 테스트에서는 실행 x
 public class InitLoader implements ApplicationRunner {
 
 	private final MemberRepository memberRepository;
@@ -65,9 +67,14 @@ public class InitLoader implements ApplicationRunner {
 			MemberRole.PARENT
 		);
 
-		memberRepository.save(kid1);
-		memberRepository.save(parent1);
-		memberRepository.save(parent2);
+		// 객체를 DB에 저장
+		kid1 = memberRepository.save(kid1);
+		parent1 = memberRepository.save(parent1);
+		parent2 = memberRepository.save(parent2);
+
+		System.out.println("kid1 = " + kid1);
+		System.out.println("parent1 = " + parent1);
+		System.out.println("parent2 = " + parent2);
 
 		// kid1 입장에서 보이는 연결
 		relationRepository.save(createRelation(kid1, parent1));
