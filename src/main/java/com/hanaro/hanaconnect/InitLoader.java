@@ -28,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-@Profile({"local", "dev"}) // 서비스 테스트에서는 실행 x
 public class InitLoader implements ApplicationRunner {
 
 	private final MemberRepository memberRepository;
