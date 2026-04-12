@@ -15,6 +15,7 @@ import com.hanaro.hanaconnect.entity.QuizQuestion;
 import com.hanaro.hanaconnect.entity.QuizSet;
 import com.hanaro.hanaconnect.repository.QuizQuestionRepository;
 
+@Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
 @SpringBootTest
 class QuizServiceTest {
 
@@ -25,7 +26,6 @@ class QuizServiceTest {
 	private QuizQuestionRepository quizQuestionRepository;
 
 	// AI 퀴즈 생성 테스트
-	@Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
 	@Test
 	void aiQuizGenerationTest() {
 		Long childId = 1L; // TODO: 테스트 전용 fixture로 생성한 childId로 교체
