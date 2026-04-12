@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,8 @@ import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 
-@ActiveProfiles("test") // test에서는 InitLoader 실행 안되게
+// @ActiveProfiles("test") // test에서는 InitLoader 실행 안되게
+@Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
 @SpringBootTest
 class MemberServiceImplTest {
 
