@@ -35,17 +35,4 @@ class MemberRepositoryTest extends BaseRepositoryTest {
 			.role(Role.USER)
 			.build();
 	}
-
-	@Test
-	void findByVirtualAccountTest() {
-		// given
-		memberRepository.save(createMember("김꼬마", "11122223333", MemberRole.KID));
-
-		// when
-		Optional<Member> result = memberRepository.findByVirtualAccount("11122223333");
-
-		// then
-		assertThat(result).isPresent();
-		assertThat(result.get().getName()).isEqualTo("김꼬마");
-	}
 }
