@@ -28,7 +28,7 @@ class QuizServiceTest {
 	@Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
 	@Test
 	void aiQuizGenerationTest() {
-		Long childId = 1L;
+		Long childId = 1L; // TODO: 테스트 전용 fixture로 생성한 childId로 교체
 
 		QuizSet quizSet = quizService.getOrCreateTodayQuiz(childId);
 
