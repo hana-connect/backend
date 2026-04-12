@@ -4,7 +4,7 @@ spring:
 
   config:
     import:
-      - classpath:security.yml
+      - optional:classpath:security.yml
       - optional:file:.env[.properties]
 
   datasource:
