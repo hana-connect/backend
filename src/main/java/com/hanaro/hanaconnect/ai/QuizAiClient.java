@@ -106,7 +106,7 @@ public class QuizAiClient {
 			.body(QuizAiChatResponseDTO.class);  // 응답 받기
 
 		System.out.println("OpenAI 응답 수신 완료");
-		System.out.println(response);
+
 		// 응답 검증
 		if (response == null
 			|| response.choices() == null
