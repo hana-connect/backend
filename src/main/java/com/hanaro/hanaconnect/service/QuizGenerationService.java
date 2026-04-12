@@ -3,6 +3,8 @@ package com.hanaro.hanaconnect.service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,7 @@ import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.QuizSetRepository;
 
 import lombok.RequiredArgsConstructor;
-import com.fasterxml.jackson.databind.ObjectMapper; 
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -198,7 +200,17 @@ public class QuizGenerationService {
 			throw new IllegalArgumentException("AI가 3개의 문제를 생성하지 않았습니다.");
 		}
 
+		Set<Integer> questionOrders = new HashSet<>();
+
 		for (QuizGenerationResponseDTO.QuestionItem item : response.getQuestions()) {
+			if (item.getQuestionOrder() == null || item.getQuestionOrder() < 1 || item.getQuestionOrder() > 3) {
+				throw new IllegalArgumentException("문항 순서가 올바르지 않습니다.");
+			}
+
+			if (!questionOrders.add(item.getQuestionOrder())) {
+				throw new IllegalArgumentException("문항 순서가 중복되었습니다.");
+			}
+
 			if (item.getChoices() == null || item.getChoices().size() != 4) {
 				throw new IllegalArgumentException("선택지 개수가 올바르지 않습니다.");
 			}
