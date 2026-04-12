@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.QuizQuestionStatus;
 import com.hanaro.hanaconnect.common.enums.QuizSetStatus;
 import com.hanaro.hanaconnect.dto.QuizEntryResponseDTO;
@@ -83,7 +84,7 @@ public class QuizService {
 
 	// 관계 검증
 	private void validateParentChildRelation(Long parentId, Long childId) {
-		boolean exists = relationRepository.existsByParent_IdAndKid_Id(parentId, childId);
+		boolean exists = relationRepository.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(parentId, childId, MemberRole.KID);
 
 		if (!exists) {
 			throw new IllegalArgumentException("해당 아이에 대한 접근 권한이 없습니다.");
