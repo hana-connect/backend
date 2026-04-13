@@ -1,5 +1,7 @@
 package com.hanaro.hanaconnect.dto;
 
+import com.hanaro.hanaconnect.common.validator.AccountNumber;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -16,7 +18,7 @@ public class AccountLinkRequestDTO {
 		example = "11122223333"
 	)
 	@NotBlank(message = "계좌번호는 필수입니다.")
-	@Pattern(regexp = "^\\d{11}$", message = "계좌번호는 11자리 숫자여야 합니다.")
+	@AccountNumber
 	private String accountNumber;
 
 	@Schema(

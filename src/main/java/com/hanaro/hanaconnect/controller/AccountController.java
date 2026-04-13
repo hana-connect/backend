@@ -15,9 +15,6 @@ import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.service.AccountService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -39,25 +36,7 @@ public class AccountController {
 		description = "로그인한 사용자가 하이픈 없는 11자리 계좌번호와 계좌 비밀번호를 입력해 계좌를 연결합니다."
 	)
 	@ApiResponses({
-		@ApiResponse(
-			responseCode = "201",
-			description = "계좌 연결 성공",
-			content = @Content(
-				schema = @Schema(implementation = CustomAPIResponse.class),
-				examples = @ExampleObject(
-					value = """
-						{
-						  "status": 201,
-						  "data": {
-						    "accountNumber": "111-2222-3333",
-						    "linkedAt": "2026.04.07"
-						  },
-						  "message": "계좌 연결이 완료되었습니다."
-						}
-						"""
-				)
-			)
-		),
+		@ApiResponse(responseCode = "201", description = "계좌 연결 성공"),
 		@ApiResponse(responseCode = "400", description = "계좌 정보 오류, 계좌 비밀번호 불일치, 중복 등록"),
 		@ApiResponse(responseCode = "500", description = "서버 내부 오류")
 	})
