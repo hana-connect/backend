@@ -29,9 +29,11 @@ public class AssetService {
 			throw new EntityNotFoundException("연결된 계좌가 없습니다.");
 		}
 
-		// 예금 + 적금 (DEPOSIT, SAVINGS) 합산
-		BigDecimal depositSavings = sumBalanceByAccountTypes(linkedAccounts,
-			List.of(AccountType.DEPOSIT, AccountType.SAVINGS));
+		// 예금 + 적금 + 청약 (DEPOSIT, SAVINGS, SUBSCRIPTION) 합산
+		BigDecimal depositSavings = sumBalanceByAccountTypes(
+			linkedAccounts,
+			List.of(AccountType.DEPOSIT, AccountType.SAVINGS, AccountType.SUBSCRIPTION)
+		);
 
 		BigDecimal depositWithdrawal = sumBalanceByAccountType(linkedAccounts, AccountType.FREE);
 		BigDecimal investment = sumBalanceByAccountType(linkedAccounts, AccountType.INVESTMENT);
