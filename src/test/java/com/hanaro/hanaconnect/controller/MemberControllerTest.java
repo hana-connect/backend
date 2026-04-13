@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MemberControllerTest {
 
 	@Autowired
@@ -62,6 +62,8 @@ class MemberControllerTest {
 
 	@Autowired
 	JwtTokenProvider jwtTokenProvider;
+
+	private static long accountSeq = 10000000000L;
 
 	private Long kidId;
 	private Long parentId;
@@ -155,7 +157,6 @@ class MemberControllerTest {
 
 	// 무작위 생성
 	private String generateAccount() {
-		long num = Math.abs(System.nanoTime() % 1_000_000_00000L); // 11자리
-		return String.format("%011d", num);
+		return String.valueOf(accountSeq++);
 	}
 }
