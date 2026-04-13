@@ -57,4 +57,19 @@ public class MemberController {
 				)
 		);
 	}
+
+	@GetMapping("/kids")
+	public ResponseEntity<CustomAPIResponse<List<ConnectMemberResponseDTO>>> getKids(
+		@AuthenticationPrincipal TokenMemberPrincipal principal
+	) {
+		List<ConnectMemberResponseDTO> connectMemberResponseDTO = memberService.getParents(principal.getMemberId());
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				connectMemberResponseDTO,
+				"아이 리스트 조회에 성공했습니다."
+			)
+		);
+	}
 }

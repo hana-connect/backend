@@ -155,6 +155,18 @@ class MemberControllerTest {
 			.andDo(print());
 	}
 
+	@Test
+	void getKidsTest() throws Exception {
+		mvc.perform(get("/api/kids")
+				.header("Authorization", "Bearer " + accessToken))
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.message").value("아이 리스트 조회에 성공했습니다."))
+			.andExpect(jsonPath("$.data").isArray())
+			.andDo(print());
+	}
+
 	// 무작위 생성
 	private String generateAccount() {
 		return String.valueOf(accountSeq++);
