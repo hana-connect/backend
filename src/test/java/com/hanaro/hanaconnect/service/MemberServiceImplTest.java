@@ -40,6 +40,14 @@ class MemberServiceImplTest {
 			.orElseThrow(() -> new IllegalArgumentException("테스트용 아이 회원(홍길동)을 찾을 수 없습니다."));
 	}
 
+	private Member findParent() {
+		return memberRepository.findAll().stream()
+			.filter(member -> member.getName().equals("김엄마"))
+			.filter(member -> member.getMemberRole() == MemberRole.PARENT)
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 부모 회원(김엄마)을 찾을 수 없습니다."));
+	}
+
 	@Test
 	@DisplayName("내 지갑 조회 성공")
 	void getMyWalletTest() {
@@ -76,5 +84,24 @@ class MemberServiceImplTest {
 		assertThat(result)
 			.extracting(ConnectMemberResponseDTO::getConnectMemberRole)
 			.containsOnly(MemberRole.PARENT);
+	}
+
+	@Test
+	@DisplayName("아이 목록 조회 성공")
+	void getKidsTest() {
+		Member parent = findParent();
+
+		List<ConnectMemberResponseDTO> result = memberService.getKids(parent.getId());
+
+		assertThat(result).isNotNull();
+		assertThat(result).hasSize(1);
+
+		assertThat(result)
+			.extracting(ConnectMemberResponseDTO::getConnectMemberName)
+			.containsExactly("홍길동");
+
+		assertThat(result)
+			.extracting(ConnectMemberResponseDTO::getConnectMemberRole)
+			.containsOnly(MemberRole.KID);
 	}
 }

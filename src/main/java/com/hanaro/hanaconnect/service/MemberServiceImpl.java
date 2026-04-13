@@ -37,4 +37,9 @@ public class MemberServiceImpl implements MemberService{
 	public List<ConnectMemberResponseDTO> getParents(Long memberId) {
 		return relationRepository.findParents(memberId);
 	}
+
+	@Override
+	public List<ConnectMemberResponseDTO> getKids(Long memberId) {
+		return relationRepository.findKids(memberId);
+	}
 }

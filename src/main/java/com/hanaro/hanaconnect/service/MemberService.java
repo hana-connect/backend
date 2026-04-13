@@ -8,4 +8,5 @@ import com.hanaro.hanaconnect.dto.WalletResponseDTO;
 public interface MemberService {
 	WalletResponseDTO getMyWallet(Long memberId);
 	List<ConnectMemberResponseDTO> getParents(Long memberId);
+	List<ConnectMemberResponseDTO> getKids(Long memberId);
 }

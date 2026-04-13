@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "유저 관련", description = "내 지갑 잔액 조회/부모 리스트 조회") // 추가로 api에 대한 설명 description에 작성해주세용~
+@Tag(name = "유저 관련", description = "내 지갑 잔액 조회/부모 리스트 조회/아이 리스트 조회") // 추가로 api에 대한 설명 description에 작성해주세용~
 public class MemberController {
 	private final MemberService memberService;
 
@@ -55,6 +55,21 @@ public class MemberController {
 				connectMemberResponseDTO,
 				"부모 리스트 조회에 성공했습니다."
 				)
+		);
+	}
+
+	@GetMapping("/kids")
+	public ResponseEntity<CustomAPIResponse<List<ConnectMemberResponseDTO>>> getKids(
+		@AuthenticationPrincipal TokenMemberPrincipal principal
+	) {
+		List<ConnectMemberResponseDTO> connectMemberResponseDTO = memberService.getKids(principal.getMemberId());
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				connectMemberResponseDTO,
+				"아이 리스트 조회에 성공했습니다."
+			)
 		);
 	}
 }
