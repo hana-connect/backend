@@ -9,12 +9,14 @@ import java.util.Optional;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.hanaro.hanaconnect.common.enums.QuizQuestionStatus;
 import com.hanaro.hanaconnect.entity.QuizQuestion;
 import com.hanaro.hanaconnect.entity.QuizSet;
 
-@Disabled("로컬 환경에서만 테스트 실행")
+// @Disabled("로컬 환경에서만 테스트 실행")
+@ActiveProfiles("test")
 class QuizQuestionRepositoryTest extends BaseRepositoryTest {
 
 	@Autowired
@@ -25,8 +27,7 @@ class QuizQuestionRepositoryTest extends BaseRepositoryTest {
 
 	@Test
 	void findByQuizSetIdOrderByQuestionOrderAsc() {
-		// given
-		QuizSet quizSet = QuizSet.create(1L, LocalDate.now(), 3);
+		QuizSet quizSet = QuizSet.create(101L, LocalDate.of(2026, 4, 13), 3);
 		quizSetRepository.save(quizSet);
 
 		QuizQuestion q1 = QuizQuestion.builder()
@@ -54,11 +55,9 @@ class QuizQuestionRepositoryTest extends BaseRepositoryTest {
 		quizQuestionRepository.save(q1);
 		quizQuestionRepository.save(q2);
 
-		// when
 		List<QuizQuestion> result =
 			quizQuestionRepository.findByQuizSetIdOrderByQuestionOrderAsc(quizSet.getId());
 
-		// then
 		assertThat(result).hasSize(2);
 		assertThat(result.get(0).getQuestionOrder()).isEqualTo(1);
 		assertThat(result.get(1).getQuestionOrder()).isEqualTo(2);
@@ -66,8 +65,7 @@ class QuizQuestionRepositoryTest extends BaseRepositoryTest {
 
 	@Test
 	void findByQuizSetIdAndQuestionOrder() {
-		// given
-		QuizSet quizSet = QuizSet.create(1L, LocalDate.now(), 3);
+		QuizSet quizSet = QuizSet.create(102L, LocalDate.of(2026, 4, 14), 3);
 		quizSetRepository.save(quizSet);
 
 		QuizQuestion question = QuizQuestion.builder()
@@ -83,11 +81,9 @@ class QuizQuestionRepositoryTest extends BaseRepositoryTest {
 
 		quizQuestionRepository.save(question);
 
-		// when
 		Optional<QuizQuestion> result =
 			quizQuestionRepository.findByQuizSetIdAndQuestionOrder(quizSet.getId(), 1);
 
-		// then
 		assertThat(result).isPresent();
 		assertThat(result.get().getQuestion()).isEqualTo("문제1");
 		assertThat(result.get().getQuestionOrder()).isEqualTo(1);

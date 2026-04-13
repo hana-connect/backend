@@ -6,17 +6,21 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.QuizQuestionStatus;
 import com.hanaro.hanaconnect.common.enums.QuizSetStatus;
 import com.hanaro.hanaconnect.dto.QuizAnswerResponseDTO;
 import com.hanaro.hanaconnect.dto.QuizEntryResponseDTO;
+import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.QuizQuestion;
+import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.QuizQuestionRepository;
 
-@Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
-//@ActiveProfiles("test") // test에서는 InitLoader 실행 안되게
+// @Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
+@ActiveProfiles("test")
 @SpringBootTest
 @Transactional
 class QuizServiceTest {
@@ -27,15 +31,37 @@ class QuizServiceTest {
 	@Autowired
 	private QuizQuestionRepository quizQuestionRepository;
 
+	@Autowired
+	private MemberRepository memberRepository;
+
+	private Member findKid() {
+		return memberRepository.findAll().stream()
+			.filter(member -> member.getName().equals("홍길동"))
+			.filter(member -> member.getMemberRole() == MemberRole.KID)
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 아이 회원을 찾을 수 없습니다."));
+	}
+
+	private Member findParent() {
+		return memberRepository.findAll().stream()
+			.filter(member -> member.getName().equals("김엄마"))
+			.filter(member -> member.getMemberRole() == MemberRole.PARENT)
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 부모 회원을 찾을 수 없습니다."));
+	}
+
 	// AI 퀴즈 생성 테스트
 	@Test
 	void aiQuizGenerationTest() {
 		// InitLoader 기준
-		// kid1 = 1, parent1 = 2
-		Long parentId = 2L;
-		Long childId = 1L;
+		// ID가 고정값이 아니어서 find로 찾아와야 함
+		memberRepository.findAll().forEach(m ->
+			System.out.println(m.getId() + " / " + m.getName() + " / " + m.getMemberRole())
+		);
+		Member parent = findParent();
+		Member child = findKid();
 
-		QuizEntryResponseDTO response = quizService.enterTodayQuiz(parentId, childId);
+		QuizEntryResponseDTO response = quizService.enterTodayQuiz(parent.getId(), child.getId());
 
 		assertThat(response).isNotNull();
 		assertThat(response.getQuizSetId()).isNotNull();
@@ -51,10 +77,10 @@ class QuizServiceTest {
 
 	@Test
 	void submitAnswer_correctAnswerTest() {
-		Long parentId = 2L;
-		Long childId = 1L;
+		Member parent = findParent();
+		Member child = findKid();
 
-		QuizEntryResponseDTO entry = quizService.enterTodayQuiz(parentId, childId);
+		QuizEntryResponseDTO entry = quizService.enterTodayQuiz(parent.getId(), child.getId());
 		Long quizSetId = entry.getQuizSetId();
 		Integer questionOrder = 1;
 
@@ -65,8 +91,8 @@ class QuizServiceTest {
 		Integer correctIndex = question.getCorrectIndex();
 
 		QuizAnswerResponseDTO response = quizService.submitAnswer(
-			parentId,
-			childId,
+			parent.getId(),
+			child.getId(),
 			quizSetId,
 			questionOrder,
 			correctIndex
@@ -86,10 +112,10 @@ class QuizServiceTest {
 
 	@Test
 	void submitAnswer_wrongAnswerTest() {
-		Long parentId = 2L;
-		Long childId = 1L;
+		Member parent = findParent();
+		Member child = findKid();
 
-		QuizEntryResponseDTO entry = quizService.enterTodayQuiz(parentId, childId);
+		QuizEntryResponseDTO entry = quizService.enterTodayQuiz(parent.getId(), child.getId());
 		Long quizSetId = entry.getQuizSetId();
 		Integer questionOrder = 1;
 
@@ -100,8 +126,8 @@ class QuizServiceTest {
 		Integer wrongIndex = (question.getCorrectIndex() + 1) % 4;
 
 		QuizAnswerResponseDTO response = quizService.submitAnswer(
-			parentId,
-			childId,
+			parent.getId(),
+			child.getId(),
 			quizSetId,
 			questionOrder,
 			wrongIndex

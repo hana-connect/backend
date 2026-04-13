@@ -26,6 +26,7 @@ import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Relation;
 import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,6 +50,9 @@ class MemberControllerTest {
 	PhoneNameRepository phoneNameRepository;
 
 	@Autowired
+	MissionRepository missionRepository;
+
+	@Autowired
 	PasswordEncoder passwordEncoder;
 
 	@Autowired
@@ -65,6 +69,7 @@ class MemberControllerTest {
 	void setUp() {
 		phoneNameRepository.deleteAll();
 		relationRepository.deleteAll();
+		missionRepository.deleteAll();
 		memberRepository.deleteAll();
 
 		String encodedPassword = passwordEncoder.encode("123456");
