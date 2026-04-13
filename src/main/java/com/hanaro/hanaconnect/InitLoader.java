@@ -12,17 +12,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.security.AccountCryptoService;
+import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
-import com.hanaro.hanaconnect.entity.PhoneName;
-import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.entity.Mission;
+import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Relation;
+import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.MissionRepository;
+import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
+
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,12 +35,14 @@ import lombok.RequiredArgsConstructor;
 @Profile({"local", "dev"}) // 서비스 테스트에서는 실행 x
 public class InitLoader implements ApplicationRunner {
 
+	private final AccountRepository accountRepository;
 	private final MemberRepository memberRepository;
 	private final RelationRepository relationRepository;
 	private final PhoneNameRepository phoneNameRepository;
 	private final AccountCryptoService accountCryptoService;
 	private final PasswordEncoder passwordEncoder;
 	private final MissionRepository missionRepository;
+
 
 	@Override
 	@Transactional
@@ -77,6 +83,24 @@ public class InitLoader implements ApplicationRunner {
 		kid1 = memberRepository.save(kid1);
 		parent1 = memberRepository.save(parent1);
 		parent2 = memberRepository.save(parent2);
+
+		accountRepository.save(createAccount(
+			"아이 입출금 통장",
+			"11122223333",
+			"1234",
+			AccountType.FREE,
+			new BigDecimal("50000"),
+			kid1
+		));
+
+		accountRepository.save(createAccount(
+			"부모 저축 예금",
+			"22233334444",
+			"5678",
+			AccountType.DEPOSIT,
+			new BigDecimal("100000"),
+			parent1
+		));
 
 		System.out.println("kid1 = " + kid1);
 		System.out.println("parent1 = " + parent1);
@@ -121,6 +145,24 @@ public class InitLoader implements ApplicationRunner {
 			.walletMoney(BigDecimal.ZERO)
 			.memberRole(memberRole)
 			.role(Role.USER)
+			.build();
+	}
+
+	private Account createAccount(
+		String name,
+		String accountNumber,
+		String rawPassword,
+		AccountType accountType,
+		BigDecimal balance,
+		Member member
+	) {
+		return Account.builder()
+			.name(name)
+			.accountNumber(accountNumber)
+			.password(passwordEncoder.encode(rawPassword))
+			.accountType(accountType)
+			.balance(balance)
+			.member(member)
 			.build();
 	}
 
