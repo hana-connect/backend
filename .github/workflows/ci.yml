@@ -68,7 +68,7 @@ jobs:
 
             jpa:
               hibernate:
-                ddl-auto: update
+                ddl-auto: create-drop
                 naming:
                   physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
               show-sql: true
@@ -85,7 +85,7 @@ jobs:
 
             sql:
               init:
-                mode: always
+                mode: never
 
             flyway:
               enabled: false
