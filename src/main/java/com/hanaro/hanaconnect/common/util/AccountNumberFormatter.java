@@ -15,7 +15,7 @@ public final class AccountNumberFormatter {
 	public static String format(String accountNumber) {
 		String normalized = normalize(accountNumber);
 
-		if (normalized == null || normalized.length() != 11) {
+		if (normalized == null || !normalized.matches("\\d{11}")) {
 			throw new IllegalArgumentException("계좌번호 형식이 올바르지 않습니다.");
 		}
 

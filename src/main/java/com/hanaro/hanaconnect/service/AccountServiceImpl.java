@@ -57,7 +57,10 @@ public class AccountServiceImpl implements AccountService {
 		try {
 			savedLinkedAccount = linkedAccountRepository.save(linkedAccount);
 		} catch (DataIntegrityViolationException e) {
-			throw new IllegalArgumentException(ALREADY_LINKED_ACCOUNT_MESSAGE);
+			if (linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), memberId)) {
+				throw new IllegalArgumentException(ALREADY_LINKED_ACCOUNT_MESSAGE);
+			}
+			throw e;
 		}
 
 		return new AccountLinkResponseDTO(
