@@ -30,10 +30,12 @@ import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MemberControllerTest {
 
@@ -67,18 +69,15 @@ class MemberControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		phoneNameRepository.deleteAll();
-		relationRepository.deleteAll();
-		missionRepository.deleteAll();
-		memberRepository.deleteAll();
-
 		String encodedPassword = passwordEncoder.encode("123456");
+		String kidAccount = generateAccount();
+		String parentAccount = generateAccount();
 
 		Member kid = Member.builder()
 			.name("김꼬마")
 			.password(encodedPassword)
 			.birthday(LocalDate.of(2010, 1, 2))
-			.virtualAccount(accountCryptoService.encrypt("11122223333"))
+			.virtualAccount(accountCryptoService.encrypt(kidAccount))
 			.walletMoney(new BigDecimal("50000"))
 			.memberRole(MemberRole.KID)
 			.role(Role.USER)
@@ -88,7 +87,7 @@ class MemberControllerTest {
 			.name("김엄마")
 			.password(encodedPassword)
 			.birthday(LocalDate.of(1980, 5, 19))
-			.virtualAccount(accountCryptoService.encrypt("22233334444"))
+			.virtualAccount(accountCryptoService.encrypt(parentAccount))
 			.walletMoney(new BigDecimal("100000"))
 			.memberRole(MemberRole.PARENT)
 			.role(Role.USER)
@@ -152,5 +151,11 @@ class MemberControllerTest {
 			.andExpect(jsonPath("$.message").value("부모 리스트 조회에 성공했습니다."))
 			.andExpect(jsonPath("$.data").isArray())
 			.andDo(print());
+	}
+
+	// 무작위 생성
+	private String generateAccount() {
+		long num = Math.abs(System.nanoTime() % 1_000_000_00000L); // 11자리
+		return String.format("%011d", num);
 	}
 }
