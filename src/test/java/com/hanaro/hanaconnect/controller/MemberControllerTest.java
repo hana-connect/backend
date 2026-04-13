@@ -67,65 +67,100 @@ class MemberControllerTest {
 
 	private Long kidId;
 	private Long parentId;
+
 	private String accessToken;
 
 	@BeforeEach
 	void setUp() {
 		String encodedPassword = passwordEncoder.encode("123456");
-		String kidAccount = generateAccount();
-		String parentAccount = generateAccount();
 
-		Member kid = Member.builder()
+		Member me = Member.builder()
 			.name("김꼬마")
 			.password(encodedPassword)
 			.birthday(LocalDate.of(2010, 1, 2))
-			.virtualAccount(accountCryptoService.encrypt(kidAccount))
+			.virtualAccount(accountCryptoService.encrypt(generateAccount()))
 			.walletMoney(new BigDecimal("50000"))
 			.memberRole(MemberRole.KID)
 			.role(Role.USER)
 			.build();
 
-		Member parent = Member.builder()
+		Member parent1 = Member.builder()
 			.name("김엄마")
 			.password(encodedPassword)
 			.birthday(LocalDate.of(1980, 5, 19))
-			.virtualAccount(accountCryptoService.encrypt(parentAccount))
+			.virtualAccount(accountCryptoService.encrypt(generateAccount()))
 			.walletMoney(new BigDecimal("100000"))
 			.memberRole(MemberRole.PARENT)
 			.role(Role.USER)
 			.build();
 
-		kid = memberRepository.save(kid);
-		parent = memberRepository.save(parent);
+		Member parent2 = Member.builder()
+			.name("이할머니")
+			.password(encodedPassword)
+			.birthday(LocalDate.of(1952, 8, 31))
+			.virtualAccount(accountCryptoService.encrypt(generateAccount()))
+			.walletMoney(new BigDecimal("90000"))
+			.memberRole(MemberRole.PARENT)
+			.role(Role.USER)
+			.build();
 
-		kidId = kid.getId();
-		parentId = parent.getId();
+		Member kidFriend = Member.builder()
+			.name("박친구")
+			.password(encodedPassword)
+			.birthday(LocalDate.of(2011, 3, 10))
+			.virtualAccount(accountCryptoService.encrypt(generateAccount()))
+			.walletMoney(new BigDecimal("30000"))
+			.memberRole(MemberRole.KID)
+			.role(Role.USER)
+			.build();
 
-		// 관계 설정
-		relationRepository.save(
-			Relation.builder()
-				.member(kid)
-				.connectMember(parent)
-				.connectMemberRole(parent.getMemberRole())
-				.build()
-		);
+		me = memberRepository.save(me);
+		parent1 = memberRepository.save(parent1);
+		parent2 = memberRepository.save(parent2);
+		kidFriend = memberRepository.save(kidFriend);
 
-		// 전화 이름 설정
-		phoneNameRepository.save(
-			PhoneName.builder()
-				.who(kid)
-				.whom(parent)
-				.whomName("우리 엄마")
-				.build()
-		);
+		relationRepository.save(Relation.builder()
+			.member(me)
+			.connectMember(parent1)
+			.connectMemberRole(parent1.getMemberRole())
+			.build());
 
-		// JWT 직접 생성
+		relationRepository.save(Relation.builder()
+			.member(me)
+			.connectMember(parent2)
+			.connectMemberRole(parent2.getMemberRole())
+			.build());
+
+		relationRepository.save(Relation.builder()
+			.member(me)
+			.connectMember(kidFriend)
+			.connectMemberRole(kidFriend.getMemberRole())
+			.build());
+
+		phoneNameRepository.save(PhoneName.builder()
+			.who(me)
+			.whom(parent1)
+			.whomName("우리 엄마")
+			.build());
+
+		phoneNameRepository.save(PhoneName.builder()
+			.who(me)
+			.whom(parent2)
+			.whomName("할머니")
+			.build());
+
+		phoneNameRepository.save(PhoneName.builder()
+			.who(me)
+			.whom(kidFriend)
+			.whomName("친구")
+			.build());
+
 		TokenMemberPrincipal principal = new TokenMemberPrincipal(
-			kid.getId(),
-			kid.getName(),
-			kid.getVirtualAccount(),
-			kid.getMemberRole(),
-			kid.getRole()
+			me.getId(),
+			me.getName(),
+			me.getVirtualAccount(),
+			me.getMemberRole(),
+			me.getRole()
 		);
 
 		accessToken = jwtTokenProvider.createAccessToken(principal);
@@ -152,6 +187,9 @@ class MemberControllerTest {
 			.andExpect(jsonPath("$.status").value(200))
 			.andExpect(jsonPath("$.message").value("부모 리스트 조회에 성공했습니다."))
 			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(2))
+			.andExpect(jsonPath("$.data[0].connectMemberRole").value("PARENT"))
+			.andExpect(jsonPath("$.data[1].connectMemberRole").value("PARENT"))
 			.andDo(print());
 	}
 
@@ -164,6 +202,9 @@ class MemberControllerTest {
 			.andExpect(jsonPath("$.status").value(200))
 			.andExpect(jsonPath("$.message").value("아이 리스트 조회에 성공했습니다."))
 			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(1))
+			.andExpect(jsonPath("$.data[0].connectMemberName").value("박친구"))
+			.andExpect(jsonPath("$.data[0].connectMemberRole").value("KID"))
 			.andDo(print());
 	}
 
