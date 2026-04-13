@@ -95,6 +95,24 @@ public class InitLoader implements ApplicationRunner {
 			parent1
 		));
 
+		accountRepository.save(createAccount(
+			"채현이 적금 (용돈)",
+			"11133334444",
+			"1234", // 비밀번호는 이렇게 넣어야 함 (자동 encode됨)
+			AccountType.SAVINGS,
+			new BigDecimal("250000"),
+			kid1
+		));
+
+		accountRepository.save(createAccount(
+			"할머니 지갑",
+			"333444555",
+			"1234",
+			AccountType.FREE,
+			new BigDecimal("1000000"),
+			parent2
+		));
+
 		System.out.println("kid1 = " + kid1);
 		System.out.println("parent1 = " + parent1);
 		System.out.println("parent2 = " + parent2);
