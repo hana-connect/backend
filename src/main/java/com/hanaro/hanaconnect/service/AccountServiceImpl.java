@@ -55,7 +55,7 @@ public class AccountServiceImpl implements AccountService {
 
 		LinkedAccount savedLinkedAccount;
 		try {
-			savedLinkedAccount = linkedAccountRepository.save(linkedAccount);
+			savedLinkedAccount = linkedAccountRepository.saveAndFlush(linkedAccount);
 		} catch (DataIntegrityViolationException e) {
 			if (linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), memberId)) {
 				throw new IllegalArgumentException(ALREADY_LINKED_ACCOUNT_MESSAGE);
