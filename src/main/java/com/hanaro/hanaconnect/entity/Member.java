@@ -56,11 +56,20 @@ public class Member extends BaseEntity {
 	private Role role;
 
 	// kid 회원 기준 house 1개
-	@OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
+	@OneToOne(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
 	private House house;
 
 	// 내가 연결한 계좌들
-	@OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
 	@Builder.Default
 	private List<LinkedAccount> linkedAccounts = new ArrayList<>();
+
+	@OneToMany(mappedBy = "parent", cascade = CascadeType.REMOVE, orphanRemoval = true)
+	@Builder.Default
+	private List<Mission> parentMissions = new ArrayList<>();
+
+	@OneToMany(mappedBy = "kid", cascade = CascadeType.REMOVE, orphanRemoval = true)
+	@Builder.Default
+	private List<Mission> kidMissions = new ArrayList<>();
+
 }

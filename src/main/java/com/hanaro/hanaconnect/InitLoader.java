@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-@Profile({"local", "dev"}) // 서비스 테스트에서는 실행 x
 public class InitLoader implements ApplicationRunner {
 
 	private final MemberRepository memberRepository;
@@ -41,11 +39,6 @@ public class InitLoader implements ApplicationRunner {
 	@Override
 	@Transactional
 	public void run(@Nullable ApplicationArguments args) {
-
-		//이미 회원이 있으면 추가하지 않음
-		if (memberRepository.count() > 0) {
-			return;
-		}
 
 		String encodedPassword = passwordEncoder.encode("123456");
 
