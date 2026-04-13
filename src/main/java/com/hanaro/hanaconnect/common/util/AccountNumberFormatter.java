@@ -9,7 +9,7 @@ public final class AccountNumberFormatter {
 		if (accountNumber == null) {
 			return null;
 		}
-		return accountNumber.replace("-", "").trim();
+		return accountNumber.trim();
 	}
 
 	public static String format(String accountNumber) {

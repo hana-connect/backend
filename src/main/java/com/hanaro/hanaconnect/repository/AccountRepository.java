@@ -8,5 +8,5 @@ import com.hanaro.hanaconnect.entity.Account;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
-	Optional<Account> findByAccountNumber(String accountNumber);
+	Optional<Account> findByAccountNumberAndMemberId(String accountNumber, Long memberId);
 }

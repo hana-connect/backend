@@ -12,10 +12,11 @@ import lombok.Setter;
 public class AccountLinkRequestDTO {
 
 	@Schema(
-		description = "계좌번호. 하이픈 포함 또는 제외 모두 입력 가능",
-		example = "111-2222-3333"
+		description = "계좌번호 11자리 숫자",
+		example = "11122223333"
 	)
 	@NotBlank(message = "계좌번호는 필수입니다.")
+	@Pattern(regexp = "^\\d{11}$", message = "계좌번호는 11자리 숫자여야 합니다.")
 	private String accountNumber;
 
 	@Schema(
