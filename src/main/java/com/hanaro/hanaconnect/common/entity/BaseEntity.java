@@ -24,4 +24,8 @@ public class BaseEntity {
 	public String toString() {
 		return "%s - %s".formatted(createdAt, updatedAt);
 	}
+
+	public void setCreatedAtForInit(java.time.LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 }
