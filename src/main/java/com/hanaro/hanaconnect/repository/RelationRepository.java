@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO;
 import com.hanaro.hanaconnect.entity.Relation;
 
@@ -28,5 +29,8 @@ public interface RelationRepository extends JpaRepository<Relation, Long> {
 	""")
 	List<ConnectMemberResponseDTO> findParents(@Param("memberId") Long memberId);
 
-	boolean existsByParent_IdAndKid_Id(Long parentId, Long kidId);
-}
+	boolean existsByMember_IdAndConnectMember_IdAndConnectMemberRole(
+		Long memberId,
+		Long connectMemberId,
+		MemberRole connectMemberRole
+	);}

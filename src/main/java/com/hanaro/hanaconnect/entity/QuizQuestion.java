@@ -20,6 +20,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -35,6 +37,8 @@ import lombok.NoArgsConstructor;
 	}
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class QuizQuestion extends BaseEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,29 +72,41 @@ public class QuizQuestion extends BaseEntity {
 	@Column(name = "hint", length = 255)
 	private String hint;
 
-	// 답 제출 확인
-	public void submitAnswer(Integer selectedIndex){
+	// 답 제출
+	public void submitAnswer(Integer selectedIndex) {
+		if (this.status != QuizQuestionStatus.READY) {
+			throw new IllegalStateException("이미 답을 제출한 문제입니다.");
+		}
+
 		this.selectedIndex = selectedIndex;
 
-		if(this.correctIndex.equals(selectedIndex)){
+		if (this.correctIndex.equals(selectedIndex)) {
 			this.status = QuizQuestionStatus.CORRECT;
 		} else {
 			this.status = QuizQuestionStatus.WRONG;
 		}
-
 	}
 
-	// 중간에 이탈 시 -> 오답 처리
+	// 중간 이탈 시 오답 처리
 	public void markWrong() {
+		if (this.status != QuizQuestionStatus.READY) {
+			throw new IllegalStateException("이미 처리된 문제입니다.");
+		}
+
 		this.status = QuizQuestionStatus.WRONG;
 	}
 
-	// quizSet 연결 메서드
+	// 정답 텍스트 반환
+	public String getCorrectAnswer() {
+		return this.choices.get(this.correctIndex);
+	}
+
+	// quizSet 연결
 	public void assignQuizSet(QuizSet quizSet) {
 		this.quizSet = quizSet;
 	}
 
-	// 더미테스트!
+	// 생성 메서드
 	public static QuizQuestion create(
 		Integer questionOrder,
 		String question,
