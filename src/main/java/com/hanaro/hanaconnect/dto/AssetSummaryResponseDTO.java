@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class AssetSummaryResponse {
+public class AssetSummaryResponseDTO {
 	private BigDecimal depositSavings;
 	private BigDecimal depositWithdrawal;
 	private BigDecimal investment;

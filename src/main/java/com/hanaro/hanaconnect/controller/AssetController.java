@@ -2,7 +2,7 @@ package com.hanaro.hanaconnect.controller;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.AssetSummaryResponse;
+import com.hanaro.hanaconnect.dto.AssetSummaryResponseDTO;
 import com.hanaro.hanaconnect.service.AssetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,10 +23,10 @@ public class AssetController {
 
 	@GetMapping("/summary")
 	@Operation(summary = "전체 자산 현황 조회", description = "연결된 모든 계좌의 잔액을 합산하여 카테고리별로 반환합니다.")
-	public ResponseEntity<CustomAPIResponse<AssetSummaryResponse>> getAssetSummary(
+	public ResponseEntity<CustomAPIResponse<AssetSummaryResponseDTO>> getAssetSummary(
 		@AuthenticationPrincipal TokenMemberPrincipal principal
 	) {
-		AssetSummaryResponse response = assetService.getMemberAssetSummary(principal.getMemberId());
+		AssetSummaryResponseDTO response = assetService.getMemberAssetSummary(principal.getMemberId());
 
 		return ResponseEntity.ok(CustomAPIResponse.createSuccess(
 			200,

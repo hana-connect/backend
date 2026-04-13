@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
-import com.hanaro.hanaconnect.dto.AssetSummaryResponse;
+import com.hanaro.hanaconnect.dto.AssetSummaryResponseDTO;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 
@@ -21,7 +21,7 @@ public class AssetService {
 	private final LinkedAccountRepository linkedAccountRepository;
 
 	@Transactional(readOnly = true)
-	public AssetSummaryResponse getMemberAssetSummary(Long memberId) {
+	public AssetSummaryResponseDTO getMemberAssetSummary(Long memberId) {
 		List<LinkedAccount> linkedAccounts = linkedAccountRepository.findAllByMemberId(memberId);
 
 		// 연결된 계좌가 없는 경우 예외 처리
@@ -42,7 +42,7 @@ public class AssetService {
 			.add(investment)
 			.add(pension);
 
-		return AssetSummaryResponse.builder()
+		return AssetSummaryResponseDTO.builder()
 			.depositSavings(depositSavings)
 			.depositWithdrawal(depositWithdrawal)
 			.investment(investment)
