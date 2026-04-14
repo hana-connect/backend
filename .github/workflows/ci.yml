@@ -73,7 +73,7 @@ jobs:
 
             datasource:
               driver-class-name: com.mysql.cj.jdbc.Driver
-              url: jdbc:mysql://mysql:3306/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+              url: jdbc:mysql://127.0.0.1:3306/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
               username: hanaconnect
               password: 12345678
 
