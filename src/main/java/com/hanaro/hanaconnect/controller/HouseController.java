@@ -52,8 +52,7 @@ public class HouseController {
 						name = "청약 있음",
 						value = """
 							{
-							  "success": true,
-							  "code": 200,
+							  "status": 200,
 							  "message": "청약 상태 조회 성공",
 							  "data": {
 							    "memberId": 2,
@@ -71,8 +70,7 @@ public class HouseController {
 						name = "청약 없음",
 						value = """
 							{
-							  "success": true,
-							  "code": 200,
+							  "status": 200,
 							  "message": "청약 상태 조회 성공",
 							  "data": {
 							    "memberId": 1,
@@ -97,9 +95,9 @@ public class HouseController {
 				examples = @ExampleObject(
 					value = """
 						{
-						  "success": false,
-						  "code": 400,
-						  "message": "kidId는 필수입니다."
+						  "status": 400,
+						  "message": "kidId는 필수입니다.",
+						  "data": null
 						}
 						"""
 				)
@@ -113,9 +111,9 @@ public class HouseController {
 				examples = @ExampleObject(
 					value = """
 						{
-						  "success": false,
-						  "code": 403,
-						  "message": "해당 아이의 정보에 접근할 수 없습니다."
+						  "status": 403,
+						  "message": "해당 아이의 정보에 접근할 수 없습니다.",
+						  "data": null
 						}
 						"""
 				)
@@ -129,9 +127,9 @@ public class HouseController {
 				examples = @ExampleObject(
 					value = """
 						{
-						  "success": false,
-						  "code": 404,
-						  "message": "회원 정보를 찾을 수 없습니다."
+						  "status": 404,
+						  "message": "회원 정보를 찾을 수 없습니다.",
+						  "data": null
 						}
 						"""
 				)

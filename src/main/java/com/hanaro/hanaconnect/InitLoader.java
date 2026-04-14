@@ -208,6 +208,20 @@ public class InitLoader implements ApplicationRunner {
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
 				.member(parent3)
+				.account(parent3FreeAccount)
+				.build()
+			);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.member(kid2)
+				.account(kid2HousingAccount)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+				LinkedAccount.builder()
+				.member(parent3)
 				.account(kid2HousingAccount)
 				.build()
 		);
@@ -321,7 +335,7 @@ public class InitLoader implements ApplicationRunner {
     ));
   }
 	private void createCheongyakTransactions(Account senderAccount, Account receiverAccount) {
-		LocalDate startDate = LocalDate.of(2024, 1, 25);
+		LocalDate startDate = LocalDate.of(2024, 1, 12);
 
 		for (int i = 0; i < 28; i++) {
 			LocalDate paymentDate = startDate.plusMonths(i);
