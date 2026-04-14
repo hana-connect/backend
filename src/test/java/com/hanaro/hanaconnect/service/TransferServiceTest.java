@@ -1,7 +1,6 @@
 package com.hanaro.hanaconnect.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.math.BigDecimal;
 
@@ -10,16 +9,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
-import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
+import com.hanaro.hanaconnect.common.enums.MemberRole;
+import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
+import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
+import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 
 @ActiveProfiles("test")
 @SpringBootTest
+@Transactional
 class TransferServiceTest {
 
 	@Autowired
@@ -31,53 +35,81 @@ class TransferServiceTest {
 	@Autowired
 	private AccountRepository accountRepository;
 
-	@Test
-	@DisplayName("송금 준비 조회 성공")
-	void getTransferPrepareInfo_success() {
-		// given
-		Member parent = memberRepository.findAll().stream()
+	@Autowired
+	private LinkedAccountRepository linkedAccountRepository;
+
+	private Member findParent() {
+		return memberRepository.findAll().stream()
 			.filter(member -> "김엄마".equals(member.getName()))
+			.filter(member -> member.getMemberRole() == MemberRole.PARENT)
 			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("부모 더미데이터가 없습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 부모 회원(김엄마)을 찾을 수 없습니다."));
+	}
 
-		Account kidAccount = accountRepository.findAll().stream()
-			.filter(account ->
-				"아이 입출금 통장".equals(account.getName())
-					&& account.getAccountType() == AccountType.FREE
-			)
+	private Account findParentFreeAccount(Long parentId) {
+		return accountRepository.findAll().stream()
+			.filter(account -> account.getMember().getId().equals(parentId))
+			.filter(account -> account.getAccountType() == AccountType.FREE)
 			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("아이 계좌 더미데이터가 없습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 부모 FREE 계좌를 찾을 수 없습니다."));
+	}
 
-		// when
-		TransferPrepareResponseDto result =
-			transferService.getTransferPrepareInfo(parent.getId(), kidAccount.getId());
-
-		// then
-		assertThat(result).isNotNull();
-		assertThat(result.getAccountId()).isEqualTo(kidAccount.getId());
-		assertThat(result.getTargetMemberName()).isEqualTo("홍길동");
-		assertThat(result.getPhoneSavedName()).isEqualTo("우리 아들");
-		assertThat(result.getDisplayName()).isEqualTo("홍길동(우리 아들)");
-		assertThat(result.getAccountAlias()).isEqualTo("아이 입출금 통장");
-		assertThat(result.getBalance()).isEqualByComparingTo(new BigDecimal("800000"));
+	private Account findLinkedKidSavingsAccount(Long parentId) {
+		return accountRepository.findAll().stream()
+			.filter(account -> account.getAccountType() == AccountType.SAVINGS)
+			.filter(account -> linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), parentId))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 연결된 아이 적금 계좌를 찾을 수 없습니다."));
 	}
 
 	@Test
-	@DisplayName("송금 준비 조회 실패 - 존재하지 않는 계좌")
-	void getTransferPrepareInfo_fail_invalidAccountId() {
-		// given
-		Member parent = memberRepository.findAll().stream()
-			.filter(member -> "김엄마".equals(member.getName()))
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("부모 더미데이터가 없습니다."));
+	@DisplayName("적금 송금 성공")
+	void transferToChildSavingsSuccessTest() {
+		Member parent = findParent();
+		Account parentFreeAccount = findParentFreeAccount(parent.getId());
+		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
 
-		Long invalidAccountId = 999999L;
+		BigDecimal senderBefore = parentFreeAccount.getBalance();
+		BigDecimal receiverBefore = kidSavingsAccount.getBalance();
 
-		// when & then
-		assertThatThrownBy(() ->
-			transferService.getTransferPrepareInfo(parent.getId(), invalidAccountId)
-		)
+		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
+		request.setTargetAccountId(kidSavingsAccount.getId());
+		request.setAmount(new BigDecimal("10000"));
+		request.setAccountPassword("5678");
+		request.setContent("적금 응원 편지");
+
+		SavingsTransferResponseDTO result =
+			transferService.transferToChildSavings(parent.getId(), request);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getTransactionMoney()).isEqualByComparingTo("10000");
+		assertThat(result.getMessage()).isEqualTo("적금 응원 편지");
+
+		Account updatedSender = accountRepository.findById(parentFreeAccount.getId())
+			.orElseThrow(() -> new IllegalArgumentException("부모 계좌를 다시 찾을 수 없습니다."));
+		Account updatedReceiver = accountRepository.findById(kidSavingsAccount.getId())
+			.orElseThrow(() -> new IllegalArgumentException("아이 적금 계좌를 다시 찾을 수 없습니다."));
+
+		assertThat(updatedSender.getBalance())
+			.isEqualByComparingTo(senderBefore.subtract(new BigDecimal("10000")));
+		assertThat(updatedReceiver.getBalance())
+			.isEqualByComparingTo(receiverBefore.add(new BigDecimal("10000")));
+	}
+
+	@Test
+	@DisplayName("적금 송금 실패 - 계좌 비밀번호 불일치")
+	void transferToChildSavingsFailWrongPasswordTest() {
+		Member parent = findParent();
+		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
+
+		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
+		request.setTargetAccountId(kidSavingsAccount.getId());
+		request.setAmount(new BigDecimal("10000"));
+		request.setAccountPassword("0000");
+		request.setContent("편지");
+
+		assertThatThrownBy(() -> transferService.transferToChildSavings(parent.getId(), request))
 			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("존재하지 않는 계좌입니다.");
+			.hasMessageContaining("계좌 비밀번호가 일치하지 않습니다.");
 	}
 }
