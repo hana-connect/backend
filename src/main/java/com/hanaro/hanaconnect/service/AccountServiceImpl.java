@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.util.AccountNumberFormatter;
 import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
@@ -16,6 +17,7 @@ import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.TerminatedAccountResponse;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
@@ -181,5 +183,15 @@ public class AccountServiceImpl implements AccountService {
 		if (!isLinkedKid) {
 			throw new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE);
 		}
+	}
+
+	@Override
+	public List<TerminatedAccountResponse> getTerminatedSavings(Long memberId) {
+		return accountRepository.findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc(
+				memberId,
+				AccountType.SAVINGS
+			).stream()
+			.map(TerminatedAccountResponse::from)
+			.toList();
 	}
 }

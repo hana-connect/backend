@@ -1,0 +1,72 @@
+package com.hanaro.hanaconnect.service;
+
+import static org.assertj.core.api.Assertions.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.hanaro.hanaconnect.common.enums.AccountType;
+import com.hanaro.hanaconnect.common.enums.MemberRole;
+import com.hanaro.hanaconnect.common.enums.Role;
+import com.hanaro.hanaconnect.dto.TerminatedAccountResponse;
+import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.Member;
+import com.hanaro.hanaconnect.repository.AccountRepository;
+import com.hanaro.hanaconnect.repository.MemberRepository;
+
+@ActiveProfiles("test")
+@SpringBootTest
+@Transactional
+class AccountServiceTest {
+
+	@Autowired
+	private AccountService accountService;
+
+	@Autowired
+	private MemberRepository memberRepository;
+
+	@Autowired
+	private AccountRepository accountRepository;
+
+	@Test
+	@DisplayName("나의 만기된 적금 계좌 목록 조회 성공")
+	void getTerminatedSavingsSuccessTest() {
+		// Given
+		Member member = memberRepository.save(Member.builder()
+			.name("홍길동")
+			.password("1234")
+			.virtualAccount("33338888777")
+			.walletMoney(BigDecimal.ZERO)
+			.memberRole(MemberRole.KID)
+			.birthday(LocalDate.of(2000, 1, 1))
+			.role(Role.USER)
+			.build());
+
+		// 만기된 적금 계좌 저장
+		accountRepository.save(Account.builder()
+			.member(member)
+			.name("369 행복 적금")
+			.accountNumber("999888777")
+			.password("1234")
+			.accountType(AccountType.SAVINGS)
+			.balance(BigDecimal.valueOf(50000))
+			.isEnd(true)
+			.build());
+
+		// When
+		List<TerminatedAccountResponse> result = accountService.getTerminatedSavings(member.getId());
+
+		// Then
+		assertThat(result).isNotEmpty();
+		assertThat(result.get(0).name()).isEqualTo("369 행복 적금");
+		assertThat(result.get(0).accountNumber()).isEqualTo("999888777");
+	}
+}
