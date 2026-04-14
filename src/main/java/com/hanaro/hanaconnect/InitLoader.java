@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
+import com.hanaro.hanaconnect.common.enums.TransactionType;
 import com.hanaro.hanaconnect.common.security.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.House;
@@ -301,7 +302,7 @@ public class InitLoader implements ApplicationRunner {
 				com.hanaro.hanaconnect.entity.Transaction.builder()
 					.transactionMoney(new BigDecimal("200000"))
 					.transactionBalance(new BigDecimal(200000L * (i + 1)))
-					.transactionType(com.hanaro.hanaconnect.common.enums.TransactionType.DEPOSIT)
+					.transactionType(TransactionType.DEPOSIT)
 					.senderAccount(senderAccount)
 					.receiverAccount(receiverAccount)
 					.build();

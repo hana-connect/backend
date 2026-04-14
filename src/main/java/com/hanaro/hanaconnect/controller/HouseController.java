@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -147,6 +149,6 @@ public class HouseController {
 		@RequestParam(required = false) Long kidId
 	) {
 		HouseStatusResponseDTO response = houseService.getHouseStatus(principal.getMemberId(), kidId);
-		return ResponseEntity.ok(CustomAPIResponse.createSuccess(200, response, "청약 상태 조회 성공"));
+		return ResponseEntity.ok(CustomAPIResponse.createSuccess(HttpStatus.OK.value(), response, "청약 상태 조회 성공"));
 	}
 }
