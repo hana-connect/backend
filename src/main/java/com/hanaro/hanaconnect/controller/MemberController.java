@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "유저 관련", description = "내 지갑 잔액 조회/부모 리스트 조회/아이 리스트 조회") // 추가로 api에 대한 설명 description에 작성해주세용~
+@Tag(name = "유저 관련", description = "내 지갑 잔액 조회/부모 리스트 조회/아이 리스트 조회/내 아이와 연결된 부모 리스트 조회") // 추가로 api에 대한 설명 description에 작성해주세용~
 public class MemberController {
 	private final MemberService memberService;
 
@@ -69,6 +70,22 @@ public class MemberController {
 				HttpStatus.OK.value(),
 				connectMemberResponseDTO,
 				"아이 리스트 조회에 성공했습니다."
+			)
+		);
+	}
+
+	@GetMapping("/{kidId}/parents")
+	public ResponseEntity<CustomAPIResponse<List<ConnectMemberResponseDTO>>> getOtherParents(
+		@AuthenticationPrincipal TokenMemberPrincipal principal,
+		@PathVariable Long kidId
+	) {
+		List<ConnectMemberResponseDTO> connectMemberResponseDTO = memberService.getOtherParents(principal.getMemberId(), kidId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				connectMemberResponseDTO,
+				"내 아이와 연결된 부모 리스트 조회에 성공했습니다."
 			)
 		);
 	}

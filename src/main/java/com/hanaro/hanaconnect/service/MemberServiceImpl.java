@@ -42,4 +42,14 @@ public class MemberServiceImpl implements MemberService{
 	public List<ConnectMemberResponseDTO> getKids(Long memberId) {
 		return relationRepository.findKids(memberId);
 	}
+
+	@Override
+	public List<ConnectMemberResponseDTO> getOtherParents(Long memberId, Long kidId) {
+		boolean isRelated = relationRepository.existsByMemberIdAndConnectMemberId(memberId, kidId);
+		if (!isRelated) {
+			throw new IllegalArgumentException("해당 아이와 연결된 부모만 조회할 수 있습니다.");
+		}
+
+		return relationRepository.findOtherParents(memberId, kidId);
+	}
 }
