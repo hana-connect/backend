@@ -86,6 +86,16 @@ public class InitLoader implements ApplicationRunner {
 			kid1
 		));
 
+		// 부모1 입출금 계좌
+		accountRepository.save(createAccount(
+			"부모 입출금 통장",
+			"22233335555",
+			"5678",
+			AccountType.FREE,
+			new BigDecimal("800000"),
+			parent1
+		));
+
 		accountRepository.save(createAccount(
 			"부모 저축 예금",
 			"22233334444",
