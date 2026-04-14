@@ -93,7 +93,8 @@ public class InitLoader implements ApplicationRunner {
 			"1234",
 			AccountType.SAVINGS,
 			new BigDecimal("80000"),
-			kid1
+			kid1,
+			null
 		));
 
 		accountRepository.save(createAccount(
@@ -102,7 +103,8 @@ public class InitLoader implements ApplicationRunner {
 			"1234",
 			AccountType.SUBSCRIPTION,
 			new BigDecimal("120000"),
-			kid1
+			kid1,
+			null
 		));
 
 
@@ -154,7 +156,8 @@ public class InitLoader implements ApplicationRunner {
 			"5678",
 			AccountType.SUBSCRIPTION,
 			new BigDecimal("150000"),
-			parent1
+			parent1,
+			null
 		));
 
 		accountRepository.save(createAccount(
@@ -163,7 +166,8 @@ public class InitLoader implements ApplicationRunner {
 			"5678",
 			AccountType.PENSION,
 			new BigDecimal("300000"),
-			parent1
+			parent1,
+			null
 		));
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
