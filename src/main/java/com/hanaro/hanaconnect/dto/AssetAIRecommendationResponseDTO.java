@@ -9,8 +9,8 @@ import lombok.Getter;
 @Getter
 @Builder
 public class AssetAIRecommendationResponseDTO {
-	private String recommendRatio; // 추g천 비율 (예: "10:90")
-	private BigDecimal kidAllowance; // 추천 용돈 금액
+	private String recommendRatio;
+	private BigDecimal kidAllowance;
 	private String aiComment;
 
 	private List<BigDecimal> assetHistory;
