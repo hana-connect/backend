@@ -83,7 +83,8 @@ public class InitLoader implements ApplicationRunner {
 			"1234",
 			AccountType.FREE,
 			new BigDecimal("50000"),
-			kid1
+			kid1,
+			null
 		));
 
 		accountRepository.save(createAccount(
@@ -92,7 +93,28 @@ public class InitLoader implements ApplicationRunner {
 			"5678",
 			AccountType.DEPOSIT,
 			new BigDecimal("100000"),
-			parent1
+			parent1,
+			null
+		));
+
+		accountRepository.save(createAccount(
+			"채현이 적금 (용돈)",
+			"11133334444",
+			"1234",
+			AccountType.SAVINGS,
+			new BigDecimal("250000"),
+			kid1,
+			new BigDecimal("300000")
+		));
+
+		accountRepository.save(createAccount(
+			"할머니 지갑",
+			"33344455566",
+			"1234",
+			AccountType.FREE,
+			new BigDecimal("900000"),
+			parent2,
+			null
 		));
 
 		System.out.println("kid1 = " + kid1);
@@ -117,8 +139,8 @@ public class InitLoader implements ApplicationRunner {
 		phoneNameRepository.save(createPhoneName(parent1, kid1, "우리 아들"));
 		phoneNameRepository.save(createPhoneName(parent2, kid1, "손주"));
 		phoneNameRepository.save(createPhoneName(parent2, parent1, "딸"));
-    
-    createSampleMissions(kid1, parent1);
+
+		createSampleMissions(kid1, parent1);
 	}
 
 	private Member createMember(
@@ -147,7 +169,8 @@ public class InitLoader implements ApplicationRunner {
 		String rawPassword,
 		AccountType accountType,
 		BigDecimal balance,
-		Member member
+		Member member,
+		BigDecimal totalLimit
 	) {
 		return Account.builder()
 			.name(name)
@@ -156,6 +179,7 @@ public class InitLoader implements ApplicationRunner {
 			.accountType(accountType)
 			.balance(balance)
 			.member(member)
+			.totalLimit(totalLimit)
 			.build();
 	}
 
@@ -173,51 +197,51 @@ public class InitLoader implements ApplicationRunner {
 			.whom(whom)
 			.whomName(whomName)
 			.build();
-  }
-  
-  private void createSampleMissions(Member kid, Member parent) {
-    missionRepository.saveAll(List.of(
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("부모님께 인사하기")
-        .isCompleted(true)
-        .build(),
+	}
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("심부름 다녀오기")
-        .isCompleted(true)
-        .build(),
+	private void createSampleMissions(Member kid, Member parent) {
+		missionRepository.saveAll(List.of(
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("부모님께 인사하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("용돈 기록 작성하기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("심부름 다녀오기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("방 정리하기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("용돈 기록 작성하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("식사 후 설거지 돕기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("방 정리하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("오늘 소비 내역 확인하기")
-        .isCompleted(true)
-        .build()
-    ));
-  }
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("식사 후 설거지 돕기")
+				.isCompleted(true)
+				.build(),
+
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("오늘 소비 내역 확인하기")
+				.isCompleted(true)
+				.build()
+		));
+	}
 }

@@ -1,7 +1,8 @@
 package com.hanaro.hanaconnect.common.enums;
 
-// 출금, 입금
+// 출금, 입금, 적금_송금
 public enum TransactionType {
 	WITHDRAW,
-	DEPOSIT
+	DEPOSIT,
+	SAVINGS_TRANSFER,
 }
