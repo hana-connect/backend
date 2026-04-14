@@ -39,7 +39,10 @@ public class TransferService {
 			throw new IllegalArgumentException("계좌 비밀번호가 일치하지 않습니다.");
 		}
 
-		// 3. 검증: [적금 계좌 한도] 체크 (아이 적금 통장 기준)
+		// 3. 검증: [잔액] 체크 (보내는 사람 지갑 통장 기준)
+		sender.withdraw(request.getAmount());
+
+		// 4. 검증: [적금 계좌 한도] 체크 (아이 적금 통장 기준)
 		if (receiver.getTotalLimit() != null) {
 			BigDecimal currentBalance = receiver.getBalance();
 			BigDecimal newBalance = currentBalance.add(request.getAmount());
@@ -49,11 +52,10 @@ public class TransferService {
 			}
 		}
 
-		// 4. 이체 실행 (상태 변경)
-		sender.withdraw(request.getAmount());
+		// 5. 이체 실행 (상태 변경)
 		receiver.deposit(request.getAmount());
 
-		//5. Transaction 저장 (기록)
+		// 6. Transaction 저장 (기록)
 		Transaction transaction = Transaction.builder()
 			.transactionMoney(request.getAmount())
 			.transactionBalance(sender.getBalance())
@@ -64,7 +66,7 @@ public class TransferService {
 
 		Transaction savedTransaction = transactionRepository.save(transaction);
 
-		// 6. 결과 반환
+		// 7. 결과 반환
 		return SavingsTransferResponseDTO.builder()
 			.transactionMoney(savedTransaction.getTransactionMoney())
 			.transactionBalance(savedTransaction.getTransactionBalance())
