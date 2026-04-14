@@ -300,7 +300,6 @@ class TransferServiceTest {
 
 		then(transactionRepository).should(never()).save(any(Transaction.class));
 	}
-
 	private Account createAccount(
 		Long id,
 		AccountType accountType,
