@@ -142,25 +142,25 @@ spring:
         enabled: true
         path: /hanaconnect/api-docs
 
-    quiz-ai:
-      api-key: dummy-key
-      model: gpt-4.1-mini
-      base-url: https://api.openai.com/v1
+  quiz-ai:
+    api-key: dummy-key
+    model: gpt-4.1-mini
+    base-url: https://api.openai.com/v1
 
-    asset-ai:
-      api-key: test-api-key
-      model: gpt-4.1-mini
-      base-url: https://api.openai.com/v1  
+  asset-ai:
+    api-key: test-api-key
+    model: gpt-4.1-mini
+    base-url: https://api.openai.com/v1  
 
-    app:
-      crypto:
-        key: 1234567890123456
+   app:
+    crypto:
+      key: 1234567890123456
 
     jwt:
       secret: ${{ secrets.JWT_SECRET_KEY }}
       access-token-expiration-ms: 3600000
       refresh-token-expiration-ms: 1209600000
-EOF
+  EOF
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
