@@ -36,9 +36,16 @@ public class TransferService {
 
 	@Transactional
 	public SavingsTransferResponseDTO transferToChildSavings(Long memberId, SavingsTransferRequestDTO request) {
+		// 0. 필수값 검증 (맨 위로 이동)
+		if (request.getAmount() == null
+			|| request.getTargetAccountId() == null
+			|| request.getAccountPassword() == null
+		) {
+			throw new IllegalArgumentException("필수 입력값이 누락되었습니다.");
+		}
 
 		// 금액이 0원 이하이거나 없는지 가장 먼저 확인!
-		if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+		if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0)  {
 			throw new IllegalArgumentException("송금 금액은 0보다 커야 합니다.");
 		}
 
