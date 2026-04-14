@@ -25,6 +25,8 @@ import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
+import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 
 
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class InitLoader implements ApplicationRunner {
 	private final AccountCryptoService accountCryptoService;
 	private final PasswordEncoder passwordEncoder;
 	private final MissionRepository missionRepository;
+	private final LinkedAccountRepository linkedAccountRepository;
 
 
 	@Override
@@ -77,7 +80,7 @@ public class InitLoader implements ApplicationRunner {
 		parent1 = memberRepository.save(parent1);
 		parent2 = memberRepository.save(parent2);
 
-		accountRepository.save(createAccount(
+		Account kidAccount = accountRepository.save(createAccount(
 			"아이 입출금 통장",
 			"11122223333",
 			"1234",
@@ -86,7 +89,7 @@ public class InitLoader implements ApplicationRunner {
 			kid1
 		));
 
-		accountRepository.save(createAccount(
+		Account parentAccount = accountRepository.save(createAccount(
 			"부모 저축 예금",
 			"22233334444",
 			"5678",
@@ -94,6 +97,27 @@ public class InitLoader implements ApplicationRunner {
 			new BigDecimal("100000"),
 			parent1
 		));
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(parentAccount)
+				.member(parent1)
+				.build()
+		);
 
 		System.out.println("kid1 = " + kid1);
 		System.out.println("parent1 = " + parent1);
