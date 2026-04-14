@@ -39,8 +39,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 	Optional<Account> findByAccountNumberAndMemberId(String accountNumber, Long memberId);
 	List<Account> findByMemberIdAndIsEndFalseOrderByCreatedAtDesc(Long memberId);
 
-
 	Optional<Account> findByMemberIdAndAccountType(Long memberId, AccountType accountType);
-
+	
 	// 만기된(isEnd=true) 적금(SAVINGS) 계좌 목록 조회
 	List<Account> findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc(Long memberId, AccountType accountType);}

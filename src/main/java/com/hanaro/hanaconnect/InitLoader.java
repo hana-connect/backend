@@ -23,6 +23,7 @@ import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Mission;
 import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Relation;
+import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.HouseRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
@@ -88,7 +89,7 @@ public class InitLoader implements ApplicationRunner {
 		);
 
 		Member parent3 = createMember(
-			"할청약",
+			"청약할머니",
 			encodedPassword,
 			LocalDate.of(1958, 7, 15),
 			"88880000111",
@@ -122,7 +123,8 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		accountRepository.save(createAccount(
+		// 기존 kid1 청약 계좌 생성 부분 수정
+		Account kid1SubscriptionAccount = accountRepository.save(createAccount(
 			"아이 청약 통장",
 			"77788889999",
 			"1234",
@@ -186,7 +188,7 @@ public class InitLoader implements ApplicationRunner {
 		));
 
 		Account parent3FreeAccount = accountRepository.save(createAccount(
-			"할청약 입출금 통장",
+			"청약할머니 입출금 통장",
 			"777788889999",
 			"1234",
 			AccountType.FREE,
@@ -277,6 +279,21 @@ public class InitLoader implements ApplicationRunner {
 				.build()
 		);
 
+		// linked account 저장 부분에 추가
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kid1SubscriptionAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kid1SubscriptionAccount)
+				.member(parent1)
+				.build()
+		);
+
 		System.out.println("kid1 = " + kid1);
 		System.out.println("kid2 = " + kid2);
 		System.out.println("parent1 = " + parent1);
@@ -339,7 +356,7 @@ public class InitLoader implements ApplicationRunner {
 
 		createCheongyakTransactions(parent3FreeAccount, kid2HousingAccount);
 
-    createSampleMissions(kid1, parent1);
+    	createSampleMissions(kid1, parent1);
 	}
 
 	private Member createMember(
@@ -442,8 +459,8 @@ public class InitLoader implements ApplicationRunner {
 		for (int i = 0; i < 28; i++) {
 			LocalDate paymentDate = startDate.plusMonths(i);
 
-			com.hanaro.hanaconnect.entity.Transaction transaction =
-				com.hanaro.hanaconnect.entity.Transaction.builder()
+			Transaction transaction =
+				Transaction.builder()
 					.transactionMoney(new BigDecimal("200000"))
 					.transactionBalance(new BigDecimal(200000L * (i + 1)))
 					.transactionType(TransactionType.DEPOSIT)

@@ -47,10 +47,10 @@ class HouseServiceTest {
 
 	private Member findRelatedParent() {
 		return memberRepository.findAll().stream()
-			.filter(member -> member.getName().equals("할청약"))
+			.filter(member -> member.getName().equals("청약할머니"))
 			.filter(member -> member.getMemberRole() == MemberRole.PARENT)
 			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 조부모 회원(할청약)을 찾을 수 없습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 조부모 회원을 찾을 수 없습니다."));
 	}
 
 	private Member findUnrelatedParent() {

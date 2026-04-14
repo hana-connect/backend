@@ -10,8 +10,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
@@ -53,20 +53,18 @@ class AccountRepositoryTest {
 			.balance(BigDecimal.valueOf(100000))
 			.build());
 
-		Optional<Account> result =
-			accountRepository.findByMemberIdAndAccountType(
-				member.getId(),
-				AccountType.FREE
-			);
+		Optional<Account> result = accountRepository.findByMemberIdAndAccountType(
+			member.getId(),
+			AccountType.FREE
+		);
 
 		assertThat(result).isPresent();
 		assertThat(result.get().getId()).isEqualTo(account.getId());
 	}
 
 	@Test
-	@DisplayName("회원 + 계좌타입으로 계좌 조회 실패 → empty")
+	@DisplayName("회원 + 계좌타입으로 계좌 조회 실패 -> empty")
 	void findByMemberIdAndAccountType_notFound() {
-		// given
 		Member member = memberRepository.save(Member.builder()
 			.name("홍길동")
 			.password("1234")
@@ -86,21 +84,17 @@ class AccountRepositoryTest {
 			.balance(BigDecimal.valueOf(100000))
 			.build());
 
-		// when
-		Optional<Account> result =
-			accountRepository.findByMemberIdAndAccountType(
-				member.getId(),
-				AccountType.DEPOSIT
-			);
+		Optional<Account> result = accountRepository.findByMemberIdAndAccountType(
+			member.getId(),
+			AccountType.DEPOSIT
+		);
 
-		// then
 		assertThat(result).isEmpty();
 	}
 
 	@Test
 	@DisplayName("회원 ID와 계좌 타입으로 만기된(isEnd=true) 계좌 목록을 ID 오름차순으로 조회 성공")
 	void findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc_success() {
-		// Given
 		Member member = memberRepository.save(Member.builder()
 			.name("홍길동")
 			.password("1234")
@@ -111,33 +105,54 @@ class AccountRepositoryTest {
 			.role(Role.USER)
 			.build());
 
-		// Given
-		Account savingsEnd1 = accountRepository.save(Account.builder()
-			.member(member).name("만기적금1").accountNumber("1111").password("1234")
-			.accountType(AccountType.SAVINGS).balance(BigDecimal.valueOf(1000)).isEnd(true).build());
-
-		Account savingsEnd2 = accountRepository.save(Account.builder()
-			.member(member).name("만기적금2").accountNumber("2222").password("1234")
-			.accountType(AccountType.SAVINGS).balance(BigDecimal.valueOf(2000)).isEnd(true).build());
+		accountRepository.save(Account.builder()
+			.member(member)
+			.name("만기적금1")
+			.accountNumber("1111")
+			.password("1234")
+			.accountType(AccountType.SAVINGS)
+			.balance(BigDecimal.valueOf(1000))
+			.isEnd(true)
+			.build());
 
 		accountRepository.save(Account.builder()
-			.member(member).name("진행중적금").accountNumber("3333").password("1234")
-			.accountType(AccountType.SAVINGS).balance(BigDecimal.valueOf(3000)).isEnd(false).build());
+			.member(member)
+			.name("만기적금2")
+			.accountNumber("2222")
+			.password("1234")
+			.accountType(AccountType.SAVINGS)
+			.balance(BigDecimal.valueOf(2000))
+			.isEnd(true)
+			.build());
 
 		accountRepository.save(Account.builder()
-			.member(member).name("입출금통장").accountNumber("4444").password("1234")
-			.accountType(AccountType.FREE).balance(BigDecimal.valueOf(4000)).isEnd(true).build());
+			.member(member)
+			.name("진행중적금")
+			.accountNumber("3333")
+			.password("1234")
+			.accountType(AccountType.SAVINGS)
+			.balance(BigDecimal.valueOf(3000))
+			.isEnd(false)
+			.build());
 
-		// When
+		accountRepository.save(Account.builder()
+			.member(member)
+			.name("입출금통장")
+			.accountNumber("4444")
+			.password("1234")
+			.accountType(AccountType.FREE)
+			.balance(BigDecimal.valueOf(4000))
+			.isEnd(true)
+			.build());
+
 		List<Account> result = accountRepository.findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc(
 			member.getId(),
 			AccountType.SAVINGS
 		);
 
-		// Then
-		assertThat(result).hasSize(2); // 만기된 적금 2개만 나와야 함
-		assertThat(result.get(0).getName()).isEqualTo("만기적금1"); // ID 작은 순서(OrderByIdAsc) 확인
+		assertThat(result).hasSize(2);
+		assertThat(result.get(0).getName()).isEqualTo("만기적금1");
 		assertThat(result.get(1).getName()).isEqualTo("만기적금2");
-		assertThat(result).extracting("isEnd").containsOnly(true); // 모두 isEnd가 true인지 확인
+		assertThat(result).extracting("isEnd").containsOnly(true);
 	}
 }

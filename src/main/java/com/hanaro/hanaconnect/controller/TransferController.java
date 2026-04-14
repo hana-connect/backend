@@ -28,7 +28,7 @@ import com.hanaro.hanaconnect.service.TransferService;
 @RestController
 @RequestMapping("/api/transfer")
 @RequiredArgsConstructor
-@Tag(name = "이체 관련", description = "적금, 송금, 청약 API")
+@Tag(name = "이체 관련", description = "적금, 송금 API")
 public class TransferController {
 
 	private final TransferService transferService;
