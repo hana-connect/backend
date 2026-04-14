@@ -154,6 +154,48 @@ class RelationRepositoryTest extends BaseRepositoryTest {
 		assertThat(exists).isFalse();
 	}
 
+	@Test
+	@DisplayName("내 아이와 연결된 다른 부모 목록 조회")
+	void findOtherParentsTest() {
+		Member kid = createMember("홍길동", MemberRole.KID);
+		Member parent1 = createMember("김엄마", MemberRole.PARENT);
+		Member parent2 = createMember("이할머니", MemberRole.PARENT);
+
+		// 아이 -> 부모 관계
+		createRelation(kid, parent1);
+		createRelation(kid, parent2);
+
+		// parent1이 parent2를 전화번호에 저장한 이름
+		createPhoneName(parent1, parent2, "친정 엄마");
+
+		List<ConnectMemberResponseDTO> result = relationRepository.findOtherParents(parent1.getId(), kid.getId());
+
+		assertThat(result).hasSize(1);
+
+		assertThat(result)
+			.extracting(ConnectMemberResponseDTO::getConnectMemberName)
+			.containsExactly("이할머니");
+
+		assertThat(result)
+			.extracting(ConnectMemberResponseDTO::getConnectMemberRole)
+			.containsOnly(MemberRole.PARENT);
+
+		assertThat(result.get(0).getConnectMemberPhoneName()).isEqualTo("친정 엄마");
+	}
+
+	@Test
+	@DisplayName("내 아이와 연결된 다른 부모가 없으면 빈 리스트 반환")
+	void findOtherParentsEmptyTest() {
+		Member kid = createMember("김청약", MemberRole.KID);
+		Member parent1 = createMember("할청약", MemberRole.PARENT);
+
+		createRelation(kid, parent1);
+
+		List<ConnectMemberResponseDTO> result = relationRepository.findOtherParents(parent1.getId(), kid.getId());
+
+		assertThat(result).isEmpty();
+	}
+
 	// 무작위 생성
 	private String generateAccount() {
 		return String.valueOf(accountSeq++);
