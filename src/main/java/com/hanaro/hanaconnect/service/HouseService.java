@@ -55,11 +55,13 @@ public class HouseService {
 		}
 
 		House house = houseOpt.get();
-		int level = HouseLevelCalculator.calculateLevel(house.getStartDate(), house.getTotalCount());
-		int gauge = HouseLevelCalculator.calculateGauge(house.getTotalCount());
+		int totalCount = house.getTotalCount() != null ? house.getTotalCount() : 0;
+		int level = HouseLevelCalculator.calculateLevel(house.getStartDate(), totalCount);
+		int gauge = HouseLevelCalculator.calculateGauge(totalCount);
 		HouseLevel houseLevel = HouseLevel.from(level);
 
-		String message = buildMessage(requester, kid, houseLevel, house);
+
+		String message = buildMessage(requester, kid, houseLevel, house, totalCount);
 
 		return HouseStatusResponseDTO.builder()
 			.memberId(kid.getId())
@@ -98,9 +100,9 @@ public class HouseService {
 		return kid;
 	}
 
-	private String buildMessage(Member requester, Member kid, HouseLevel houseLevel, House house) {
+	private String buildMessage(Member requester, Member kid, HouseLevel houseLevel, House house, int totalCount) {
 		if (requester.getMemberRole() == MemberRole.PARENT) {
-			return houseLevel.getDefaultMessage(house.getTotalCount());
+			return houseLevel.getDefaultMessage(totalCount);
 		}
 
 		Optional<Transaction> latestPaymentOpt = transactionRepository
@@ -110,14 +112,14 @@ public class HouseService {
 			);
 
 		if (latestPaymentOpt.isEmpty()) {
-			return houseLevel.getDefaultMessage(house.getTotalCount());
+			return houseLevel.getDefaultMessage(totalCount);
 		}
 
 		Transaction latestPayment = latestPaymentOpt.get();
 
 		if (latestPayment.getSenderAccount() == null ||
 			latestPayment.getSenderAccount().getMember() == null) {
-			return houseLevel.getDefaultMessage(house.getTotalCount());
+			return houseLevel.getDefaultMessage(totalCount);
 		}
 
 		Member payer = latestPayment.getSenderAccount().getMember();
@@ -127,6 +129,6 @@ public class HouseService {
 			.map(PhoneName::getWhomName)
 			.orElse(payer.getName());
 
-		return houseLevel.getPersonalizedMessage(payerDisplayName, house.getTotalCount());
+		return houseLevel.getPersonalizedMessage(payerDisplayName, totalCount);
 	}
 }

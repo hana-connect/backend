@@ -13,9 +13,10 @@ public class HouseLevelCalculator {
 	 * 시작하면 lv1, 이후 12개월마다 +1
 	 */
 	public static int calculateLevel(LocalDate startDate, int totalCount) {
-		if (startDate == null || totalCount == 0) return 0;
+		if (startDate == null || totalCount <= 0) return 0;
 
 		long monthsElapsed = ChronoUnit.MONTHS.between(startDate, LocalDate.now());
+		if (monthsElapsed < 0) return 0;
 		int level = 1 + (int)(monthsElapsed / MONTHS_PER_LEVEL);
 		return Math.min(level, MAX_LEVEL);
 	}
@@ -25,7 +26,7 @@ public class HouseLevelCalculator {
 	 * 1년(12회) = 100, 한 번 납입 시 100/12
 	 */
 	public static int calculateGauge(int totalCount) {
-		if (totalCount == 0) return 0;
+		if (totalCount <= 0) return 0;
 		int countWithinLevel = totalCount % MONTHS_PER_LEVEL;
 		if (countWithinLevel == 0) return 100;
 		return (int) Math.round((countWithinLevel / (double) MONTHS_PER_LEVEL) * 100);

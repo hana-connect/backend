@@ -44,10 +44,13 @@ public enum HouseLevel {
 	}
 
 	public String getPersonalizedMessage(String name, int totalCount) {
-		if (messageTemplate == null) return null;
+		if (name == null || name.isBlank() || action == null) {
+				return getDefaultMessage(totalCount);
+			}
 
-		String subject = KoreanFormatter.getSubjectParticle(name);
-		String prefix = name + subject + " " + action + " 덕분에 ";
+		String normalizedName = name.trim();
+		String subject = KoreanFormatter.getSubjectParticle(normalizedName);
+		String prefix = normalizedName + subject + " " + action + " 덕분에 ";
 
 		return prefix + messageTemplate.replace("{totalCount}", String.valueOf(totalCount));
 	}
