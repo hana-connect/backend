@@ -7,13 +7,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.util.AccountNumberFormatter;
 import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
+import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
+import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
+import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
+import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.repository.RelationRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +35,9 @@ public class AccountServiceImpl implements AccountService {
 
 	private final AccountRepository accountRepository;
 	private final LinkedAccountRepository linkedAccountRepository;
+	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final RelationRepository relationRepository;
 
 	@Override
 	public AccountLinkResponseDTO linkMyAccount(Long memberId, AccountLinkRequestDTO request) {
@@ -69,8 +77,61 @@ public class AccountServiceImpl implements AccountService {
 		);
 	}
 
+	@Override
+	public KidAccountAddResponseDTO addKidAccount(Long memberId, Long kidId, KidAccountAddRequestDTO request) {
+		validateParentKidRelation(memberId, kidId);
+
+		String normalizedAccountNumber = AccountNumberFormatter.normalize(request.getAccountNumber());
+		validateAccountNumber(normalizedAccountNumber);
+
+		Account account = accountRepository.findByAccountNumberAndMemberId(normalizedAccountNumber, kidId)
+			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
+
+		if (linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), memberId)) {
+			throw new IllegalArgumentException(ALREADY_LINKED_ACCOUNT_MESSAGE);
+		}
+
+		Member parentMember = memberRepository.findById(memberId)
+			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
+
+		LinkedAccount linkedAccount = LinkedAccount.builder()
+			.nickname(request.getNickname().trim())
+			.account(account)
+			.member(parentMember)
+			.build();
+
+		LinkedAccount savedLinkedAccount;
+		try {
+			savedLinkedAccount = linkedAccountRepository.saveAndFlush(linkedAccount);
+		} catch (DataIntegrityViolationException e) {
+			if (linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), memberId)) {
+				throw new IllegalArgumentException(ALREADY_LINKED_ACCOUNT_MESSAGE);
+			}
+			throw e;
+		}
+
+		return new KidAccountAddResponseDTO(
+			account.getMember().getName(),
+			AccountNumberFormatter.format(account.getAccountNumber()),
+			account.getAccountType(),
+			savedLinkedAccount.getCreatedAt().format(LINKED_AT_FORMATTER)
+		);
+	}
+
 	private void validateAccountNumber(String accountNumber) {
 		if (accountNumber == null || !accountNumber.matches("^\\d{11}$")) {
+			throw new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE);
+		}
+	}
+
+	private void validateParentKidRelation(Long memberId, Long kidId) {
+		boolean isLinkedKid = relationRepository.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(
+			memberId,
+			kidId,
+			MemberRole.KID
+		);
+
+		if (!isLinkedKid) {
 			throw new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE);
 		}
 	}
