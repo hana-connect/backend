@@ -68,12 +68,10 @@ public class HouseService {
 	}
 
 	private Member resolveTargetKid(Member requester, Long kidId) {
-		// 아이 본인 요청
 		if (requester.getMemberRole() == MemberRole.KID) {
 			return requester;
 		}
 
-		// 조부모: kidId 필수
 		if (kidId == null) {
 			throw new IllegalArgumentException("kidId는 필수입니다.");
 		}
@@ -81,10 +79,14 @@ public class HouseService {
 		Member kid = memberRepository.findById(kidId)
 			.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
 
-		// 기존 RelationRepository 메서드 재사용
 		boolean hasRelation = relationRepository
-			.existsByMember_IdAndConnectMember_Id(requester.getId(), kidId);
-		if (!hasRelation) {
+			.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(
+				requester.getId(),
+				kidId,
+				MemberRole.KID
+			);
+
+		if (!hasRelation || kid.getMemberRole() != MemberRole.KID) {
 			throw new AccessDeniedException("해당 아이의 정보에 접근할 수 없습니다.");
 		}
 
