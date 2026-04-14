@@ -82,7 +82,7 @@ class TransferControllerTest {
 		Long memberId = 1L;
 
 		SavingsTransferRequestDTO request = createRequest();
-		request.setAccountPassword("0000");
+		request.setPassword("000000");
 
 		given(transferService.transferToChildSavings(eq(memberId), any(SavingsTransferRequestDTO.class)))
 			.willThrow(new IllegalArgumentException("계좌 비밀번호가 일치하지 않습니다."));
@@ -170,7 +170,7 @@ class TransferControllerTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(2L);
 		request.setAmount(new BigDecimal("10000"));
-		request.setAccountPassword("1111");
+		request.setPassword("111111");
 		request.setContent("적금 응원 편지");
 		return request;
 	}

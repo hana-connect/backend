@@ -2,6 +2,9 @@ package com.hanaro.hanaconnect.dto;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,9 +15,16 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SavingsTransferRequestDTO {
-	private Long targetAccountId;
-	private BigDecimal amount;
-	private String accountPassword;
-	private String content;  // 적금 편지
 
+	@NotNull(message = "대상 계좌는 필수입니다.")
+	private Long targetAccountId;
+
+	@NotNull(message = "송금 금액은 필수입니다.")
+	@Positive(message = "송금 금액은 0보다 커야 합니다.")
+	private BigDecimal amount;
+
+	@NotBlank(message = "간편비밀번호는 필수입니다.")
+	private String password;
+
+	private String content;  // 적금 편지
 }
