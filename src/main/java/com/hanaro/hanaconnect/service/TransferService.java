@@ -90,9 +90,13 @@ public class TransferService {
 		Transaction transaction = createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_TRANSFER);
 		Transaction savedTransaction = transactionRepository.save(transaction);
 
-		if (request.getContent() != null && !request.getContent().isBlank()) {
+		// 메시지 정규화
+		String normalizedContent = (request.getContent() == null) ? null : request.getContent().trim();
+
+		// 정규화된 값이 진짜 내용이 있을 때만 Letter 저장
+		if (normalizedContent != null && !normalizedContent.isEmpty()) {
 			Letter letter = Letter.builder()
-				.content(request.getContent())
+				.content(normalizedContent)
 				.transaction(savedTransaction)
 				.build();
 			letterRepository.save(letter);
@@ -102,7 +106,7 @@ public class TransferService {
 		return SavingsTransferResponseDTO.builder()
 			.transactionMoney(savedTransaction.getTransactionMoney())
 			.transactionBalance(savedTransaction.getTransactionBalance())
-			.message(request.getContent())
+			.message(normalizedContent)
 			.build();
 	}
 
@@ -218,11 +222,10 @@ public class TransferService {
 
 	@Transactional(readOnly = true)
 	public RelayResponseDTO getRelayHistory(Long memberId, Long targetAccountId) {
-		Account account = accountRepository.findById(targetAccountId)
-			.orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
-
 		LinkedAccount linkedAccount = linkedAccountRepository.findByMemberIdAndAccountId(memberId, targetAccountId)
 			.orElseThrow(() -> new IllegalArgumentException("해당 계좌에 접근 권한이 없습니다."));
+
+		Account account = linkedAccount.getAccount();
 
 		if (account.getAccountType() != AccountType.SAVINGS) {
 			throw new IllegalArgumentException("적금 계좌만 조회할 수 있습니다.");
@@ -239,5 +242,4 @@ public class TransferService {
 			.history(history)
 			.build();
 	}
-
 }

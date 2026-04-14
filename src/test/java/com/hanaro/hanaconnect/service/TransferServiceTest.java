@@ -152,7 +152,7 @@ class TransferServiceTest {
 		// 존재하지 않는 계좌
 		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), 999L))
 			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessageContaining("계좌를 찾을 수 없습니다.");
+			.hasMessageContaining("해당 계좌에 접근 권한이 없습니다.");
 
 		// 내 연결 계좌 목록에 없는 진짜 계좌 ID
 		Long unlinkedId = findUnlinkedAccountId(parent.getId());
@@ -166,6 +166,7 @@ class TransferServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("적금 계좌만 조회할 수 있습니다.");
 	}
+
 	private Account findLinkedKidCheckingAccount(Long memberId) {
 		return linkedAccountRepository.findAllByMemberId(memberId).stream()
 			.map(LinkedAccount::getAccount)
