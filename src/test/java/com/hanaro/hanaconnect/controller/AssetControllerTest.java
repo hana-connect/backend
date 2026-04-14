@@ -143,7 +143,7 @@ class AssetControllerTest {
 
 	@Test
 	void getAIRecommendationTest() throws Exception {
-		mvc.perform(get("/api/assets/ai-recommendation")
+		mvc.perform(get("/api/assets/recommendation")
 				.header("Authorization", "Bearer " + accessToken))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))

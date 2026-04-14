@@ -39,7 +39,7 @@ public class AssetController {
 		));
 	}
 
-	@GetMapping("/ai-recommendation")
+	@GetMapping("/recommendation")
 	@Operation(summary = "자산관리 AI 추천", description = "유저의 자산을 분석하여 맞춤형 자산관리 전략을 추천합니다.")
 	public ResponseEntity<CustomAPIResponse<AssetAIRecommendationResponseDTO>> getAIRecommendation(
 		@AuthenticationPrincipal TokenMemberPrincipal principal
