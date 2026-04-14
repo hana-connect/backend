@@ -104,7 +104,7 @@ public class InitLoader implements ApplicationRunner {
 			kid1
 		));
 
-		accountRepository.save(createAccount(
+
 		// 부모1 입출금 계좌
 		Account parentFreeAccount = accountRepository.save(createAccount(
 			"부모 입출금 통장",
