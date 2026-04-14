@@ -49,7 +49,6 @@ public class InitLoader implements ApplicationRunner {
 	private final LinkedAccountRepository linkedAccountRepository;
 	private final TransactionRepository transactionRepository;
 
-
 	@Override
 	@Transactional
 	public void run(@Nullable ApplicationArguments args) {
@@ -103,7 +102,7 @@ public class InitLoader implements ApplicationRunner {
 		parent2 = memberRepository.save(parent2);
 		parent3 = memberRepository.save(parent3);
 
-		accountRepository.save(createAccount(
+		Account kidAccount = accountRepository.save(createAccount(
 			"아이 입출금 통장",
 			"11122223333",
 			"1234",
@@ -112,7 +111,18 @@ public class InitLoader implements ApplicationRunner {
 			kid1
 		));
 
-		accountRepository.save(createAccount(
+		// 부모1 입출금 계좌
+		Account parentFreeAccount = accountRepository.save(createAccount(
+			"부모 입출금 통장",
+			"22233335555",
+			"5678",
+			AccountType.FREE,
+			new BigDecimal("800000"),
+			parent1
+		));
+
+		// 부모1 저축 예금 계좌
+		Account parentDepositAccount = accountRepository.save(createAccount(
 			"부모 저축 예금",
 			"22233334444",
 			"5678",
@@ -139,21 +149,46 @@ public class InitLoader implements ApplicationRunner {
 			kid2
 		));
 
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(parentDepositAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(parentFreeAccount)
+				.member(parent1)
+				.build()
+		);
+
 		System.out.println("kid1 = " + kid1);
 		System.out.println("kid2 = " + kid2);
 		System.out.println("parent1 = " + parent1);
 		System.out.println("parent2 = " + parent2);
 		System.out.println("parent3 = " + parent3);
 
-		// kid1 입장에서 보이는 연결
 		relationRepository.save(createRelation(kid1, parent1));
 		relationRepository.save(createRelation(kid1, parent2));
 
-		// parent1 입장에서 보이는 연결
 		relationRepository.save(createRelation(parent1, kid1));
 		relationRepository.save(createRelation(parent1, parent2));
 
-		// parent2 입장에서 보이는 연결
 		relationRepository.save(createRelation(parent2, kid1));
 		relationRepository.save(createRelation(parent2, parent1));
 
@@ -245,51 +280,44 @@ public class InitLoader implements ApplicationRunner {
 			.whom(whom)
 			.whomName(whomName)
 			.build();
-  }
-  
-  private void createSampleMissions(Member kid, Member parent) {
-    missionRepository.saveAll(List.of(
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("부모님께 인사하기")
-        .isCompleted(true)
-        .build(),
+	}
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("심부름 다녀오기")
-        .isCompleted(true)
-        .build(),
+	private void createSampleMissions(Member kid, Member parent) {
+		missionRepository.saveAll(List.of(
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("부모님께 인사하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("용돈 기록 작성하기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("심부름 다녀오기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("방 정리하기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("용돈 기록 작성하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("식사 후 설거지 돕기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("방 정리하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("오늘 소비 내역 확인하기")
-        .isCompleted(true)
-        .build()
+			Mission.builder()
+		        .kid(kid)
+		        .parent(parent)
+		        .name("오늘 소비 내역 확인하기")
+		        .isCompleted(true)
+		        .build()
     ));
   }
 	private void createCheongyakTransactions(Account senderAccount, Account receiverAccount) {
