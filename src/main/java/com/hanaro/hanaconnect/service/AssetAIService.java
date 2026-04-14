@@ -52,23 +52,19 @@ public class AssetAIService {
 			JsonNode root = objectMapper.readTree(jsonResponse);
 
 			// 3. AI가 결정한 '동적' 데이터 추출 (값이 없으면 괄호 안의 기본값 사용)
-			int aiIncreaseRate = root.path("increaseRate").asInt(8);
+			int rawRate = root.path("increaseRate").asInt(8);
+			// 5% ~ 15% 사이로 범위를 강제하여 계산 안정성 확보
+			int aiIncreaseRate = Math.max(5, Math.min(15, rawRate));
+
+			// 추천 비율, 용돈 금액, AI 코멘트 추출
 			String aiRatio = root.path("recommendRatio").asText("5:95");
 			BigDecimal aiAllowance = new BigDecimal(root.path("kidAllowance").asText("50000"));
 			String aiComment = root.path("aiComment").asText("자산을 분석하여 최적의 생활비와 용돈 비율을 계산했습니다.");
 
-			// 4. 그래프용 히스토리 계산
-			BigDecimal rateFactor = new BigDecimal(1.0 + (aiIncreaseRate / 100.0));
-			BigDecimal prevMonth = realTotal.divide(rateFactor, 0, RoundingMode.HALF_UP);
+			// 4. 추출된 메소드를 통해 과거 자산 히스토리(그래프 데이터) 생성
+			List<BigDecimal> assetHistory = calculateAssetHistory(realTotal, aiIncreaseRate);
 
-			List<BigDecimal> assetHistory = List.of(
-				prevMonth.multiply(new BigDecimal("0.90")).setScale(0, RoundingMode.HALF_UP),
-				prevMonth.multiply(new BigDecimal("0.95")).setScale(0, RoundingMode.HALF_UP),
-				prevMonth,
-				realTotal // 4월 데이터는 진짜 DB 값
-			);
-
-			// 5. 모든 값을 AI가 준 결과로 채워서 반환
+			// 5. 최종 DTO 빌드 및 반환
 			return AssetAIRecommendationResponseDTO.builder()
 				.aiComment(aiComment)
 				.recommendRatio(aiRatio)
@@ -80,6 +76,21 @@ public class AssetAIService {
 		} catch (Exception e) {
 			return getFallback(realTotal);
 		}
+	}
+
+	// 현재 자산과 증가율을 바탕으로 4개월치 자산 히스토리를 계산하는 메소드
+	private List<BigDecimal> calculateAssetHistory(BigDecimal realTotal, int aiIncreaseRate) {
+		BigDecimal rateFactor = BigDecimal.ONE.add(
+			BigDecimal.valueOf(aiIncreaseRate).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP)
+		);
+		BigDecimal prevMonth = realTotal.divide(rateFactor, 0, RoundingMode.HALF_UP);
+
+		return List.of(
+			prevMonth.multiply(new BigDecimal("0.90")).setScale(0, RoundingMode.HALF_UP),
+			prevMonth.multiply(new BigDecimal("0.95")).setScale(0, RoundingMode.HALF_UP),
+			prevMonth,
+			realTotal
+		);
 	}
 
 	private AssetAIRecommendationResponseDTO getFallback(BigDecimal total) {
