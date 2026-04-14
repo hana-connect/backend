@@ -32,6 +32,10 @@ public class TransferService {
 	private final AccountRepository accountRepository;
 	private final SavingTransactionRepository transactionRepository;
 	private final LinkedAccountRepository linkedAccountRepository;
+
+	private final PhoneNameRepository phoneNameRepository;
+	private final RelationRepository relationRepository;
+	
 	private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
 	@Transactional
