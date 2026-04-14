@@ -1,5 +1,6 @@
 package com.hanaro.hanaconnect.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,6 +37,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 	Optional<Account> findByIdWithLock(@Param("id") Long id);
 
 	Optional<Account> findByAccountNumberAndMemberId(String accountNumber, Long memberId);
+	List<Account> findByMemberIdAndIsEndFalseOrderByCreatedAtDesc(Long memberId);
+
 
 	Optional<Account> findByMemberIdAndAccountType(Long memberId, AccountType accountType);
 }
