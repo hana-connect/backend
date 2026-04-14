@@ -27,6 +27,11 @@ public class TransferService {
 	@Transactional
 	public SavingsTransferResponseDTO transferToChildSavings(Long memberId, SavingsTransferRequestDTO request) {
 
+		// 금액이 0원 이하이거나 없는지 가장 먼저 확인!
+		if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("송금 금액은 0보다 커야 합니다.");
+		}
+
 		// 1. 계좌들 조회
 		Account sender = accountRepository.findByMemberIdAndAccountTypeWithLock(memberId, AccountType.FREE)
 			.orElseThrow(() -> new EntityNotFoundException("지갑 계좌를 찾을 수 없습니다."));
