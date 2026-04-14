@@ -101,9 +101,11 @@ public class HouseService {
 		if (requester.getMemberRole() == MemberRole.PARENT) {
 			Optional<PhoneName> phoneName = phoneNameRepository
 				.findByWhoIdAndWhomId(kid.getId(), requester.getId());
+
 			String connectorName = phoneName.map(PhoneName::getWhomName).orElse(requester.getName());
 			return houseLevel.getPersonalizedMessage(connectorName, totalCount);
 		}
-		return houseLevel.getDefaultMessage();
+
+		return houseLevel.getDefaultMessage(totalCount);
 	}
 }

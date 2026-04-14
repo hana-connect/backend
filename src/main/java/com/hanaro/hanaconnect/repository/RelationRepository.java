@@ -53,5 +53,4 @@ public interface RelationRepository extends JpaRepository<Relation, Long> {
 	);
 
 	boolean existsByMember_IdAndConnectMember_Id(Long memberId, Long connectMemberId);
-
 }
