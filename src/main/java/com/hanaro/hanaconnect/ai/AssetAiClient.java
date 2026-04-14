@@ -40,11 +40,12 @@ public class AssetAiClient {
 					"schema", Map.of(
 						"type", "object",
 						"properties", Map.of(
-							"ratio", Map.of("type", "string"),
-							"allowance", Map.of("type", "integer"),
-							"comment", Map.of("type", "string")
+							"recommendRatio", Map.of("type", "string"),
+							"kidAllowance", Map.of("type", "integer"),
+							"aiComment", Map.of("type", "string"),
+							"increaseRate", Map.of("type", "integer")
 						),
-						"required", List.of("ratio", "allowance", "comment"),
+						"required", List.of("recommendRatio", "kidAllowance", "aiComment", "increaseRate"),
 						"additionalProperties", false
 					)
 				)
