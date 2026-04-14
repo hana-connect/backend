@@ -15,7 +15,6 @@ public class HouseLevelCalculator {
 	public static int calculateLevel(LocalDate startDate, int totalCount) {
 		if (startDate == null || totalCount == 0) return 0;
 
-		// 납입 시작 = lv1, 이후 12개월마다 +1
 		long monthsElapsed = ChronoUnit.MONTHS.between(startDate, LocalDate.now());
 		int level = 1 + (int)(monthsElapsed / MONTHS_PER_LEVEL);
 		return Math.min(level, MAX_LEVEL);
