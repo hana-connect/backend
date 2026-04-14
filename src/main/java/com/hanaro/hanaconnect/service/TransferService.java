@@ -14,6 +14,8 @@ import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.SavingTransactionRepository;
+import com.hanaro.hanaconnect.repository.RelationRepository;
+import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
