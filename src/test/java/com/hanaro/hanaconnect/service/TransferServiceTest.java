@@ -112,4 +112,45 @@ class TransferServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("계좌 비밀번호가 일치하지 않습니다.");
 	}
+
+	@Test
+	@DisplayName("적금 릴레이 내역 조회 성공")
+	void getRelayHistorySuccessTest() {
+		// Given
+		Member parent = findParent();
+		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
+
+		// 내역 만들기
+		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
+		request.setTargetAccountId(kidSavingsAccount.getId());
+		request.setAmount(new BigDecimal("50000"));
+		request.setPassword("123456");
+		request.setContent("할머니가 주는 용돈이다!");
+
+		transferService.transferToChildSavings(parent.getId(), request);
+
+		// When
+		com.hanaro.hanaconnect.dto.RelayResponseDTO result =
+			transferService.getRelayHistory(parent.getId(), kidSavingsAccount.getId());
+
+		// Then
+		assertThat(result).isNotNull();
+		assertThat(result.getProductName()).isEqualTo(kidSavingsAccount.getName());
+
+		// history 검증
+		assertThat(result.getHistory()).isNotEmpty();
+		assertThat(result.getHistory().get(0).getMessage()).isEqualTo("할머니가 주는 용돈이다!");
+		assertThat(result.getHistory().get(0).getAmount()).isEqualByComparingTo("50000");
+	}
+
+	@Test
+	@DisplayName("적금 릴레이 내역 조회 실패 - 존재하지 않는 계좌")
+	void getRelayHistoryFailTest() {
+		Member parent = findParent();
+		Long invalidAccountId = 9999L;
+
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), invalidAccountId))
+			.isInstanceOf(RuntimeException.class)
+			.hasMessageContaining("계좌를 찾을 수 없습니다.");
+	}
 }

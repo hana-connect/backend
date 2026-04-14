@@ -237,7 +237,6 @@ public class TransferService {
 		// Repository에서 만든 쿼리로 편지 내역 리스트 조회
 		List<RelayHistoryDTO> history = letterRepository.findMyRelayHistory(memberId, targetAccountId);
 
-		// 최종 DTO 조립해서 반환
 		return RelayResponseDTO.builder()
 			.productName(account.getName())
 			.accountNumber(account.getAccountNumber())

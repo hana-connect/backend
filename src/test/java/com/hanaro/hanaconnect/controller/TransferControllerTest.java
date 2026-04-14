@@ -174,4 +174,40 @@ class TransferControllerTest {
 		request.setContent("적금 응원 편지");
 		return request;
 	}
+
+	@Test
+	@DisplayName("적금 릴레이 내역 조회 성공")
+	void getRelayData_success() throws Exception {
+		// Given
+		Long memberId = 1L;
+		Long targetAccountId = 10L;
+
+		com.hanaro.hanaconnect.dto.RelayResponseDTO response = com.hanaro.hanaconnect.dto.RelayResponseDTO.builder()
+			.productName("우리 아이 적금")
+			.accountNumber("123-456-789")
+			.history(List.of(
+				com.hanaro.hanaconnect.dto.RelayHistoryDTO.builder()
+					.id(1L)
+					.amount(new BigDecimal("10000"))
+					.message("응원한다!")
+					.date(java.time.LocalDateTime.now())
+					.build()
+			))
+			.build();
+
+		given(transferService.getRelayHistory(eq(memberId), eq(targetAccountId)))
+			.willReturn(response);
+
+		// When + Then
+		mvc.perform(get("/api/transfer/savings/relay")
+				.param("targetAccountId", String.valueOf(targetAccountId))
+				.with(authentication(createAuthentication(memberId))))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.message").value("적금 편지 내역 조회에 성공했습니다."))
+			.andExpect(jsonPath("$.data.productName").value("우리 아이 적금"))
+			.andExpect(jsonPath("$.data.accountNumber").value("123-456-789"))
+			.andExpect(jsonPath("$.data.history[0].message").value("응원한다!"))
+			.andExpect(jsonPath("$.data.history[0].amount").value(10000));
+	}
 }
