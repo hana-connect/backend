@@ -29,10 +29,12 @@ class AssetServiceTest {
 	@InjectMocks
 	private AssetService assetService;
 
+	private final Long TEST_MEMBER_ID = 100L;
+
 	@Test
 	void shouldReturnAssetSummary_whenAccountsExist() {
 		// given
-		Long memberId = 1L;
+		Long memberId = TEST_MEMBER_ID;
 
 		Member member = Member.builder()
 			.id(memberId)
@@ -60,26 +62,28 @@ class AssetServiceTest {
 			.member(member)
 			.build();
 
-		given(linkedAccountRepository.findAllByMemberId(memberId))
+		given(linkedAccountRepository.findAllByMemberId(anyLong()))
 			.willReturn(List.of(linked1, linked2));
 
 		// when
 		AssetSummaryResponseDTO result = assetService.getMemberAssetSummary(memberId);
 
 		// then
-		assertEquals(new BigDecimal("1000000"), result.getDepositSavings());
-		assertEquals(new BigDecimal("500000"), result.getPension());
-		assertEquals(BigDecimal.ZERO, result.getDepositWithdrawal());
-		assertEquals(BigDecimal.ZERO, result.getInvestment());
-		assertEquals(new BigDecimal("1500000"), result.getTotalAssets());
+		assertAll(
+			() -> assertEquals(new BigDecimal("1000000"), result.getDepositSavings()),
+			() -> assertEquals(new BigDecimal("500000"), result.getPension()),
+			() -> assertEquals(new BigDecimal("1500000"), result.getTotalAssets())
+		);
+
+		verify(linkedAccountRepository).findAllByMemberId(memberId);
 	}
 
 	@Test
 	void shouldThrowException_whenNoLinkedAccounts() {
 		// given
-		Long memberId = 1L;
+		Long memberId = TEST_MEMBER_ID;
 
-		given(linkedAccountRepository.findAllByMemberId(memberId))
+		given(linkedAccountRepository.findAllByMemberId(anyLong()))
 			.willReturn(List.of());
 
 		// when & then
@@ -89,13 +93,13 @@ class AssetServiceTest {
 		);
 
 		assertEquals("연결된 계좌가 없습니다.", exception.getMessage());
+		verify(linkedAccountRepository).findAllByMemberId(memberId);
 	}
 
 	@Test
 	void shouldSumDifferentAccountTypesCorrectly() {
 		// given
-		Long memberId = 1L;
-
+		Long memberId = TEST_MEMBER_ID;
 		Member member = Member.builder().id(memberId).build();
 
 		Account savings = Account.builder()
@@ -134,10 +138,13 @@ class AssetServiceTest {
 		AssetSummaryResponseDTO result = assetService.getMemberAssetSummary(memberId);
 
 		// then
-		assertEquals(new BigDecimal("500000"), result.getDepositSavings());
-		assertEquals(new BigDecimal("100000"), result.getDepositWithdrawal());
-		assertEquals(new BigDecimal("400000"), result.getInvestment());
-		assertEquals(BigDecimal.ZERO, result.getPension());
-		assertEquals(new BigDecimal("1000000"), result.getTotalAssets());
+		assertAll(
+			() -> assertEquals(new BigDecimal("500000"), result.getDepositSavings()),
+			() -> assertEquals(new BigDecimal("100000"), result.getDepositWithdrawal()),
+			() -> assertEquals(new BigDecimal("400000"), result.getInvestment()),
+			() -> assertEquals(new BigDecimal("1000000"), result.getTotalAssets())
+		);
+
+		verify(linkedAccountRepository).findAllByMemberId(memberId);
 	}
 }

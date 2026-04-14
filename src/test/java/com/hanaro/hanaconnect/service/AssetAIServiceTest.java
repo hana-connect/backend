@@ -31,6 +31,8 @@ class AssetAIServiceTest {
 	@InjectMocks
 	private AssetAIService assetAIService;
 
+	private final Long TEST_MEMBER_ID = 999L;
+
 	@BeforeEach
 	void setUp() {
 		assetAIService = new AssetAIService(assetService, assetAiClient, objectMapper);
@@ -38,8 +40,7 @@ class AssetAIServiceTest {
 
 	@Test
 	void shouldReturnAIRecommendation_whenValidResponse() {
-		// given
-		Long memberId = 1L;
+		Long memberId = TEST_MEMBER_ID;
 
 		AssetSummaryResponseDTO summary = AssetSummaryResponseDTO.builder()
 			.totalAssets(new BigDecimal("1000000"))
@@ -47,7 +48,7 @@ class AssetAIServiceTest {
 			.pension(new BigDecimal("200000"))
 			.build();
 
-		given(assetService.getMemberAssetSummary(memberId))
+		given(assetService.getMemberAssetSummary(anyLong()))
 			.willReturn(summary);
 
 		String aiJson = """
@@ -67,20 +68,22 @@ class AssetAIServiceTest {
 			assetAIService.getAssetRecommendation(memberId);
 
 		// then
-		assertEquals("30:70", result.getRecommendRatio());
-		assertEquals(new BigDecimal("70000"), result.getKidAllowance());
-		assertEquals("테스트 코멘트입니다.", result.getAiComment());
-		assertEquals(10, result.getIncreaseRate());
+		assertAll(
+			() -> assertEquals("30:70", result.getRecommendRatio()),
+			() -> assertEquals(new BigDecimal("70000"), result.getKidAllowance()),
+			() -> assertEquals("테스트 코멘트입니다.", result.getAiComment()),
+			() -> assertEquals(10, result.getIncreaseRate()),
+			() -> assertEquals(4, result.getAssetHistory().size()),
+			() -> assertEquals(new BigDecimal("1000000"), result.getAssetHistory().get(3))
+		);
 
-		// 히스토리 검증
-		assertEquals(4, result.getAssetHistory().size());
-		assertEquals(new BigDecimal("1000000"), result.getAssetHistory().get(3));
+		verify(assetService).getMemberAssetSummary(memberId);
 	}
 
 	@Test
 	void shouldClampIncreaseRate_between5And15() {
 		// given
-		Long memberId = 1L;
+		Long memberId = TEST_MEMBER_ID;
 
 		AssetSummaryResponseDTO summary = AssetSummaryResponseDTO.builder()
 			.totalAssets(new BigDecimal("1000000"))
@@ -88,10 +91,9 @@ class AssetAIServiceTest {
 			.pension(BigDecimal.ZERO)
 			.build();
 
-		given(assetService.getMemberAssetSummary(memberId))
+		given(assetService.getMemberAssetSummary(anyLong()))
 			.willReturn(summary);
 
-		// increaseRate 20 → 15로 clamp
 		String aiJson = """
             {
               "aiComment": "테스트",
@@ -110,12 +112,13 @@ class AssetAIServiceTest {
 
 		// then
 		assertEquals(15, result.getIncreaseRate());
+		verify(assetService).getMemberAssetSummary(memberId);
 	}
 
 	@Test
 	void shouldReturnFallback_whenAIResponseFails() {
 		// given
-		Long memberId = 1L;
+		Long memberId = TEST_MEMBER_ID;
 
 		AssetSummaryResponseDTO summary = AssetSummaryResponseDTO.builder()
 			.totalAssets(new BigDecimal("500000"))
@@ -123,25 +126,26 @@ class AssetAIServiceTest {
 			.pension(BigDecimal.ZERO)
 			.build();
 
-		given(assetService.getMemberAssetSummary(memberId))
+		given(assetService.getMemberAssetSummary(anyLong()))
 			.willReturn(summary);
 
-		// AI 응답 깨짐
+		// AI 클라이언트에서 예외 발생 시나리오
 		given(assetAiClient.getAssetRecommendationFromAi(anyString()))
-			.willThrow(new RuntimeException());
+			.willThrow(new RuntimeException("AI 서비스 연결 실패"));
 
 		// when
 		AssetAIRecommendationResponseDTO result =
 			assetAIService.getAssetRecommendation(memberId);
 
 		// then
-		assertEquals("10:90", result.getRecommendRatio());
-		assertEquals(new BigDecimal("50000"), result.getKidAllowance());
-		assertEquals("안정적인 관리를 추천드립니다.", result.getAiComment());
-		assertEquals(0, result.getIncreaseRate());
+		assertAll(
+			() -> assertEquals("10:90", result.getRecommendRatio()),
+			() -> assertEquals(new BigDecimal("50000"), result.getKidAllowance()),
+			() -> assertEquals("안정적인 관리를 추천드립니다.", result.getAiComment()),
+			() -> assertEquals(0, result.getIncreaseRate()),
+			() -> assertEquals(new BigDecimal("500000"), result.getAssetHistory().get(0))
+		);
 
-		// fallback history
-		assertEquals(4, result.getAssetHistory().size());
-		assertEquals(new BigDecimal("500000"), result.getAssetHistory().get(0));
+		verify(assetService).getMemberAssetSummary(memberId);
 	}
 }

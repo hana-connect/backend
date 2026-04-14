@@ -64,7 +64,7 @@ class AssetControllerTest {
 	void setUp() {
 		String encodedPassword = passwordEncoder.encode("123456");
 
-		// 회원 생성
+		// 1. 회원 생성 및 저장
 		Member member = Member.builder()
 			.name("테스트유저")
 			.password(encodedPassword)
@@ -75,17 +75,22 @@ class AssetControllerTest {
 			.role(Role.USER)
 			.build();
 
-		member = memberRepository.save(member);
-		memberId = member.getId();
+		memberRepository.save(member);
 
-		// 계좌 생성
+		Member savedMember = memberRepository.findAll().stream()
+			.filter(m -> m.getName().equals("테스트유저"))
+			.findFirst()
+			.orElseThrow();
+
+		this.memberId = savedMember.getId();
+
 		Account account1 = Account.builder()
 			.name("예금계좌")
 			.accountNumber("111-1111-1111")
 			.password("1234")
 			.accountType(com.hanaro.hanaconnect.common.enums.AccountType.DEPOSIT)
 			.balance(new BigDecimal("1000000"))
-			.member(member)
+			.member(savedMember) // savedMember 사용
 			.build();
 
 		Account account2 = Account.builder()
@@ -94,34 +99,32 @@ class AssetControllerTest {
 			.password("1234")
 			.accountType(com.hanaro.hanaconnect.common.enums.AccountType.PENSION)
 			.balance(new BigDecimal("500000"))
-			.member(member)
+			.member(savedMember) // savedMember 사용
 			.build();
 
 		accountRepository.save(account1);
 		accountRepository.save(account2);
 
-		// linked account 연결
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
 				.account(account1)
-				.member(member)
+				.member(savedMember)
 				.build()
 		);
 
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
 				.account(account2)
-				.member(member)
+				.member(savedMember)
 				.build()
 		);
 
-		// JWT 생성
 		TokenMemberPrincipal principal = new TokenMemberPrincipal(
-			member.getId(),
-			member.getName(),
-			member.getVirtualAccount(),
-			member.getMemberRole(),
-			member.getRole()
+			savedMember.getId(),
+			savedMember.getName(),
+			savedMember.getVirtualAccount(),
+			savedMember.getMemberRole(),
+			savedMember.getRole()
 		);
 
 		accessToken = jwtTokenProvider.createAccessToken(principal);
