@@ -16,6 +16,7 @@ import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
@@ -111,5 +112,72 @@ class TransferServiceTest {
 		assertThatThrownBy(() -> transferService.transferToChildSavings(parent.getId(), request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("비밀번호가 일치하지 않습니다.");
+	}
+
+	@Test
+	@DisplayName("적금 릴레이 내역 조회 성공")
+	void getRelayHistorySuccessTest() {
+		// Given
+		Member parent = findParent();
+		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
+
+		// 내역 만들기
+		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
+		request.setTargetAccountId(kidSavingsAccount.getId());
+		request.setAmount(new BigDecimal("50000"));
+		request.setPassword("123456");
+		request.setContent("할머니가 주는 용돈이다!");
+
+		transferService.transferToChildSavings(parent.getId(), request);
+
+		// When
+		com.hanaro.hanaconnect.dto.RelayResponseDTO result =
+			transferService.getRelayHistory(parent.getId(), kidSavingsAccount.getId());
+
+		// Then
+		assertThat(result).isNotNull();
+		assertThat(result.getProductNickname()).isEqualTo(kidSavingsAccount.getName());
+
+		// history 검증
+		assertThat(result.getHistory()).isNotEmpty();
+		assertThat(result.getHistory().get(0).getMessage()).isEqualTo("할머니가 주는 용돈이다!");
+		assertThat(result.getHistory().get(0).getAmount()).isEqualByComparingTo("50000");
+	}
+
+	@Test
+	@DisplayName("적금 릴레이 내역 조회 실패 케이스 모음")
+	void getRelayHistoryFailTest() {
+		Member parent = findParent();
+
+		// 존재하지 않는 계좌
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), 999L))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("해당 계좌에 접근 권한이 없습니다.");
+
+		// 내 연결 계좌 목록에 없는 진짜 계좌 ID
+		Long unlinkedId = findUnlinkedAccountId(parent.getId());
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), unlinkedId))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("해당 계좌에 접근 권한이 없습니다.");
+
+		// 계좌 타입 불일치
+		Account checkingAccount = findLinkedKidCheckingAccount(parent.getId());
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), checkingAccount.getId()))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("적금 계좌만 조회할 수 있습니다.");
+	}
+
+	private Account findLinkedKidCheckingAccount(Long memberId) {
+		return linkedAccountRepository.findAllByMemberId(memberId).stream()
+			.map(LinkedAccount::getAccount)
+			.filter(a -> a.getAccountType() == AccountType.FREE)
+			.findFirst().orElseThrow();
+	}
+
+	private Long findUnlinkedAccountId(Long memberId) {
+		return accountRepository.findAll().stream()
+			.filter(a -> linkedAccountRepository.findByMemberIdAndAccountId(memberId, a.getId()).isEmpty())
+			.map(Account::getId)
+			.findFirst().orElseThrow();
 	}
 }

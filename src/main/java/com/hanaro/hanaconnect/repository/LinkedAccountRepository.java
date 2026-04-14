@@ -1,6 +1,7 @@
 package com.hanaro.hanaconnect.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,6 +12,9 @@ public interface LinkedAccountRepository extends JpaRepository<LinkedAccount, Lo
 
 	boolean existsByAccountIdAndMemberId(Long accountId, Long memberId);
 	List<LinkedAccount> findAllByMemberId(Long memberId);
+
+	Optional<LinkedAccount> findByMemberIdAndAccountId(Long memberId, Long accountId);
+
 	List<LinkedAccount> findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
 		Long memberId,
 		MemberRole memberRole
