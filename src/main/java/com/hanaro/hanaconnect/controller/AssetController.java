@@ -49,7 +49,7 @@ public class AssetController {
 		return ResponseEntity.ok(CustomAPIResponse.createSuccess(
 			HttpStatus.OK.value(),
 			response,
-			"AI 추천이 완료되었습니다."
+			response.getAiComment()
 		));
 	}
 }
