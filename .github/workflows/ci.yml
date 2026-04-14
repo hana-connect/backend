@@ -163,6 +163,14 @@ jobs:
             secret: ${{ secrets.JWT_SECRET_KEY }}
             access-token-expiration-ms: 3600000
             refresh-token-expiration-ms: 1209600000
+
+          logging:
+            level:
+              root: INFO
+              org.springframework.web: DEBUG
+              org.springframework.jdbc: DEBUG
+              org.hibernate.SQL: DEBUG
+              org.hibernate.type.descriptor.sql: TRACE
           EOF
 
       - name: Grant execute permission for gradlew
