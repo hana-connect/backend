@@ -32,12 +32,12 @@ public class AssetService {
 		// 예금 + 적금 + 청약 (DEPOSIT, SAVINGS, SUBSCRIPTION) 합산
 		BigDecimal depositSavings = sumBalanceByAccountTypes(
 			linkedAccounts,
-			List.of(AccountType.DEPOSIT, AccountType.SAVINGS, AccountType.SUBSCRIPTION)
+			List.of(AccountType.DEPOSIT, AccountType.SAVINGS, AccountType.SUBSCRIPTION), memberId
 		);
 
-		BigDecimal depositWithdrawal = sumBalanceByAccountType(linkedAccounts, AccountType.FREE);
-		BigDecimal investment = sumBalanceByAccountType(linkedAccounts, AccountType.INVESTMENT);
-		BigDecimal pension = sumBalanceByAccountType(linkedAccounts, AccountType.PENSION);
+		BigDecimal depositWithdrawal = sumBalanceByAccountType(linkedAccounts, AccountType.FREE, memberId);
+		BigDecimal investment = sumBalanceByAccountType(linkedAccounts, AccountType.INVESTMENT, memberId);
+		BigDecimal pension = sumBalanceByAccountType(linkedAccounts, AccountType.PENSION, memberId);
 
 		BigDecimal totalAssets = depositSavings
 			.add(depositWithdrawal)
@@ -54,19 +54,21 @@ public class AssetService {
 	}
 
 	// 단일 타입을 위한 헬퍼
-	private BigDecimal sumBalanceByAccountType(List<LinkedAccount> linkedAccounts, AccountType type) {
+	private BigDecimal sumBalanceByAccountType(List<LinkedAccount> linkedAccounts, AccountType type, Long memberId) {
 		return linkedAccounts.stream()
 			.map(LinkedAccount::getAccount)
 			.filter(account -> account.getAccountType() == type)
+			.filter(account -> account.getMember().getId().equals(memberId))
 			.map(account -> account.getBalance())
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	// 리스트로 여러 타입을 한 번에 더하기 위한 헬퍼 (예적금용)
-	private BigDecimal sumBalanceByAccountTypes(List<LinkedAccount> linkedAccounts, List<AccountType> types) {
+	private BigDecimal sumBalanceByAccountTypes(List<LinkedAccount> linkedAccounts, List<AccountType> types, Long memberId) {
 		return linkedAccounts.stream()
 			.map(LinkedAccount::getAccount)
 			.filter(account -> types.contains(account.getAccountType()))
+			.filter(account -> account.getMember().getId().equals(memberId))
 			.map(account -> account.getBalance())
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
