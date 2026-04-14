@@ -49,6 +49,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Wait for MySQL to be ready
+        run: |
+          until docker exec $(docker ps -q --filter ancestor=mysql:8.0) mysqladmin ping -h 127.0.0.1 -u hanaconnect -p12345678 --silent; do
+            echo "MySQL 서버가 아직 안 켜졌어요... 2초 대기 중"
+            sleep 2
+          done
+
       - name: Create CI config files
         run: |
           mkdir -p src/main/resources
