@@ -21,7 +21,7 @@ public class TransferRequestDto {
 
 	@Schema(description = "송금 금액(숫자만 입력)", example = "5000")
 	@NotNull(message = "송금 금액은 필수입니다.")
-	@Positive(message = "송금 금액은 0보다 커야 합니다.")
+	@Positive(message = "송금 금액은 0보다 커야 합니다.") // 0보다 커야 한다
 	private BigDecimal amount;
 
 	@Schema(description = "간편 비밀번호 6자리", example = "123456")
