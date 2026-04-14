@@ -215,6 +215,26 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
+		accountRepository.save(Account.builder()
+			.name("청춘 적금(만기)")
+			.accountNumber("12345678901")
+			.password(passwordEncoder.encode("1234"))
+			.accountType(AccountType.SAVINGS)
+			.balance(new BigDecimal("2000000"))
+			.member(kid1)
+			.isEnd(true)
+			.build());
+
+		accountRepository.save(Account.builder()
+			.name("하나 새희망 적금")
+			.accountNumber("12121212121")
+			.password(passwordEncoder.encode("1234"))
+			.accountType(AccountType.SAVINGS)
+			.balance(new BigDecimal("5000000"))
+			.member(kid1)
+			.isEnd(true)
+			.build());
+
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
 				.account(kidAccount)
