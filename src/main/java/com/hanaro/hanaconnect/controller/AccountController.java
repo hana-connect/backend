@@ -1,5 +1,7 @@
 package com.hanaro.hanaconnect.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "계좌 관련", description = "본인 계좌 등록/아이 계좌 추가 API")
+@Tag(name = "계좌 관련", description = "본인 계좌 등록, 내 계좌 조회, 아이 계좌 추가 API")
 public class AccountController {
 
 	private final AccountService accountService;
@@ -62,25 +64,26 @@ public class AccountController {
 
 	@GetMapping("/accounts/me")
 	@Operation(
-		summary = "내 계좌 목록 조회",
-		description = "로그인한 사용자의 본인 계좌 목록을 조회합니다. limit를 전달하면 최근 등록순으로 해당 개수만 반환합니다."
+		summary = "본인 계좌 목록 조회",
+		description = "로그인한 사용자의 본인 계좌 목록을 조회합니다. 만기 계좌는 제외되며, limit를 전달하면 최근 등록순으로 해당 개수만 반환합니다."
 	)
 	@ApiResponses({
-		@ApiResponse(responseCode = "200", description = "내 계좌 목록 조회 성공"),
+		@ApiResponse(responseCode = "200", description = "본인 계좌 목록 조회 성공"),
 		@ApiResponse(responseCode = "401", description = "인증 필요"),
 		@ApiResponse(responseCode = "500", description = "서버 내부 오류")
 	})
-	public ResponseEntity<CustomAPIResponse<java.util.List<MyAccountResponseDTO>>> getMyAccounts(
+	public ResponseEntity<CustomAPIResponse<List<MyAccountResponseDTO>>> getMyAccounts(
 		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@Parameter(description = "최근 등록순으로 조회할 최대 개수", example = "2")
 		@RequestParam(required = false) Integer limit
 	) {
-		java.util.List<MyAccountResponseDTO> response = accountService.getMyAccounts(principal.getMemberId(), limit);
+		List<MyAccountResponseDTO> response = accountService.getMyAccounts(principal.getMemberId(), limit);
 
 		return ResponseEntity.ok(
 			CustomAPIResponse.createSuccess(
 				HttpStatus.OK.value(),
 				response,
-				"내 계좌 목록 조회에 성공했습니다."
+				"본인 계좌 목록 조회에 성공했습니다."
 			)
 		);
 	}

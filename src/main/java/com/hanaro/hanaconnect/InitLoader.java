@@ -87,11 +87,47 @@ public class InitLoader implements ApplicationRunner {
 		));
 
 		accountRepository.save(createAccount(
+			"아이 적금 통장",
+			"66677778888",
+			"1234",
+			AccountType.SAVINGS,
+			new BigDecimal("80000"),
+			kid1
+		));
+
+		accountRepository.save(createAccount(
+			"아이 청약 통장",
+			"77788889999",
+			"1234",
+			AccountType.SUBSCRIPTION,
+			new BigDecimal("120000"),
+			kid1
+		));
+
+		accountRepository.save(createAccount(
 			"부모 저축 예금",
 			"22233334444",
 			"5678",
 			AccountType.DEPOSIT,
 			new BigDecimal("100000"),
+			parent1
+		));
+
+		accountRepository.save(createAccount(
+			"부모 청약 통장",
+			"44455556666",
+			"5678",
+			AccountType.SUBSCRIPTION,
+			new BigDecimal("150000"),
+			parent1
+		));
+
+		accountRepository.save(createAccount(
+			"부모 연금 통장",
+			"55566667777",
+			"5678",
+			AccountType.PENSION,
+			new BigDecimal("300000"),
 			parent1
 		));
 
