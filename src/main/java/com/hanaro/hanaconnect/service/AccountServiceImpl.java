@@ -1,5 +1,6 @@
 package com.hanaro.hanaconnect.service;
 
+import java.util.List;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -13,6 +14,7 @@ import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
+import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
@@ -116,6 +118,27 @@ public class AccountServiceImpl implements AccountService {
 			account.getAccountType(),
 			savedLinkedAccount.getCreatedAt().format(LINKED_AT_FORMATTER)
 		);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<MyAccountResponseDTO> getMyAccounts(Long memberId, Integer limit) {
+		List<Account> accounts = accountRepository.findByMemberIdAndIsEndFalseOrderByCreatedAtDesc(memberId);
+
+		if (limit != null && limit > 0 && accounts.size() > limit) {
+			accounts = accounts.subList(0, limit);
+		}
+
+		return accounts.stream()
+			.map(account -> MyAccountResponseDTO.builder()
+				.accountId(account.getId())
+				.name(account.getName())
+				.accountNumber(AccountNumberFormatter.format(account.getAccountNumber()))
+				.balance(account.getBalance())
+				.accountType(account.getAccountType())
+				.createdAt(account.getCreatedAt().format(LINKED_AT_FORMATTER))
+				.build())
+			.toList();
 	}
 
 	private void validateAccountNumber(String accountNumber) {
