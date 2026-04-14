@@ -99,6 +99,7 @@ public class TransferService {
 			.transactionMoney(savedTransaction.getTransactionMoney())
 			.transactionBalance(savedTransaction.getTransactionBalance())
 			.message(request.getContent())
+			.build();
     }
 
 	@Transactional(readOnly = true)
