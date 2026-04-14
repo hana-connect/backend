@@ -14,6 +14,7 @@ import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
+import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
@@ -137,6 +138,29 @@ public class AccountServiceImpl implements AccountService {
 				.balance(account.getBalance())
 				.accountType(account.getAccountType())
 				.createdAt(account.getCreatedAt().format(LINKED_AT_FORMATTER))
+				.build())
+			.toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<KidAccountListResponseDTO> getKidAccounts(Long memberId, Integer limit) {
+		List<LinkedAccount> linkedAccounts =
+			linkedAccountRepository.findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
+				memberId,
+				MemberRole.KID
+			);
+
+		if (limit != null && limit > 0 && linkedAccounts.size() > limit) {
+			linkedAccounts = linkedAccounts.subList(0, limit);
+		}
+
+		return linkedAccounts.stream()
+			.map(linkedAccount -> KidAccountListResponseDTO.builder()
+				.linkedAccountId(linkedAccount.getId())
+				.accountId(linkedAccount.getAccount().getId())
+				.nickname(linkedAccount.getNickname())
+				.accountNumber(AccountNumberFormatter.format(linkedAccount.getAccount().getAccountNumber()))
 				.build())
 			.toList();
 	}
