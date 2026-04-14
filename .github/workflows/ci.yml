@@ -53,14 +53,14 @@ jobs:
         run: |
           echo "MySQL 기다리는 중..."
           for i in {1..30}; do
-            mysqladmin ping -h mysql -u hanaconnect -p12345678 --silent && break
+            mysqladmin ping -h 127.0.0.1 -u hanaconnect -p12345678 --silent && break
             echo "아직 안 됨... 대기"
             sleep 2
           done
 
       - name: Check MySQL connection
         run: |
-          mysql -h mysql -u hanaconnect -p12345678 -e "SHOW DATABASES;"
+          mysql -h 127.0.0.1 -u hanaconnect -p12345678 -e "SHOW DATABASES;"
 
       - name: Create CI config files
         run: |
