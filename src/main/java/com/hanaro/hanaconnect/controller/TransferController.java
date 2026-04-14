@@ -43,6 +43,7 @@ public class TransferController {
 			response,
 			"적금 송금이 완료되었습니다."
 		));
+	}
     
 	@GetMapping("/prepare")
 	@Operation(summary = "송금 준비 조회", description = "아이 계좌를 기준으로 송금 화면 정보를 조회합니다.")
