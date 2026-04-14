@@ -1,6 +1,6 @@
 package com.hanaro.hanaconnect.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,10 +26,10 @@ import jakarta.persistence.EntityManager;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-class SavingTransactionRepositoryTest {
+class TransactionRepositoryTest {
 
 	@Autowired
-	SavingTransactionRepository savingTransactionRepository;
+	TransactionRepository transactionRepository;
 
 	@Autowired
 	EntityManager entityManager;
@@ -54,7 +54,7 @@ class SavingTransactionRepositoryTest {
 			.receiverAccount(receiverAccount)
 			.build();
 
-		Transaction savedTransaction = savingTransactionRepository.save(transaction);
+		Transaction savedTransaction = transactionRepository.save(transaction);
 
 		assertThat(savedTransaction.getId()).isNotNull();
 		assertThat(savedTransaction.getTransactionMoney()).isEqualByComparingTo("10000");
@@ -80,12 +80,12 @@ class SavingTransactionRepositoryTest {
 			.receiverAccount(receiverAccount)
 			.build();
 
-		Transaction savedTransaction = savingTransactionRepository.save(transaction);
+		Transaction savedTransaction = transactionRepository.save(transaction);
 
 		entityManager.flush();
 		entityManager.clear();
 
-		Transaction foundTransaction = savingTransactionRepository.findById(savedTransaction.getId())
+		Transaction foundTransaction = transactionRepository.findById(savedTransaction.getId())
 			.orElseThrow();
 
 		assertThat(foundTransaction.getTransactionMoney()).isEqualByComparingTo("15000");
@@ -128,4 +128,7 @@ class SavingTransactionRepositoryTest {
 	private String generateAccount() {
 		return String.valueOf(accountSeq++);
 	}
+
+
+  
 }
