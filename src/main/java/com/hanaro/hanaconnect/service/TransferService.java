@@ -52,7 +52,9 @@ public class TransferService {
 			.orElse(null);
 
 		// 5. 저장 이름이 없으면 실명만
-		String displayName = (phoneSavedName != null)
+		boolean hasPhoneSavedName = phoneSavedName != null && !phoneSavedName.isBlank();
+
+		String displayName = hasPhoneSavedName
 			? kid.getName() + "(" + phoneSavedName + ")"
 			: kid.getName();
 
