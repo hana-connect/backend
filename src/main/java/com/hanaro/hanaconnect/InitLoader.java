@@ -94,7 +94,8 @@ public class InitLoader implements ApplicationRunner {
 			"5678",
 			AccountType.FREE,
 			new BigDecimal("800000"),
-			parent1
+			parent1,
+			null
 		));
 
 		// 부모1 저축 예금 계좌
