@@ -69,4 +69,23 @@ public class Account extends BaseEntity {
 	@OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<LinkedAccount> linkedMembers = new ArrayList<>();
+
+	// 출금
+	public void withdraw(BigDecimal amount) {
+		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("출금 금액은 0보다 커야 합니다.");
+		}
+		if (this.balance.compareTo(amount) < 0) {
+			throw new IllegalArgumentException("잔액이 부족합니다.");
+		}
+		this.balance = this.balance.subtract(amount);
+	}
+
+	// 입금
+	public void deposit(BigDecimal amount) {
+		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("입금 금액은 0보다 커야 합니다.");
+		}
+		this.balance = this.balance.add(amount);
+	}
 }
