@@ -112,7 +112,7 @@ public class HouseController {
 					value = """
 						{
 						  "status": 403,
-						  "message": "해당 아이의 정보에 접근할 수 없습니다.",
+						  "message": "접근 권한이 없습니다.",
 						  "data": null
 						}
 						"""
