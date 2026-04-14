@@ -14,7 +14,7 @@ public class TransferPrepareResponseDto {
 	private Long accountId;
 	private String targetMemberName;
 	private String phoneSavedName;
-	private String displayName;
+	private String displayName;  // 화면용 이름  (김채연(김채*))
 	private String accountAlias; // 계좌 별명
 	private BigDecimal balance;
 }

@@ -75,7 +75,7 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("10000"));
-		request.setAccountPassword("5678");
+		request.setPassword("123456");
 		request.setContent("적금 응원 편지");
 
 		SavingsTransferResponseDTO result =
@@ -97,7 +97,7 @@ class TransferServiceTest {
 	}
 
 	@Test
-	@DisplayName("적금 송금 실패 - 계좌 비밀번호 불일치")
+	@DisplayName("적금 송금 실패 - 비밀번호 불일치")
 	void transferToChildSavingsFailWrongPasswordTest() {
 		Member parent = findParent();
 		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
@@ -105,12 +105,12 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("10000"));
-		request.setAccountPassword("0000");
+		request.setPassword("000000");
 		request.setContent("편지");
 
 		assertThatThrownBy(() -> transferService.transferToChildSavings(parent.getId(), request))
 			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessageContaining("계좌 비밀번호가 일치하지 않습니다.");
+			.hasMessageContaining("비밀번호가 일치하지 않습니다.");
 	}
 
 	@Test
