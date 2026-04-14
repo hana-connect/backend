@@ -26,6 +26,6 @@ public class KidAccountAddRequestDTO {
 		example = "민수 청약통장"
 	)
 	@NotBlank(message = "계좌 별명은 필수입니다.")
-	@Size(max = 50, message = "계좌 별명은 50자 이하여야 합니다.")
+	@Size(max = 12, message = "계좌 별명은 12자 이하여야 합니다.")
 	private String nickname;
 }
