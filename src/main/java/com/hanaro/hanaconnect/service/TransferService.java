@@ -20,6 +20,7 @@ import com.hanaro.hanaconnect.dto.TransferRequestDto;
 import com.hanaro.hanaconnect.dto.TransferResponseDto;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Letter;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
@@ -221,11 +222,17 @@ public class TransferService {
 		Account account = accountRepository.findById(targetAccountId)
 			.orElseThrow(() -> new RuntimeException("계좌를 찾을 수 없습니다."));
 
-		// Repository에서 만든 쿼리로 편지 내역 리스트 조회
+		// 연결된 계좌(LinkedAccount) 정보 조회하여 별명(nickname) 가져오기
+		String displayName = linkedAccountRepository.findByMemberIdAndAccountId(memberId, targetAccountId)
+			.map(LinkedAccount::getNickname)
+			.filter(nick -> nick != null && !nick.isEmpty())
+			.orElse(account.getName());
+
+		// 편지 조회
 		List<RelayHistoryDTO> history = letterRepository.findMyRelayHistory(memberId, targetAccountId);
 
 		return RelayResponseDTO.builder()
-			.productName(account.getName())
+			.productNickname(displayName)
 			.accountNumber(account.getAccountNumber())
 			.history(history)
 			.build();

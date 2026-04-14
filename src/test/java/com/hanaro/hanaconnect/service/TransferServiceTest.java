@@ -135,7 +135,7 @@ class TransferServiceTest {
 
 		// Then
 		assertThat(result).isNotNull();
-		assertThat(result.getProductName()).isEqualTo(kidSavingsAccount.getName());
+		assertThat(result.getProductNickname()).isEqualTo(kidSavingsAccount.getName());
 
 		// history 검증
 		assertThat(result.getHistory()).isNotEmpty();

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RelayResponseDTO {
-	private String productName;
+	private String productNickname;
 	private String accountNumber;
 	private List<RelayHistoryDTO> history;
 }

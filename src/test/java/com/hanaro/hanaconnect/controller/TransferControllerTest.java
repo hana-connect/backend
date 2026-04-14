@@ -183,7 +183,7 @@ class TransferControllerTest {
 		Long targetAccountId = 10L;
 
 		com.hanaro.hanaconnect.dto.RelayResponseDTO response = com.hanaro.hanaconnect.dto.RelayResponseDTO.builder()
-			.productName("우리 아이 적금")
+			.productNickname("길동이 선물 적금")
 			.accountNumber("123-456-789")
 			.history(List.of(
 				com.hanaro.hanaconnect.dto.RelayHistoryDTO.builder()
@@ -205,7 +205,7 @@ class TransferControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
 			.andExpect(jsonPath("$.message").value("적금 편지 내역 조회에 성공했습니다."))
-			.andExpect(jsonPath("$.data.productName").value("우리 아이 적금"))
+			.andExpect(jsonPath("$.data.productNickname").value("길동이 선물 적금"))
 			.andExpect(jsonPath("$.data.accountNumber").value("123-456-789"))
 			.andExpect(jsonPath("$.data.history[0].message").value("응원한다!"))
 			.andExpect(jsonPath("$.data.history[0].amount").value(10000));
