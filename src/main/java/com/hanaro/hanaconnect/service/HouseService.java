@@ -2,19 +2,18 @@ package com.hanaro.hanaconnect.service;
 
 import com.hanaro.hanaconnect.common.enums.HouseLevel;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
-import com.hanaro.hanaconnect.common.security.CustomUserDetails;
 import com.hanaro.hanaconnect.common.util.HouseLevelCalculator;
 import com.hanaro.hanaconnect.dto.HouseStatusResponseDTO;
 import com.hanaro.hanaconnect.entity.House;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.PhoneName;
-import com.hanaro.hanaconnect.exception.CustomException;
-import com.hanaro.hanaconnect.exception.ErrorCode;
 import com.hanaro.hanaconnect.repository.HouseRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +29,9 @@ public class HouseService {
 	private final RelationRepository relationRepository;
 	private final PhoneNameRepository phoneNameRepository;
 
-	public HouseStatusResponseDTO getHouseStatus(CustomUserDetails userDetails, Long kidId) {
-		Member requester = memberRepository.findById(userDetails.getMemberId())
-			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+	public HouseStatusResponseDTO getHouseStatus(Long requesterId, Long kidId) {
+		Member requester = memberRepository.findById(requesterId)
+			.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
 
 		Member kid = resolveTargetKid(requester, kidId);
 
@@ -68,25 +67,25 @@ public class HouseService {
 			.build();
 	}
 
-	/**
-	 * 요청자 역할에 따라 조회 대상 아이 결정
-	 */
 	private Member resolveTargetKid(Member requester, Long kidId) {
+		// 아이 본인 요청
 		if (requester.getMemberRole() == MemberRole.KID) {
 			return requester;
 		}
 
+		// 조부모: kidId 필수
 		if (kidId == null) {
-			throw new CustomException(ErrorCode.KID_ID_REQUIRED);
+			throw new IllegalArgumentException("kidId는 필수입니다.");
 		}
 
 		Member kid = memberRepository.findById(kidId)
-			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+			.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
 
+		// 기존 RelationRepository 메서드 재사용
 		boolean hasRelation = relationRepository
-			.existsByMemberIdAndConnectMemberId(requester.getId(), kidId);
+			.existsByMember_IdAndConnectMember_Id(requester.getId(), kidId);
 		if (!hasRelation) {
-			throw new CustomException(ErrorCode.ACCESS_DENIED);
+			throw new AccessDeniedException("해당 아이의 정보에 접근할 수 없습니다.");
 		}
 
 		return kid;
