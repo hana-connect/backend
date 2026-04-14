@@ -2,6 +2,7 @@ package com.hanaro.hanaconnect.ai;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -58,6 +59,12 @@ public class AssetAiClient {
 			.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 			.body(requestBody)
 			.retrieve()
+			.onStatus(HttpStatusCode::is4xxClientError, (request, apiResponse) -> {
+				throw new RuntimeException("AI API 호출 실패 (4xx): " + apiResponse.getStatusCode());
+			})
+			.onStatus(HttpStatusCode::is5xxServerError, (request, apiResponse) -> {
+				throw new RuntimeException("AI 서버 에러 (5xx): " + apiResponse.getStatusCode());
+			})
 			.body(AssetAiChatResponseDTO.class);
 
 		// 검증 로직
