@@ -64,6 +64,7 @@ jobs:
           spring:
             application:
               name: hanaconnect
+              password: 12345678
 
             config:
               import: classpath:security.yml
