@@ -16,16 +16,17 @@ import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.security.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Mission;
 import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Relation;
 import com.hanaro.hanaconnect.repository.AccountRepository;
+import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
-
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,7 +41,7 @@ public class InitLoader implements ApplicationRunner {
 	private final AccountCryptoService accountCryptoService;
 	private final PasswordEncoder passwordEncoder;
 	private final MissionRepository missionRepository;
-
+	private final LinkedAccountRepository linkedAccountRepository;
 
 	@Override
 	@Transactional
@@ -72,12 +73,11 @@ public class InitLoader implements ApplicationRunner {
 			MemberRole.PARENT
 		);
 
-		// 객체를 DB에 저장
 		kid1 = memberRepository.save(kid1);
 		parent1 = memberRepository.save(parent1);
 		parent2 = memberRepository.save(parent2);
 
-		accountRepository.save(createAccount(
+		Account kidAccount = accountRepository.save(createAccount(
 			"아이 입출금 통장",
 			"11122223333",
 			"1234",
@@ -87,7 +87,7 @@ public class InitLoader implements ApplicationRunner {
 		));
 
 		// 부모1 입출금 계좌
-		accountRepository.save(createAccount(
+		Account parentFreeAccount = accountRepository.save(createAccount(
 			"부모 입출금 통장",
 			"22233335555",
 			"5678",
@@ -96,7 +96,8 @@ public class InitLoader implements ApplicationRunner {
 			parent1
 		));
 
-		accountRepository.save(createAccount(
+		// 부모1 저축 예금 계좌
+		Account parentDepositAccount = accountRepository.save(createAccount(
 			"부모 저축 예금",
 			"22233334444",
 			"5678",
@@ -105,19 +106,44 @@ public class InitLoader implements ApplicationRunner {
 			parent1
 		));
 
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(parentDepositAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(parentFreeAccount)
+				.member(parent1)
+				.build()
+		);
+
 		System.out.println("kid1 = " + kid1);
 		System.out.println("parent1 = " + parent1);
 		System.out.println("parent2 = " + parent2);
 
-		// kid1 입장에서 보이는 연결
 		relationRepository.save(createRelation(kid1, parent1));
 		relationRepository.save(createRelation(kid1, parent2));
 
-		// parent1 입장에서 보이는 연결
 		relationRepository.save(createRelation(parent1, kid1));
 		relationRepository.save(createRelation(parent1, parent2));
 
-		// parent2 입장에서 보이는 연결
 		relationRepository.save(createRelation(parent2, kid1));
 		relationRepository.save(createRelation(parent2, parent1));
 
@@ -127,8 +153,8 @@ public class InitLoader implements ApplicationRunner {
 		phoneNameRepository.save(createPhoneName(parent1, kid1, "우리 아들"));
 		phoneNameRepository.save(createPhoneName(parent2, kid1, "손주"));
 		phoneNameRepository.save(createPhoneName(parent2, parent1, "딸"));
-    
-    createSampleMissions(kid1, parent1);
+
+		createSampleMissions(kid1, parent1);
 	}
 
 	private Member createMember(
@@ -183,51 +209,51 @@ public class InitLoader implements ApplicationRunner {
 			.whom(whom)
 			.whomName(whomName)
 			.build();
-  }
-  
-  private void createSampleMissions(Member kid, Member parent) {
-    missionRepository.saveAll(List.of(
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("부모님께 인사하기")
-        .isCompleted(true)
-        .build(),
+	}
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("심부름 다녀오기")
-        .isCompleted(true)
-        .build(),
+	private void createSampleMissions(Member kid, Member parent) {
+		missionRepository.saveAll(List.of(
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("부모님께 인사하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("용돈 기록 작성하기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("심부름 다녀오기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("방 정리하기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("용돈 기록 작성하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("식사 후 설거지 돕기")
-        .isCompleted(true)
-        .build(),
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("방 정리하기")
+				.isCompleted(true)
+				.build(),
 
-      Mission.builder()
-        .kid(kid)
-        .parent(parent)
-        .name("오늘 소비 내역 확인하기")
-        .isCompleted(true)
-        .build()
-    ));
-  }
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("식사 후 설거지 돕기")
+				.isCompleted(true)
+				.build(),
+
+			Mission.builder()
+				.kid(kid)
+				.parent(parent)
+				.name("오늘 소비 내역 확인하기")
+				.isCompleted(true)
+				.build()
+		));
+	}
 }

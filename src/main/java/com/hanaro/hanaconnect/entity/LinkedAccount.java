@@ -26,6 +26,9 @@ public class LinkedAccount extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Column(length = 50)
+	private String nickname;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "account_id", nullable = false)
 	private Account account;

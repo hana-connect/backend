@@ -3,6 +3,7 @@ package com.hanaro.hanaconnect.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,8 @@ import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
 import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
+import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
+import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.service.AccountService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,14 +26,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/accounts")
+@RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "계좌 관련", description = "본인 계좌 등록 API")
+@Tag(name = "계좌 관련", description = "본인 계좌 등록/아이 계좌 추가 API")
 public class AccountController {
 
 	private final AccountService accountService;
 
-	@PostMapping("/link")
+	@PostMapping("/accounts/link")
 	@Operation(
 		summary = "본인 계좌 등록",
 		description = "로그인한 사용자가 하이픈 없는 11자리 계좌번호와 계좌 비밀번호를 입력해 계좌를 연결합니다."
@@ -51,6 +54,31 @@ public class AccountController {
 				HttpStatus.CREATED.value(),
 				response,
 				"계좌 연결이 완료되었습니다."
+			));
+	}
+
+	@PostMapping("/kids/{kidId}/accounts")
+	@Operation(
+		summary = "아이 계좌 추가",
+		description = "로그인한 부모(조부모 포함) 사용자가 연결된 아이의 기존 계좌를 자신의 계정에 추가합니다."
+	)
+	@ApiResponses({
+		@ApiResponse(responseCode = "201", description = "아이 계좌 추가 성공"),
+		@ApiResponse(responseCode = "400", description = "계좌 정보 오류 또는 중복 등록"),
+		@ApiResponse(responseCode = "500", description = "서버 내부 오류")
+	})
+	public ResponseEntity<CustomAPIResponse<KidAccountAddResponseDTO>> addKidAccount(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@PathVariable Long kidId,
+		@Valid @RequestBody KidAccountAddRequestDTO request
+	) {
+		KidAccountAddResponseDTO response = accountService.addKidAccount(principal.getMemberId(), kidId, request);
+
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(CustomAPIResponse.createSuccess(
+				HttpStatus.CREATED.value(),
+				response,
+				"아이 계좌 추가가 완료되었습니다."
 			));
 	}
 }

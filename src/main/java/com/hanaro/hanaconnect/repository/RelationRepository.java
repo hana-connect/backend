@@ -50,4 +50,5 @@ public interface RelationRepository extends JpaRepository<Relation, Long> {
 		Long memberId,
 		Long connectMemberId,
 		MemberRole connectMemberRole
-	);}
+	);
+}
