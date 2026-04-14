@@ -109,7 +109,7 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		accountRepository.save(createAccount(
+		Account kidSavingsAccount = accountRepository.save(createAccount(
 			"채현이 적금 (용돈)",
 			"11133334444",
 			"1234",
@@ -153,6 +153,20 @@ public class InitLoader implements ApplicationRunner {
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
 				.account(parentFreeAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidSavingsAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidSavingsAccount)
 				.member(parent1)
 				.build()
 		);
