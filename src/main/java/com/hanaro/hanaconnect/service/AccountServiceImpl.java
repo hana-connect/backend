@@ -4,6 +4,7 @@ import java.util.List;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
+import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
@@ -143,6 +145,31 @@ public class AccountServiceImpl implements AccountService {
 			.toList();
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public List<KidAccountListResponseDTO> getKidAccounts(Long memberId, Integer limit) {
+		validateParentRole(memberId);
+
+		List<LinkedAccount> linkedAccounts =
+			linkedAccountRepository.findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
+				memberId,
+				MemberRole.KID
+			);
+
+		if (limit != null && limit > 0 && linkedAccounts.size() > limit) {
+			linkedAccounts = linkedAccounts.subList(0, limit);
+		}
+
+		return linkedAccounts.stream()
+			.map(linkedAccount -> KidAccountListResponseDTO.builder()
+				.linkedAccountId(linkedAccount.getId())
+				.accountId(linkedAccount.getAccount().getId())
+				.nickname(linkedAccount.getNickname())
+				.accountNumber(AccountNumberFormatter.format(linkedAccount.getAccount().getAccountNumber()))
+				.build())
+			.toList();
+	}
+
 	private void validateAccountNumber(String accountNumber) {
 		if (accountNumber == null || !accountNumber.matches("^\\d{11}$")) {
 			throw new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE);
@@ -158,6 +185,15 @@ public class AccountServiceImpl implements AccountService {
 
 		if (!isLinkedKid) {
 			throw new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE);
+		}
+	}
+
+	private void validateParentRole(Long memberId) {
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
+
+		if (member.getMemberRole() != MemberRole.PARENT) {
+			throw new AccessDeniedException("접근 권한이 없습니다.");
 		}
 	}
 

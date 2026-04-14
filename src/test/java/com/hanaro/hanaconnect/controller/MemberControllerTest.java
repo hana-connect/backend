@@ -1,5 +1,6 @@
 package com.hanaro.hanaconnect.controller;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -9,13 +10,13 @@ import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
@@ -30,13 +31,11 @@ import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-// @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MemberControllerTest {
 
 	@Autowired
@@ -66,9 +65,13 @@ class MemberControllerTest {
 	private static long accountSeq = 10000000000L;
 
 	private Long kidId;
-	private Long parentId;
+	private Long parent1Id;
+	private Long parent2Id;
+	private Long kidFriendId;
 
-	private String accessToken;
+	private String kidAccessToken;
+	private String parentAccessToken;
+	private String kidFriendAccessToken;
 
 	@BeforeEach
 	void setUp() {
@@ -119,6 +122,12 @@ class MemberControllerTest {
 		parent2 = memberRepository.save(parent2);
 		kidFriend = memberRepository.save(kidFriend);
 
+		kidId = me.getId();
+		parent1Id = parent1.getId();
+		parent2Id = parent2.getId();
+		kidFriendId = kidFriend.getId();
+
+		// 아이 -> 부모
 		relationRepository.save(Relation.builder()
 			.member(me)
 			.connectMember(parent1)
@@ -131,6 +140,20 @@ class MemberControllerTest {
 			.connectMemberRole(parent2.getMemberRole())
 			.build());
 
+		// 부모 -> 아이
+		relationRepository.save(Relation.builder()
+			.member(parent1)
+			.connectMember(me)
+			.connectMemberRole(me.getMemberRole())
+			.build());
+
+		relationRepository.save(Relation.builder()
+			.member(parent2)
+			.connectMember(me)
+			.connectMemberRole(me.getMemberRole())
+			.build());
+
+		// 아이 친구 연결
 		relationRepository.save(Relation.builder()
 			.member(me)
 			.connectMember(kidFriend)
@@ -155,7 +178,13 @@ class MemberControllerTest {
 			.whomName("친구")
 			.build());
 
-		TokenMemberPrincipal principal = new TokenMemberPrincipal(
+		phoneNameRepository.save(PhoneName.builder()
+			.who(parent1)
+			.whom(parent2)
+			.whomName("시어머니")
+			.build());
+
+		TokenMemberPrincipal kidPrincipal = new TokenMemberPrincipal(
 			me.getId(),
 			me.getName(),
 			me.getVirtualAccount(),
@@ -163,13 +192,31 @@ class MemberControllerTest {
 			me.getRole()
 		);
 
-		accessToken = jwtTokenProvider.createAccessToken(principal);
+		TokenMemberPrincipal parentPrincipal = new TokenMemberPrincipal(
+			parent1.getId(),
+			parent1.getName(),
+			parent1.getVirtualAccount(),
+			parent1.getMemberRole(),
+			parent1.getRole()
+		);
+
+		TokenMemberPrincipal kidFriendPrincipal = new TokenMemberPrincipal(
+			kidFriend.getId(),
+			kidFriend.getName(),
+			kidFriend.getVirtualAccount(),
+			kidFriend.getMemberRole(),
+			kidFriend.getRole()
+		);
+
+		kidAccessToken = jwtTokenProvider.createAccessToken(kidPrincipal);
+		parentAccessToken = jwtTokenProvider.createAccessToken(parentPrincipal);
+		kidFriendAccessToken = jwtTokenProvider.createAccessToken(kidFriendPrincipal);
 	}
 
 	@Test
 	void getMyWalletTest() throws Exception {
 		mvc.perform(get("/api/wallet")
-				.header("Authorization", "Bearer " + accessToken))
+				.header("Authorization", "Bearer " + kidAccessToken))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.status").value(200))
@@ -181,22 +228,21 @@ class MemberControllerTest {
 	@Test
 	void getParentsTest() throws Exception {
 		mvc.perform(get("/api/parents")
-				.header("Authorization", "Bearer " + accessToken))
+				.header("Authorization", "Bearer " + kidAccessToken))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.status").value(200))
 			.andExpect(jsonPath("$.message").value("부모 리스트 조회에 성공했습니다."))
 			.andExpect(jsonPath("$.data").isArray())
 			.andExpect(jsonPath("$.data.length()").value(2))
-			.andExpect(jsonPath("$.data[0].connectMemberRole").value("PARENT"))
-			.andExpect(jsonPath("$.data[1].connectMemberRole").value("PARENT"))
+			.andExpect(jsonPath("$.data[*].connectMemberRole", hasItem("PARENT")))
 			.andDo(print());
 	}
 
 	@Test
 	void getKidsTest() throws Exception {
 		mvc.perform(get("/api/kids")
-				.header("Authorization", "Bearer " + accessToken))
+				.header("Authorization", "Bearer " + kidAccessToken))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.status").value(200))
@@ -208,7 +254,28 @@ class MemberControllerTest {
 			.andDo(print());
 	}
 
-	// 무작위 생성
+	@Test
+	void getOtherParentsTest() throws Exception {
+		mvc.perform(get("/api/" + kidId + "/parents")
+				.header("Authorization", "Bearer " + parentAccessToken))
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(1))
+			.andExpect(jsonPath("$.data[0].connectMemberName").value("이할머니"))
+			.andExpect(jsonPath("$.data[0].connectMemberRole").value("PARENT"))
+			.andDo(print());
+	}
+
+	@Test
+	void getOtherParentsFailTest() throws Exception {
+		mvc.perform(get("/api/" + kidId + "/parents")
+				.header("Authorization", "Bearer " + kidFriendAccessToken))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
 	private String generateAccount() {
 		return String.valueOf(accountSeq++);
 	}

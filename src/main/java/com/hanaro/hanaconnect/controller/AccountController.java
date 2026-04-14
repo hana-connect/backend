@@ -19,6 +19,7 @@ import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
+import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.service.AccountService;
@@ -85,6 +86,32 @@ public class AccountController {
 				HttpStatus.OK.value(),
 				response,
 				"본인 계좌 목록 조회에 성공했습니다."
+			)
+		);
+	}
+
+	@GetMapping("/accounts/kids")
+	@Operation(
+		summary = "아이 계좌 목록 조회",
+		description = "로그인한 부모(조부모 포함) 사용자가 본인이 추가한 아이 계좌 목록을 조회합니다. 만기 계좌는 제외되며, limit를 전달하면 최근 추가순으로 해당 개수만 반환합니다."
+	)
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "아이 계좌 목록 조회 성공"),
+		@ApiResponse(responseCode = "401", description = "인증 필요"),
+		@ApiResponse(responseCode = "500", description = "서버 내부 오류")
+	})
+	public ResponseEntity<CustomAPIResponse<List<KidAccountListResponseDTO>>> getKidAccounts(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@Parameter(description = "최근 추가순으로 조회할 최대 개수", example = "2")
+		@RequestParam(required = false) Integer limit
+	) {
+		List<KidAccountListResponseDTO> response = accountService.getKidAccounts(principal.getMemberId(), limit);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"아이 계좌 목록 조회에 성공했습니다."
 			)
 		);
 	}
