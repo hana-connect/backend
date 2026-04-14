@@ -2,15 +2,19 @@ package com.hanaro.hanaconnect.service;
 
 import com.hanaro.hanaconnect.common.enums.HouseLevel;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
+import com.hanaro.hanaconnect.common.enums.TransactionType;
 import com.hanaro.hanaconnect.common.util.HouseLevelCalculator;
 import com.hanaro.hanaconnect.dto.HouseStatusResponseDTO;
 import com.hanaro.hanaconnect.entity.House;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.PhoneName;
+import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.HouseRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
+import com.hanaro.hanaconnect.repository.TransactionRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -28,6 +32,7 @@ public class HouseService {
 	private final MemberRepository memberRepository;
 	private final RelationRepository relationRepository;
 	private final PhoneNameRepository phoneNameRepository;
+	private final TransactionRepository transactionRepository;
 
 	public HouseStatusResponseDTO getHouseStatus(Long requesterId, Long kidId) {
 		Member requester = memberRepository.findById(requesterId)
@@ -54,7 +59,7 @@ public class HouseService {
 		int gauge = HouseLevelCalculator.calculateGauge(house.getTotalCount());
 		HouseLevel houseLevel = HouseLevel.from(level);
 
-		String message = buildMessage(requester, kid, houseLevel, house.getTotalCount());
+		String message = buildMessage(requester, kid, houseLevel, house);
 
 		return HouseStatusResponseDTO.builder()
 			.memberId(kid.getId())
@@ -93,20 +98,35 @@ public class HouseService {
 		return kid;
 	}
 
-	/**
-	 * 메시지 생성
-	 * - 조부모가 요청한 경우: "{조부모 이름}가 놓아주신..." 형태
-	 * - 아이 본인: 기본 메시지
-	 */
-	private String buildMessage(Member requester, Member kid, HouseLevel houseLevel, int totalCount) {
+	private String buildMessage(Member requester, Member kid, HouseLevel houseLevel, House house) {
 		if (requester.getMemberRole() == MemberRole.PARENT) {
-			Optional<PhoneName> phoneName = phoneNameRepository
-				.findByWhoIdAndWhomId(kid.getId(), requester.getId());
-
-			String connectorName = phoneName.map(PhoneName::getWhomName).orElse(requester.getName());
-			return houseLevel.getPersonalizedMessage(connectorName, totalCount);
+			return houseLevel.getDefaultMessage(house.getTotalCount());
 		}
 
-		return houseLevel.getDefaultMessage(totalCount);
+		Optional<Transaction> latestPaymentOpt = transactionRepository
+			.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
+				house.getAccount().getId(),
+				TransactionType.DEPOSIT
+			);
+
+		if (latestPaymentOpt.isEmpty()) {
+			return houseLevel.getDefaultMessage(house.getTotalCount());
+		}
+
+		Transaction latestPayment = latestPaymentOpt.get();
+
+		if (latestPayment.getSenderAccount() == null ||
+			latestPayment.getSenderAccount().getMember() == null) {
+			return houseLevel.getDefaultMessage(house.getTotalCount());
+		}
+
+		Member payer = latestPayment.getSenderAccount().getMember();
+
+		String payerDisplayName = phoneNameRepository
+			.findByWhoIdAndWhomId(kid.getId(), payer.getId())
+			.map(PhoneName::getWhomName)
+			.orElse(payer.getName());
+
+		return houseLevel.getPersonalizedMessage(payerDisplayName, house.getTotalCount());
 	}
 }
