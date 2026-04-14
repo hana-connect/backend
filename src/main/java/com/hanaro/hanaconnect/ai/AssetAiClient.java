@@ -52,19 +52,23 @@ public class AssetAiClient {
 			)
 		);
 
-		// OpenAI 응답을 직접 받기 위해 Map으로 처리
-		Map response = restClient.post()
+		AssetAiChatResponseDTO response = restClient.post()
 			.uri(baseUrl + "/chat/completions")
 			.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
 			.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 			.body(requestBody)
 			.retrieve()
-			.body(Map.class);
+			.body(AssetAiChatResponseDTO.class);
 
-		List choices = (List) response.get("choices");
-		Map firstChoice = (Map) choices.get(0);
-		Map message = (Map) firstChoice.get("message");
+		// 검증 로직
+		if (response == null
+			|| response.choices() == null
+			|| response.choices().isEmpty()
+			|| response.choices().get(0).message() == null
+			|| response.choices().get(0).message().content() == null) {
+			throw new RuntimeException("Asset AI 응답이 비어 있습니다.");
+		}
 
-		return (String) message.get("content");
+		return response.choices().get(0).message().content();
 	}
 }
