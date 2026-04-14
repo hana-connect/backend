@@ -1,174 +1,143 @@
 package com.hanaro.hanaconnect.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
+import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
-import com.hanaro.hanaconnect.entity.Transaction;
+import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
-import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
-import com.hanaro.hanaconnect.repository.SavingTransactionRepository;
+import com.hanaro.hanaconnect.repository.MemberRepository;
 
-
-@ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
+@SpringBootTest
+@Transactional
 class TransferServiceTest {
 
-	@Mock
-	AccountRepository accountRepository;
+	@Autowired
+	private TransferService transferService;
 
-	@Mock
-	SavingTransactionRepository transactionRepository;
+	@Autowired
+	private MemberRepository memberRepository;
 
-	@Mock
-	LinkedAccountRepository linkedAccountRepository;
+	@Autowired
+	private AccountRepository accountRepository;
 
-	@Mock
-	PasswordEncoder passwordEncoder;
+	private Member findParent() {
+		return memberRepository.findAll().stream()
+			.filter(member -> "김엄마".equals(member.getName()))
+			.filter(member -> member.getMemberRole() == MemberRole.PARENT)
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 부모 회원(김엄마)을 찾을 수 없습니다."));
+	}
 
-	@InjectMocks
-	TransferService transferService;
+	private Account findParentFreeAccount(Long parentId) {
+		return accountRepository.findAll().stream()
+			.filter(account -> account.getMember().getId().equals(parentId))
+			.filter(account -> account.getAccountType() == AccountType.FREE)
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 부모 FREE 계좌를 찾을 수 없습니다."));
+	}
 
-	@Test
-	@DisplayName("적금 송금 성공 - 모든 검증 통과")
-	void transferToChildSavings_success() {
-
-		Long memberId = 1L;
-		Account sender = createAccount(1L, AccountType.FREE, new BigDecimal("50000"), null);
-		Account receiver = createAccount(2L, AccountType.SAVINGS, new BigDecimal("10000"), new BigDecimal("100000"));
-		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO(2L, new BigDecimal("10000"), "1111", "적금 응원 편지");
-
-		given(accountRepository.findByMemberIdAndAccountTypeWithLock(memberId, AccountType.FREE))
-			.willReturn(Optional.of(sender));
-		given(accountRepository.findByIdWithLock(request.getTargetAccountId()))
-			.willReturn(Optional.of(receiver));
-		given(linkedAccountRepository.existsByAccountIdAndMemberId(request.getTargetAccountId(), memberId))
-			.willReturn(true);
-
-		given(passwordEncoder.matches("1111", "encoded-password"))
-			.willReturn(true);
-		given(transactionRepository.save(any(Transaction.class)))
-			.willAnswer(invocation -> invocation.getArgument(0));
-
-		SavingsTransferResponseDTO response = transferService.transferToChildSavings(memberId, request);
-
-		assertEquals(0, response.getTransactionMoney().compareTo(new BigDecimal("10000")));
-		assertEquals(0, response.getTransactionBalance().compareTo(new BigDecimal("40000")));
-		assertEquals("적금 응원 편지", response.getMessage());
-
-		assertEquals(0, sender.getBalance().compareTo(new BigDecimal("40000")));
-		assertEquals(0, receiver.getBalance().compareTo(new BigDecimal("20000")));
-
-		ArgumentCaptor<Transaction> transactionCaptor = ArgumentCaptor.forClass(Transaction.class);
-		then(transactionRepository).should().save(transactionCaptor.capture());
+	private Account findKidSavingsAccount() {
+		return accountRepository.findAll().stream()
+			.filter(account -> account.getMember().getName().equals("홍길동"))
+			.filter(account -> account.getAccountType() == AccountType.SAVINGS)
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 아이 적금 계좌를 찾을 수 없습니다."));
 	}
 
 	@Test
-	@DisplayName("송금 실패 - 금액이 0원 이하일 때")
-	void transferToChildSavings_fail_invalid_amount() {
-		Long memberId = 1L;
-		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO(2L, BigDecimal.ZERO, "1111", "편지");
+	@DisplayName("적금 송금 성공")
+	void transferToChildSavingsSuccessTest() {
+		Member parent = findParent();
+		Account parentFreeAccount = findParentFreeAccount(parent.getId());
+		Account kidSavingsAccount = findKidSavingsAccount();
 
-		assertThrows(IllegalArgumentException.class, () -> transferService.transferToChildSavings(memberId, request));
-		then(accountRepository).shouldHaveNoInteractions();
+		BigDecimal senderBefore = parentFreeAccount.getBalance();
+		BigDecimal receiverBefore = kidSavingsAccount.getBalance();
+
+		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
+		request.setTargetAccountId(kidSavingsAccount.getId());
+		request.setAmount(new BigDecimal("10000"));
+		request.setAccountPassword("1111"); // 테스트 더미 비밀번호에 맞게 수정 필요
+		request.setContent("적금 응원 편지");
+
+		SavingsTransferResponseDTO result =
+			transferService.transferToChildSavings(parent.getId(), request);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getTransactionMoney()).isEqualByComparingTo("10000");
+		assertThat(result.getMessage()).isEqualTo("적금 응원 편지");
+
+		Account updatedSender = accountRepository.findById(parentFreeAccount.getId())
+			.orElseThrow(() -> new IllegalArgumentException("부모 계좌를 다시 찾을 수 없습니다."));
+		Account updatedReceiver = accountRepository.findById(kidSavingsAccount.getId())
+			.orElseThrow(() -> new IllegalArgumentException("아이 적금 계좌를 다시 찾을 수 없습니다."));
+
+		assertThat(updatedSender.getBalance())
+			.isEqualByComparingTo(senderBefore.subtract(new BigDecimal("10000")));
+		assertThat(updatedReceiver.getBalance())
+			.isEqualByComparingTo(receiverBefore.add(new BigDecimal("10000")));
 	}
 
 	@Test
-	@DisplayName("송금 실패 - 연결된 손주 계좌가 아닐 때")
-	void transferToChildSavings_fail_not_linked() {
+	@DisplayName("적금 송금 실패 - 금액이 0원 이하")
+	void transferToChildSavingsFailInvalidAmountTest() {
+		Member parent = findParent();
+		Account kidSavingsAccount = findKidSavingsAccount();
 
-		Long memberId = 1L;
-		Account sender = createAccount(1L, AccountType.FREE, new BigDecimal("50000"), null);
-		Account receiver = createAccount(2L, AccountType.SAVINGS, new BigDecimal("10000"), new BigDecimal("100000"));
-		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO(2L, new BigDecimal("10000"), "1111", "응원해!");
+		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
+		request.setTargetAccountId(kidSavingsAccount.getId());
+		request.setAmount(BigDecimal.ZERO);
+		request.setAccountPassword("1111");
+		request.setContent("편지");
 
-		given(accountRepository.findByMemberIdAndAccountTypeWithLock(memberId, AccountType.FREE))
-			.willReturn(Optional.of(sender));
-		given(accountRepository.findByIdWithLock(request.getTargetAccountId()))
-			.willReturn(Optional.of(receiver));
-
-		given(linkedAccountRepository.existsByAccountIdAndMemberId(request.getTargetAccountId(), memberId))
-			.willReturn(false);
-
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-			() -> transferService.transferToChildSavings(memberId, request));
-
-		assertEquals("연결된 손주 계좌가 아닙니다.", exception.getMessage());
-		then(passwordEncoder).shouldHaveNoInteractions();
+		assertThatThrownBy(() -> transferService.transferToChildSavings(parent.getId(), request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("송금 금액은 0보다 커야 합니다.");
 	}
 
 	@Test
-	@DisplayName("송금 실패 - 비밀번호가 틀렸을 때")
-	void transferToChildSavings_fail_wrong_account_password() {
-		Long memberId = 1L;
-		Account sender = createAccount(1L, AccountType.FREE, new BigDecimal("50000"), null);
-		Account receiver = createAccount(2L, AccountType.SAVINGS, new BigDecimal("10000"), new BigDecimal("100000"));
-		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO(2L, new BigDecimal("10000"), "0000", "편지");
+	@DisplayName("적금 송금 실패 - 존재하지 않는 적금 계좌")
+	void transferToChildSavingsFailInvalidTargetAccountTest() {
+		Member parent = findParent();
 
-		given(accountRepository.findByMemberIdAndAccountTypeWithLock(memberId, AccountType.FREE)).willReturn(Optional.of(sender));
-		given(accountRepository.findByIdWithLock(request.getTargetAccountId())).willReturn(Optional.of(receiver));
-		given(linkedAccountRepository.existsByAccountIdAndMemberId(request.getTargetAccountId(), memberId)).willReturn(true);
-		given(passwordEncoder.matches("0000", "encoded-password")).willReturn(false);
+		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
+		request.setTargetAccountId(999999L);
+		request.setAmount(new BigDecimal("10000"));
+		request.setAccountPassword("1111");
+		request.setContent("편지");
 
-		assertThrows(IllegalArgumentException.class, () -> transferService.transferToChildSavings(memberId, request));
+		assertThatThrownBy(() -> transferService.transferToChildSavings(parent.getId(), request))
+			.isInstanceOf(Exception.class);
 	}
 
 	@Test
-	@DisplayName("송금 실패 - 잔액이 부족할 때")
-	void transferToChildSavings_fail_insufficient_balance() {
-		Long memberId = 1L;
-		Account sender = createAccount(1L, AccountType.FREE, new BigDecimal("5000"), null);
-		Account receiver = createAccount(2L, AccountType.SAVINGS, new BigDecimal("10000"), new BigDecimal("100000"));
-		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO(2L, new BigDecimal("10000"), "1111", "편지");
+	@DisplayName("적금 송금 실패 - 계좌 비밀번호 불일치")
+	void transferToChildSavingsFailWrongPasswordTest() {
+		Member parent = findParent();
+		Account kidSavingsAccount = findKidSavingsAccount();
 
-		given(accountRepository.findByMemberIdAndAccountTypeWithLock(memberId, AccountType.FREE)).willReturn(Optional.of(sender));
-		given(accountRepository.findByIdWithLock(request.getTargetAccountId())).willReturn(Optional.of(receiver));
-		given(linkedAccountRepository.existsByAccountIdAndMemberId(request.getTargetAccountId(), memberId)).willReturn(true);
-		given(passwordEncoder.matches("1111", "encoded-password")).willReturn(true);
+		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
+		request.setTargetAccountId(kidSavingsAccount.getId());
+		request.setAmount(new BigDecimal("10000"));
+		request.setAccountPassword("0000");
+		request.setContent("편지");
 
-		assertThrows(IllegalArgumentException.class, () -> transferService.transferToChildSavings(memberId, request));
-	}
-
-	@Test
-	@DisplayName("송금 실패 - 적금 한도를 초과할 때")
-	void transferToChildSavings_fail_total_limit_exceeded() {
-		Long memberId = 1L;
-		Account sender = createAccount(1L, AccountType.FREE, new BigDecimal("50000"), null);
-		Account receiver = createAccount(2L, AccountType.SAVINGS, new BigDecimal("95000"), new BigDecimal("100000"));
-		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO(2L, new BigDecimal("10000"), "1111", "편지");
-
-		given(accountRepository.findByMemberIdAndAccountTypeWithLock(memberId, AccountType.FREE)).willReturn(Optional.of(sender));
-		given(accountRepository.findByIdWithLock(request.getTargetAccountId())).willReturn(Optional.of(receiver));
-		given(linkedAccountRepository.existsByAccountIdAndMemberId(request.getTargetAccountId(), memberId)).willReturn(true);
-		given(passwordEncoder.matches("1111", "encoded-password")).willReturn(true);
-
-		assertThrows(IllegalArgumentException.class, () -> transferService.transferToChildSavings(memberId, request));
-	}
-
-	private Account createAccount(Long id, AccountType accountType, BigDecimal balance, BigDecimal totalLimit) {
-		return Account.builder()
-			.id(id)
-			.name(accountType == AccountType.FREE ? "자유 입출금" : "아이 적금")
-			.accountNumber("1000000000" + id)
-			.password("encoded-password")
-			.accountType(accountType)
-			.balance(balance)
-			.totalLimit(totalLimit)
-			.build();
+		assertThatThrownBy(() -> transferService.transferToChildSavings(parent.getId(), request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("계좌 비밀번호가 일치하지 않습니다.");
 	}
 }

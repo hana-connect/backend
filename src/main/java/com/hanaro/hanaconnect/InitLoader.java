@@ -16,16 +16,17 @@ import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.security.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Mission;
 import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Relation;
 import com.hanaro.hanaconnect.repository.AccountRepository;
+import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
-
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,7 +41,7 @@ public class InitLoader implements ApplicationRunner {
 	private final AccountCryptoService accountCryptoService;
 	private final PasswordEncoder passwordEncoder;
 	private final MissionRepository missionRepository;
-
+	private final LinkedAccountRepository linkedAccountRepository;
 
 	@Override
 	@Transactional
@@ -72,12 +73,11 @@ public class InitLoader implements ApplicationRunner {
 			MemberRole.PARENT
 		);
 
-		// 객체를 DB에 저장
 		kid1 = memberRepository.save(kid1);
 		parent1 = memberRepository.save(parent1);
 		parent2 = memberRepository.save(parent2);
 
-		accountRepository.save(createAccount(
+		Account kidAccount = accountRepository.save(createAccount(
 			"아이 입출금 통장",
 			"11122223333",
 			"1234",
@@ -87,7 +87,18 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		accountRepository.save(createAccount(
+		// 부모1 입출금 계좌
+		Account parentFreeAccount = accountRepository.save(createAccount(
+			"부모 입출금 통장",
+			"22233335555",
+			"5678",
+			AccountType.FREE,
+			new BigDecimal("800000"),
+			parent1
+		));
+
+		// 부모1 저축 예금 계좌
+		Account parentDepositAccount = accountRepository.save(createAccount(
 			"부모 저축 예금",
 			"22233334444",
 			"5678",
@@ -117,19 +128,44 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(parentDepositAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(parentFreeAccount)
+				.member(parent1)
+				.build()
+		);
+
 		System.out.println("kid1 = " + kid1);
 		System.out.println("parent1 = " + parent1);
 		System.out.println("parent2 = " + parent2);
 
-		// kid1 입장에서 보이는 연결
 		relationRepository.save(createRelation(kid1, parent1));
 		relationRepository.save(createRelation(kid1, parent2));
 
-		// parent1 입장에서 보이는 연결
 		relationRepository.save(createRelation(parent1, kid1));
 		relationRepository.save(createRelation(parent1, parent2));
 
-		// parent2 입장에서 보이는 연결
 		relationRepository.save(createRelation(parent2, kid1));
 		relationRepository.save(createRelation(parent2, parent1));
 

@@ -35,4 +35,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 	@Query("select a from Account a where a.id = :id")
 	Optional<Account> findByIdWithLock(@Param("id") Long id);
 
+	Optional<Account> findByAccountNumberAndMemberId(String accountNumber, Long memberId);
+
+	Optional<Account> findByMemberIdAndAccountType(Long memberId, AccountType accountType);
 }
