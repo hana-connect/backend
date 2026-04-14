@@ -2,6 +2,7 @@ package com.hanaro.hanaconnect.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,15 +11,19 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
+import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
+import com.hanaro.hanaconnect.dto.RelayResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
 import com.hanaro.hanaconnect.dto.TransferRequestDto;
 import com.hanaro.hanaconnect.dto.TransferResponseDto;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.Letter;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
+import com.hanaro.hanaconnect.repository.LetterRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
@@ -43,6 +48,7 @@ public class TransferService {
 	private final RelationRepository relationRepository;
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final LetterRepository letterRepository;
 
 	@Transactional
 	public SavingsTransferResponseDTO transferToChildSavings(Long memberId, SavingsTransferRequestDTO request) {
@@ -99,6 +105,14 @@ public class TransferService {
 			.build();
 
 		Transaction savedTransaction = savingTransactionRepository.save(transaction);
+
+		if (request.getContent() != null && !request.getContent().isBlank()) {
+			Letter letter = Letter.builder()
+				.content(request.getContent())
+				.transaction(savedTransaction)
+				.build();
+			letterRepository.save(letter);
+		}
 
 		// 8. 응답
 		return SavingsTransferResponseDTO.builder()
@@ -211,6 +225,23 @@ public class TransferService {
 			.accountNumber(kidAccount.getAccountNumber())
 			.amount(amount)
 			.transferDate(LocalDate.now())
+			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public RelayResponseDTO getRelayHistory(Long memberId, Long targetAccountId) {
+		// 계좌 정보 조회
+		Account account = accountRepository.findById(targetAccountId)
+			.orElseThrow(() -> new RuntimeException("계좌를 찾을 수 없습니다."));
+
+		// Repository에서 만든 쿼리로 편지 내역 리스트 조회
+		List<RelayHistoryDTO> history = letterRepository.findMyRelayHistory(memberId, targetAccountId);
+
+		// 최종 DTO 조립해서 반환
+		return RelayResponseDTO.builder()
+			.productName(account.getName())
+			.accountNumber(account.getAccountNumber())
+			.history(history)
 			.build();
 	}
 }

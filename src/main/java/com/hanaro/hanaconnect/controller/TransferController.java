@@ -9,11 +9,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.dto.RelayResponseDTO;
+import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
+import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
 import com.hanaro.hanaconnect.dto.TransferRequestDto;
 import com.hanaro.hanaconnect.dto.TransferResponseDto;
-import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.service.TransferService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -82,6 +83,24 @@ public class TransferController {
 				HttpStatus.OK.value(),
 				response,
 				"송금이 완료되었습니다."
+			)
+		);
+	}
+
+	@GetMapping("/savings/relay")
+	@Operation(summary = "적금 릴레이 내역 조회", description = "프론트 릴레이 화면에 필요한 계좌 정보와 편지 목록을 조회합니다.")
+	public ResponseEntity<CustomAPIResponse<RelayResponseDTO>> getRelayData(
+		@AuthenticationPrincipal TokenMemberPrincipal principal,
+		@RequestParam Long targetAccountId
+	) {
+
+		RelayResponseDTO response = transferService.getRelayHistory(principal.getMemberId(), targetAccountId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"적금 편지 내역 조회에 성공했습니다."
 			)
 		);
 	}

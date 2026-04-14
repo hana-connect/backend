@@ -16,7 +16,7 @@ import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
-import com.hanaro.hanaconnect.dto.TerminatedAccountResponse;
+import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
@@ -162,12 +162,12 @@ public class AccountServiceImpl implements AccountService {
 	}
 
 	@Override
-	public List<TerminatedAccountResponse> getTerminatedSavings(Long memberId) {
+	public List<TerminatedAccountResponseDTO> getTerminatedSavings(Long memberId) {
 		return accountRepository.findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc(
 				memberId,
 				AccountType.SAVINGS
 			).stream()
-			.map(TerminatedAccountResponse::from)
+			.map(TerminatedAccountResponseDTO::from)
 			.toList();
 	}
 }
