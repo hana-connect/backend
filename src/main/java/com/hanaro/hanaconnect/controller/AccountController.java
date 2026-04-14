@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
@@ -107,10 +105,6 @@ public class AccountController {
 		@Parameter(description = "최근 추가순으로 조회할 최대 개수", example = "2")
 		@RequestParam(required = false) Integer limit
 	) {
-		if (principal.getMemberRole() != MemberRole.PARENT) {
-			throw new AccessDeniedException("접근 권한이 없습니다.");
-		}
-
 		List<KidAccountListResponseDTO> response = accountService.getKidAccounts(principal.getMemberId(), limit);
 
 		return ResponseEntity.ok(

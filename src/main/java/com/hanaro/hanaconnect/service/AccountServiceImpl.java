@@ -4,6 +4,7 @@ import java.util.List;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -147,6 +148,8 @@ public class AccountServiceImpl implements AccountService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<KidAccountListResponseDTO> getKidAccounts(Long memberId, Integer limit) {
+		validateParentRole(memberId);
+
 		List<LinkedAccount> linkedAccounts =
 			linkedAccountRepository.findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
 				memberId,
@@ -182,6 +185,15 @@ public class AccountServiceImpl implements AccountService {
 
 		if (!isLinkedKid) {
 			throw new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE);
+		}
+	}
+
+	private void validateParentRole(Long memberId) {
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
+
+		if (member.getMemberRole() != MemberRole.PARENT) {
+			throw new AccessDeniedException("접근 권한이 없습니다.");
 		}
 	}
 
