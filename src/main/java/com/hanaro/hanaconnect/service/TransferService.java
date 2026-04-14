@@ -28,10 +28,10 @@ public class TransferService {
 	public SavingsTransferResponseDTO transferToChildSavings(Long memberId, SavingsTransferRequestDTO request) {
 
 		// 1. 계좌들 조회
-		Account sender = accountRepository.findByMemberIdAndAccountType(memberId, AccountType.FREE)
+		Account sender = accountRepository.findByMemberIdAndAccountTypeWithLock(memberId, AccountType.FREE)
 			.orElseThrow(() -> new EntityNotFoundException("지갑 계좌를 찾을 수 없습니다."));
 
-		Account receiver = accountRepository.findById(request.getTargetAccountId())
+		Account receiver = accountRepository.findByIdWithLock(request.getTargetAccountId())
 			.orElseThrow(() -> new EntityNotFoundException("대상 적금 계좌를 찾을 수 없습니다."));
 
 		// 2. 검증: 비밀번호 확인

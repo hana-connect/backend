@@ -37,7 +37,7 @@ public class AccountServiceImpl implements AccountService {
 
 		validateAccountNumber(normalizedAccountNumber);
 
-		Account account = accountRepository.findByAccountNumberAndMemberId(normalizedAccountNumber, memberId)
+		Account account = accountRepository.findByAccountNumberAndMemberIdWithLock(normalizedAccountNumber, memberId)
 			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
 
 		if (!passwordEncoder.matches(request.getAccountPassword(), account.getPassword())) {

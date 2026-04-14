@@ -112,7 +112,7 @@ public class InitLoader implements ApplicationRunner {
 			"33344455566",
 			"1234",
 			AccountType.FREE,
-			new BigDecimal("1000000"),
+			new BigDecimal("900000"),
 			parent2,
 			null
 		));
