@@ -28,7 +28,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,120 +47,96 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-
-      - name: Wait for MySQL to be ready
-        run: |
-          echo "MySQL 기다리는 중..."
-          for i in {1..30}; do
-            mysqladmin ping -h 127.0.0.1 -u hanaconnect -p12345678 --silent && break
-            echo "아직 안 됨... 대기"
-            sleep 2
-          done
-
-      - name: Check MySQL connection
-        run: |
-          mysql -h 127.0.0.1 -u hanaconnect -p12345678 -e "SHOW DATABASES;"
-
       - name: Create CI config files
         run: |
           mkdir -p src/main/resources
           cat > src/main/resources/application.yml <<EOF
-          
-spring:
-  application:
-    name: hanaconnect
-
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: hanaconnect
-    password: 12345678
-
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-      show-sql: true
-      defer-datasource-initialization: true
-      properties:
-        hibernate:
-          jdbc:
-            batch_size: 50
-            time_zone: Asia/Seoul
-          order_inserts: true
-          order_updates: true
-          format_sql: true
-          use_sql_comments: true
-
-  sql:
-    init:
-      mode: never
-
-  flyway:
-    enabled: false
-    baseline-on-migrate: true
-
-  web:
-    resources:
-      add-mappings: false
-
-  servlet:
-    multipart:
-    location: src/main/resources/static/tmp
-    max-request-size: 10MB
-    max-file-size: 2MB
-
-  messages:
-    basename: messages/message
-
-  upload:
-    path: src/main/resources/static/upload
-    secure: src/main/upload/secure
-
-  management:
-    server:
-      port: 9001
-    endpoints:
-      web:
-        exposure:
-          include: health,beans,env,metrics
-    endpoint:
-      metrics:
-        access: read_only
-      shutdown:
-        access: unrestricted
-      health:
-        show-details: always
-
-    springdoc:
-      swagger-ui:
-        enabled: true
-        path: /swagger.html
-      api-docs:
-        enabled: true
-        path: /hanaconnect/api-docs
-
-  quiz-ai:
-    api-key: dummy-key
-    model: gpt-4.1-mini
-    base-url: https://api.openai.com/v1
-
-  asset-ai:
-    api-key: test-api-key
-    model: gpt-4.1-mini
-    base-url: https://api.openai.com/v1  
-
-   app:
-    crypto:
-      key: 1234567890123456
-
-    jwt:
-      secret: ${{ secrets.JWT_SECRET_KEY }}
-      access-token-expiration-ms: 3600000
-      refresh-token-expiration-ms: 1209600000
-  EOF
-
+          spring:
+            application:
+              name: hanaconnect
+            config:
+              import: classpath:security.yml
+            datasource:
+              driver-class-name: com.mysql.cj.jdbc.Driver
+              url: jdbc:mysql://127.0.0.1:3306/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+              username: hanaconnect
+            jpa:
+              hibernate:
+                ddl-auto: create-drop
+                naming:
+                  physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+              show-sql: true
+              defer-datasource-initialization: true
+              properties:
+                hibernate:
+                  jdbc:
+                    batch_size: 50
+                    time_zone: Asia/Seoul
+                  order_inserts: true
+                  order_updates: true
+                  format_sql: true
+                  use_sql_comments: true
+            sql:
+              init:
+                mode: never
+            flyway:
+              enabled: false
+              baseline-on-migrate: true
+            web:
+              resources:
+                add-mappings: false
+            servlet:
+              multipart:
+                location: src/main/resources/static/tmp
+                max-request-size: 10MB
+                max-file-size: 2MB
+            messages:
+              basename: messages/message
+          upload:
+            path: src/main/resources/static/upload
+            secure: src/main/upload/secure
+          management:
+            server:
+              port: 9001
+            endpoints:
+              web:
+                exposure:
+                  include: health,beans,env,metrics
+            endpoint:
+              metrics:
+                access: read_only
+              shutdown:
+                access: unrestricted
+              health:
+                show-details: always
+          springdoc:
+            swagger-ui:
+              enabled: true
+              path: /swagger.html
+            api-docs:
+              enabled: true
+              path: /hanaconnect/api-docs
+          quiz-ai:
+            api-key: dummy-key
+            model: gpt-4.1-mini
+            base-url: https://api.openai.com/v1
+          asset-ai:
+            api-key: test-api-key
+            model: gpt-4.1-mini
+            base-url: https://api.openai.com/v1  
+          EOF
+          cat > src/main/resources/security.yml <<EOF
+          spring:
+            datasource:
+              password: 12345678
+          app:
+            crypto:
+              key: 1234567890123456
+          jwt:
+            secret: ${{ secrets.JWT_SECRET_KEY }}
+            access-token-expiration-ms: 3600000
+            refresh-token-expiration-ms: 1209600000
+          EOF
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
