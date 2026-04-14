@@ -218,17 +218,19 @@ public class TransferService {
 
 	@Transactional(readOnly = true)
 	public RelayResponseDTO getRelayHistory(Long memberId, Long targetAccountId) {
-		// 계좌 정보 조회
 		Account account = accountRepository.findById(targetAccountId)
-			.orElseThrow(() -> new RuntimeException("계좌를 찾을 수 없습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
 
-		// 연결된 계좌(LinkedAccount) 정보 조회하여 별명(nickname) 가져오기
-		String displayName = linkedAccountRepository.findByMemberIdAndAccountId(memberId, targetAccountId)
-			.map(LinkedAccount::getNickname)
-			.filter(nick -> nick != null && !nick.isEmpty())
-			.orElse(account.getName());
+		LinkedAccount linkedAccount = linkedAccountRepository.findByMemberIdAndAccountId(memberId, targetAccountId)
+			.orElseThrow(() -> new IllegalArgumentException("해당 계좌에 접근 권한이 없습니다."));
 
-		// 편지 조회
+		if (account.getAccountType() != AccountType.SAVINGS) {
+			throw new IllegalArgumentException("적금 계좌만 조회할 수 있습니다.");
+		}
+
+		String nickname = linkedAccount.getNickname();
+		String displayName = (nickname != null && !nickname.isBlank()) ? nickname : account.getName();
+
 		List<RelayHistoryDTO> history = letterRepository.findMyRelayHistory(memberId, targetAccountId);
 
 		return RelayResponseDTO.builder()
@@ -237,4 +239,5 @@ public class TransferService {
 			.history(history)
 			.build();
 	}
+
 }

@@ -16,6 +16,7 @@ import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
@@ -144,13 +145,38 @@ class TransferServiceTest {
 	}
 
 	@Test
-	@DisplayName("적금 릴레이 내역 조회 실패 - 존재하지 않는 계좌")
+	@DisplayName("적금 릴레이 내역 조회 실패 케이스 모음")
 	void getRelayHistoryFailTest() {
 		Member parent = findParent();
-		Long invalidAccountId = 9999L;
 
-		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), invalidAccountId))
-			.isInstanceOf(RuntimeException.class)
+		// 존재하지 않는 계좌
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), 999L))
+			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("계좌를 찾을 수 없습니다.");
+
+		// 내 연결 계좌 목록에 없는 진짜 계좌 ID
+		Long unlinkedId = findUnlinkedAccountId(parent.getId());
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), unlinkedId))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("해당 계좌에 접근 권한이 없습니다.");
+
+		// 계좌 타입 불일치
+		Account checkingAccount = findLinkedKidCheckingAccount(parent.getId());
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), checkingAccount.getId()))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("적금 계좌만 조회할 수 있습니다.");
+	}
+	private Account findLinkedKidCheckingAccount(Long memberId) {
+		return linkedAccountRepository.findAllByMemberId(memberId).stream()
+			.map(LinkedAccount::getAccount)
+			.filter(a -> a.getAccountType() == AccountType.FREE)
+			.findFirst().orElseThrow();
+	}
+
+	private Long findUnlinkedAccountId(Long memberId) {
+		return accountRepository.findAll().stream()
+			.filter(a -> linkedAccountRepository.findByMemberIdAndAccountId(memberId, a.getId()).isEmpty())
+			.map(Account::getId)
+			.findFirst().orElseThrow();
 	}
 }
