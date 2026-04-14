@@ -83,7 +83,8 @@ public class InitLoader implements ApplicationRunner {
 			"1234",
 			AccountType.FREE,
 			new BigDecimal("50000"),
-			kid1
+			kid1,
+			null
 		));
 
 		// 부모1 입출금 계좌
@@ -93,7 +94,8 @@ public class InitLoader implements ApplicationRunner {
 			"5678",
 			AccountType.FREE,
 			new BigDecimal("800000"),
-			parent1
+			parent1,
+			null
 		));
 
 		// 부모1 저축 예금 계좌
@@ -103,7 +105,28 @@ public class InitLoader implements ApplicationRunner {
 			"5678",
 			AccountType.DEPOSIT,
 			new BigDecimal("100000"),
-			parent1
+			parent1,
+			null
+		));
+
+		Account kidSavingsAccount = accountRepository.save(createAccount(
+			"채현이 적금 (용돈)",
+			"11133334444",
+			"1234",
+			AccountType.SAVINGS,
+			new BigDecimal("250000"),
+			kid1,
+			new BigDecimal("300000")
+		));
+
+		accountRepository.save(createAccount(
+			"할머니 지갑",
+			"33344455566",
+			"1234",
+			AccountType.FREE,
+			new BigDecimal("900000"),
+			parent2,
+			null
 		));
 
 		linkedAccountRepository.save(
@@ -130,6 +153,20 @@ public class InitLoader implements ApplicationRunner {
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
 				.account(parentFreeAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidSavingsAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidSavingsAccount)
 				.member(parent1)
 				.build()
 		);
@@ -183,7 +220,8 @@ public class InitLoader implements ApplicationRunner {
 		String rawPassword,
 		AccountType accountType,
 		BigDecimal balance,
-		Member member
+		Member member,
+		BigDecimal totalLimit
 	) {
 		return Account.builder()
 			.name(name)
@@ -192,6 +230,7 @@ public class InitLoader implements ApplicationRunner {
 			.accountType(accountType)
 			.balance(balance)
 			.member(member)
+			.totalLimit(totalLimit)
 			.build();
 	}
 
