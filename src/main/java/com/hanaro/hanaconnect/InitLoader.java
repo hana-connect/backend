@@ -83,7 +83,8 @@ public class InitLoader implements ApplicationRunner {
 			"1234",
 			AccountType.FREE,
 			new BigDecimal("50000"),
-			kid1
+			kid1,
+			null
 		));
 
 		accountRepository.save(createAccount(
@@ -92,16 +93,18 @@ public class InitLoader implements ApplicationRunner {
 			"5678",
 			AccountType.DEPOSIT,
 			new BigDecimal("100000"),
-			parent1
+			parent1,
+			null
 		));
 
 		accountRepository.save(createAccount(
 			"채현이 적금 (용돈)",
 			"11133334444",
-			"1234", // 비밀번호는 이렇게 넣어야 함 (자동 encode됨)
+			"1234",
 			AccountType.SAVINGS,
 			new BigDecimal("250000"),
-			kid1
+			kid1,
+			new BigDecimal("300000")
 		));
 
 		accountRepository.save(createAccount(
@@ -110,7 +113,8 @@ public class InitLoader implements ApplicationRunner {
 			"1234",
 			AccountType.FREE,
 			new BigDecimal("1000000"),
-			parent2
+			parent2,
+			null
 		));
 
 		System.out.println("kid1 = " + kid1);
@@ -165,7 +169,8 @@ public class InitLoader implements ApplicationRunner {
 		String rawPassword,
 		AccountType accountType,
 		BigDecimal balance,
-		Member member
+		Member member,
+		BigDecimal totalLimit
 	) {
 		return Account.builder()
 			.name(name)
@@ -174,6 +179,7 @@ public class InitLoader implements ApplicationRunner {
 			.accountType(accountType)
 			.balance(balance)
 			.member(member)
+			.totalLimit(totalLimit)
 			.build();
 	}
 
