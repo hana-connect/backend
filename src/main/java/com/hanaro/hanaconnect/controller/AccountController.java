@@ -20,6 +20,7 @@ import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.TerminatedAccountResponse;
 import com.hanaro.hanaconnect.service.AccountService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -111,5 +112,24 @@ public class AccountController {
 				response,
 				"아이 계좌 추가가 완료되었습니다."
 			));
+	}
+
+	@GetMapping("/accounts/terminated-savings")
+	@Operation(
+		summary = "나의 만기된 적금 계좌 목록 조회",
+		description = "로그인한 사용자의 계좌 중 만기된(is_end=true) 적금(SAVINGS) 목록을 조회합니다."
+	)
+	public ResponseEntity<CustomAPIResponse<List<TerminatedAccountResponse>>> getTerminatedSavings(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal
+	) {
+		List<TerminatedAccountResponse> response = accountService.getTerminatedSavings(principal.getMemberId());
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"만기된 적금 목록 조회에 성공했습니다."
+			)
+		);
 	}
 }

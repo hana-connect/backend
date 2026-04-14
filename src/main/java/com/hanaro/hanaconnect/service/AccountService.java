@@ -7,6 +7,7 @@ import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.TerminatedAccountResponse;
 
 public interface AccountService {
 
@@ -16,4 +17,5 @@ public interface AccountService {
 
 	List<MyAccountResponseDTO> getMyAccounts(Long memberId, Integer limit);
 
+	List<TerminatedAccountResponse> getTerminatedSavings(Long memberId);
 }
