@@ -76,6 +76,15 @@ class AccountRepositoryTest {
 			.role(Role.USER)
 			.build());
 
+		accountRepository.save(Account.builder()
+			.member(member)
+			.name("부모 입출금 통장")
+			.accountNumber("99999999999")
+			.password("1234")
+			.accountType(AccountType.FREE)
+			.balance(BigDecimal.valueOf(100000))
+			.build());
+
 		// when
 		Optional<Account> result =
 			accountRepository.findByMemberIdAndAccountType(
