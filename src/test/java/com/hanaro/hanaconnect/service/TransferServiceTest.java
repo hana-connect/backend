@@ -101,7 +101,7 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(BigDecimal.ZERO);
-		request.setAccountPassword("1111");
+		request.setAccountPassword("5678");
 		request.setContent("편지");
 
 		assertThatThrownBy(() -> transferService.transferToChildSavings(parent.getId(), request))
