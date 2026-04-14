@@ -24,8 +24,6 @@ public class TransferService {
 	private final SavingTransactionRepository transactionRepository;
 	private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-	private static final BigDecimal DAILY_LIMIT = new BigDecimal("500000");
-
 	@Transactional
 	public SavingsTransferResponseDTO transferToChildSavings(Long memberId, SavingsTransferRequestDTO request) {
 
@@ -41,18 +39,7 @@ public class TransferService {
 			throw new IllegalArgumentException("계좌 비밀번호가 일치하지 않습니다.");
 		}
 
-		// 3. 검증: [일일 송금 한도] 체크 (부모님 기준)
-		BigDecimal todayTotal = transactionRepository.sumAmountByMemberAndTypeAndDate(
-			memberId,
-			TransactionType.SAVINGS_TRANSFER,
-			java.time.LocalDate.now()
-		).orElse(BigDecimal.ZERO);
-
-		if (todayTotal.add(request.getAmount()).compareTo(DAILY_LIMIT) > 0) {
-			throw new IllegalArgumentException("일일 송금 한도(50만원)를 초과했습니다.");
-		}
-
-		// 4. 검증: [적금 계좌 한도] 체크 (아이 적금 통장 기준)
+		// 3. 검증: [적금 계좌 한도] 체크 (아이 적금 통장 기준)
 		if (receiver.getTotalLimit() != null) {
 			BigDecimal currentBalance = receiver.getBalance();
 			BigDecimal newBalance = currentBalance.add(request.getAmount());
@@ -62,11 +49,11 @@ public class TransferService {
 			}
 		}
 
-		// 5. 이체 실행 (상태 변경)
+		// 4. 이체 실행 (상태 변경)
 		sender.withdraw(request.getAmount());
 		receiver.deposit(request.getAmount());
 
-		// 6. Transaction 저장 (기록)
+		//5. Transaction 저장 (기록)
 		Transaction transaction = Transaction.builder()
 			.transactionMoney(request.getAmount())
 			.transactionBalance(sender.getBalance())
@@ -77,7 +64,7 @@ public class TransferService {
 
 		Transaction savedTransaction = transactionRepository.save(transaction);
 
-		// 7. 결과 반환
+		// 6. 결과 반환
 		return SavingsTransferResponseDTO.builder()
 			.transactionMoney(savedTransaction.getTransactionMoney())
 			.transactionBalance(savedTransaction.getTransactionBalance())
