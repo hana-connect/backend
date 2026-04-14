@@ -109,7 +109,7 @@ public class InitLoader implements ApplicationRunner {
 
 		accountRepository.save(createAccount(
 			"할머니 지갑",
-			"333444555",
+			"33344455566",
 			"1234",
 			AccountType.FREE,
 			new BigDecimal("1000000"),
