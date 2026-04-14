@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import com.hanaro.hanaconnect.entity.PhoneName;
 
 public interface PhoneNameRepository extends JpaRepository<PhoneName, Long> {
+	Optional<PhoneName> findByWhoIdAndWhomId(Long whoId, Long whomId);
 
 	@Query("""
 		SELECT p.whomName
