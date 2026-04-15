@@ -21,6 +21,7 @@ import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.service.AccountService;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -51,10 +52,10 @@ class AccountServiceTest {
 			.build());
 
 		// 만기된 적금 계좌 저장
-		accountRepository.save(Account.builder()
+		Account savedAccount = accountRepository.save(Account.builder()
 			.member(member)
 			.name("369 행복 적금")
-			.accountNumber("999888777")
+			.accountNumber("99988877700")
 			.password("1234")
 			.accountType(AccountType.SAVINGS)
 			.balance(BigDecimal.valueOf(50000))
@@ -66,7 +67,13 @@ class AccountServiceTest {
 
 		// Then
 		assertThat(result).isNotEmpty();
-		assertThat(result.get(0).getName()).isEqualTo("369 행복 적금");
-		assertThat(result.get(0).getAccountNumber()).isEqualTo("999888777");
+		assertThat(result).hasSize(1);
+
+		TerminatedAccountResponseDTO response = result.get(0);
+
+		assertThat(response.getName()).isEqualTo("369 행복 적금");
+		assertThat(response.getAccountNumber()).isEqualTo("999-8887-7700");
+		assertThat(response.getAccountId()).isNotNull();
+		assertThat(response.getAccountId()).isEqualTo(savedAccount.getId());
 	}
 }

@@ -175,7 +175,7 @@ public class AccountController {
 
 	@GetMapping("/accounts/terminated-savings")
 	@Operation(
-		summary = "나의 만기된 적금 계좌 목록 조회",
+		summary = "아이 내 지갑 - 나의 만기된 적금 계좌 목록 조회",
 		description = "로그인한 사용자의 계좌 중 만기된(is_end=true) 적금(SAVINGS) 목록을 조회합니다."
 	)
 	public ResponseEntity<CustomAPIResponse<List<TerminatedAccountResponseDTO>>> getTerminatedSavings(
@@ -192,16 +192,24 @@ public class AccountController {
 		);
 	}
 
+	// 아이용
 	@GetMapping("/accounts/terminated-savings/{accountId}")
 	@Operation(
-		summary = "만기된 적금 상세 내역 및 편지함 조회",
-		description = "로그인한 사용자의 계좌 중 만기된 적금 계좌의 상세 거래 내역과 편지를 조회합니다. 입금액, 잔액, 발신자 정보 및 메시지를 포함합니다."
+		summary = "아이 내 지갑 - 만기된 적금 상세 내역 및 편지함 조회",
+		description = "전체 또는 특정 발신인 별 거래 내역을 12개씩 페이징하여 조회합니다."
 	)
 	public ResponseEntity<CustomAPIResponse<SavingsDetailResponseDTO>> getSavingsDetail(
 		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
-		@PathVariable Long accountId
+		@PathVariable Long accountId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(required = false) Long senderId
 	) {
-		SavingsDetailResponseDTO response = transferService.getExpiredSavingsDetail(principal.getMemberId(), accountId);
+		SavingsDetailResponseDTO response = transferService.getExpiredSavingsDetail(
+			principal.getMemberId(),
+			accountId,
+			page,
+			senderId
+		);
 
 		return ResponseEntity.ok(
 			CustomAPIResponse.createSuccess(
