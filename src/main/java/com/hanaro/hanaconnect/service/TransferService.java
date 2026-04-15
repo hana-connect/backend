@@ -242,4 +242,25 @@ public class TransferService {
 			.history(history)
 			.build();
 	}
+
+	@Transactional(readOnly = true)
+	public RelayResponseDTO getRecentRelayHistory(Long memberId, Long targetAccountId) {
+		// 1. 권한 체크 및 계좌 정보 가져오기
+		LinkedAccount linkedAccount = linkedAccountRepository.findByMemberIdAndAccountId(memberId, targetAccountId)
+			.orElseThrow(() -> new IllegalArgumentException("해당 계좌에 접근 권한이 없습니다."));
+
+		Account account = linkedAccount.getAccount();
+		String displayName = (linkedAccount.getNickname() != null && !linkedAccount.getNickname().isBlank())
+			? linkedAccount.getNickname() : account.getName();
+
+		// 2. 딱 3개만 가져오도록 PageRequest 생성
+		org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 3);
+		List<RelayHistoryDTO> history = letterRepository.findTop3RelayHistory(memberId, targetAccountId, pageable);
+
+		return RelayResponseDTO.builder()
+			.productNickname(displayName)
+			.accountNumber(account.getAccountNumber())
+			.history(history)
+			.build();
+	}
 }
