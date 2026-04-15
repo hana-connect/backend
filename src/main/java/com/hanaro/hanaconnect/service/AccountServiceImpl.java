@@ -14,6 +14,8 @@ import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.util.AccountNumberFormatter;
 import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
+import com.hanaro.hanaconnect.dto.AccountVerifyRequestDTO;
+import com.hanaro.hanaconnect.dto.AccountVerifyResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
@@ -80,6 +82,24 @@ public class AccountServiceImpl implements AccountService {
 		return new AccountLinkResponseDTO(
 			AccountNumberFormatter.format(account.getAccountNumber()),
 			savedLinkedAccount.getCreatedAt().format(LINKED_AT_FORMATTER)
+		);
+	}
+
+	@Override
+	public AccountVerifyResponseDTO verifyMyAccount(Long memberId, AccountVerifyRequestDTO request) {
+		String normalizedAccountNumber = AccountNumberFormatter.normalize(request.getAccountNumber());
+
+		validateAccountNumber(normalizedAccountNumber);
+
+		Account account = accountRepository.findByAccountNumberAndMemberIdWithLock(normalizedAccountNumber, memberId)
+			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
+
+		if (linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), memberId)) {
+			throw new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE);
+		}
+
+		return new AccountVerifyResponseDTO(
+			AccountNumberFormatter.format(account.getAccountNumber())
 		);
 	}
 
