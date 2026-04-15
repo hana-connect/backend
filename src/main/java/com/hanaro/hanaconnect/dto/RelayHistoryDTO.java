@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RelayHistoryDTO {
-	private Long id;
+	private Long letterId;
 
 	private String senderName;
 
