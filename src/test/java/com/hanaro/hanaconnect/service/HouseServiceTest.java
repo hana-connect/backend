@@ -74,7 +74,7 @@ class HouseServiceTest {
 		assertThat(result.getMonthlyPayment()).isEqualByComparingTo("200000");
 		assertThat(result.getStartDate()).isNotNull();
 		assertThat(result.getLevel())
-			.isEqualTo(HouseLevelCalculator.calculateLevel(result.getStartDate(), result.getTotalCount()));
+			.isEqualTo(HouseLevelCalculator.calculateLevel(result.getTotalCount()));
 		assertThat(result.getGauge())
 			.isEqualTo(HouseLevelCalculator.calculateGauge(result.getTotalCount()));
 		assertThat(result.getMessage()).contains("할머니");
