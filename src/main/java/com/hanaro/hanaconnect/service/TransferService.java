@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
+import com.hanaro.hanaconnect.dto.RecentTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
 import com.hanaro.hanaconnect.dto.RelayResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
@@ -224,6 +225,27 @@ public class TransferService {
 			.transactionMoney(amount)
 			.transactionBalance(balance)
 			.transactionType(type)
+			.build();
+	}
+
+	// 최근 적금_송금 내역 단건 조회
+	@Transactional(readOnly = true)
+	public RecentTransferResponseDTO getRecentTransferAmount(Long receiverAccountId) {
+
+		// 1. '아이 적금 계좌'에 '적금 입금'된 가장 최신 내역 조회
+		Transaction latestTx = transactionRepository.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
+			receiverAccountId,
+			TransactionType.SAVINGS_DEPOSIT
+		).orElse(null);
+
+		// 2. 내역 없으면 null
+		if (latestTx == null) {
+			return null;
+		}
+
+		return RecentTransferResponseDTO.builder()
+			.transactionDate(latestTx.getCreatedAt())
+			.amount(latestTx.getTransactionMoney())
 			.build();
 	}
 

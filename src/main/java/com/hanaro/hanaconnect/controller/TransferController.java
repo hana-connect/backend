@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.dto.RecentTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.RelayResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
@@ -81,6 +82,22 @@ public class TransferController {
 				HttpStatus.OK.value(),
 				response,
 				"송금이 완료되었습니다."
+			)
+		);
+	}
+
+	@GetMapping("/recent")
+	@Operation(summary = "최근 송금 내역 단건 조회", description = "특정 계좌로 가장 최근에 보낸 금액과 날짜를 조회합니다.")
+	public ResponseEntity<CustomAPIResponse<RecentTransferResponseDTO>> getRecentTransfer(
+		@RequestParam Long targetAccountId
+	) {
+		RecentTransferResponseDTO response = transferService.getRecentTransferAmount(targetAccountId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				response != null ? "최근 송금 내역 조회에 성공했습니다." : "최근 송금 내역이 존재하지 않습니다."
 			)
 		);
 	}

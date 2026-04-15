@@ -31,5 +31,4 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 		@Param("end") LocalDateTime end,
 		@Param("type") TransactionType type
 	);
-
 }
