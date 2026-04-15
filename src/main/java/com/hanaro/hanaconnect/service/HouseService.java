@@ -1,5 +1,12 @@
 package com.hanaro.hanaconnect.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import com.hanaro.hanaconnect.common.enums.HouseLevel;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
@@ -23,11 +30,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -39,7 +41,7 @@ public class HouseService {
 	private final PhoneNameRepository phoneNameRepository;
 	private final TransactionRepository transactionRepository;
 
-	public HouseStatusResponseDTO getHouseStatus(Long requesterId, Long kidId) {
+	public HouseStatusResponseDTO getHouseStatus(Long requesterId, Long kidId, LocalDate paidAt) {
 		Member requester = findRequester(requesterId);
 		Member kid = resolveTargetKid(requester, kidId);
 
@@ -58,19 +60,32 @@ public class HouseService {
 		}
 
 		House house = houseOpt.get();
-		int totalCount = safeTotalCount(house);
+		int totalCount = resolveTotalCount(house, paidAt);
+
+		if (totalCount <= 0) {
+			return HouseStatusResponseDTO.builder()
+				.memberId(kid.getId())
+				.level(0)
+				.gauge(0)
+				.totalCount(0)
+				.monthlyPayment(BigDecimal.ZERO)
+				.startDate(house.getStartDate())
+				.message(null)
+				.build();
+		}
+
 		int level = HouseLevelCalculator.calculateLevel(totalCount);
 		int gauge = HouseLevelCalculator.calculateGauge(totalCount);
 		HouseLevel houseLevel = HouseLevel.from(level);
 
-		String message = buildMessage(requester, kid, houseLevel, house, totalCount);
+		String message = buildMessage(requester, kid, houseLevel, house, totalCount, paidAt);
 
 		return HouseStatusResponseDTO.builder()
 			.memberId(kid.getId())
 			.level(level)
 			.gauge(gauge)
-			.totalCount(house.getTotalCount())
-			.monthlyPayment(house.getMonthlyPayment())
+			.totalCount(totalCount)
+			.monthlyPayment(resolveMonthlyPayment(house, paidAt))
 			.startDate(house.getStartDate())
 			.message(message)
 			.build();
@@ -105,10 +120,6 @@ public class HouseService {
 		return new HouseContext(requester, kid, house);
 	}
 
-	private int safeTotalCount(House house) {
-		return house.getTotalCount() != null ? house.getTotalCount() : 0;
-	}
-
 	private Member resolveTargetKid(Member requester, Long kidId) {
 		if (requester.getMemberRole() == MemberRole.KID) {
 			return requester;
@@ -135,16 +146,54 @@ public class HouseService {
 		return kid;
 	}
 
-	private String buildMessage(Member requester, Member kid, HouseLevel houseLevel, House house, int totalCount) {
+	private int resolveTotalCount(House house, LocalDate paidAt) {
+		if (paidAt == null) {
+			return house.getTotalCount() != null ? house.getTotalCount() : 0;
+		}
+
+		long count = transactionRepository
+			.countByReceiverAccountIdAndTransactionTypeAndCreatedAtLessThanEqual(
+				house.getAccount().getId(),
+				TransactionType.SUBSCRIPTION,
+				paidAt.atTime(23, 59, 59)
+			);
+
+		return (int) count;
+	}
+
+	private BigDecimal resolveMonthlyPayment(House house, LocalDate paidAt) {
+		if (paidAt == null) {
+			return house.getMonthlyPayment() != null
+				? house.getMonthlyPayment()
+				: BigDecimal.ZERO;
+		}
+
+		LocalDate firstDay = paidAt.withDayOfMonth(1);
+		LocalDate lastDay = paidAt.withDayOfMonth(paidAt.lengthOfMonth());
+
+		BigDecimal amount = transactionRepository.sumMonthlyPaymentAmount(
+			house.getAccount().getId(),
+			firstDay.atStartOfDay(),
+			lastDay.atTime(23, 59, 59),
+			TransactionType.SUBSCRIPTION
+		);
+
+		return amount != null ? amount : BigDecimal.ZERO;
+	}
+
+	private String buildMessage(
+		Member requester,
+		Member kid,
+		HouseLevel houseLevel,
+		House house,
+		int totalCount,
+		LocalDate paidAt
+	) {
 		if (requester.getMemberRole() == MemberRole.PARENT) {
 			return houseLevel.getDefaultMessage(totalCount);
 		}
 
-		Optional<Transaction> latestPaymentOpt = transactionRepository
-			.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
-				house.getAccount().getId(),
-				TransactionType.SUBSCRIPTION
-			);
+		Optional<Transaction> latestPaymentOpt = resolveLatestPayment(house, paidAt);
 
 		if (latestPaymentOpt.isEmpty()) {
 			return houseLevel.getDefaultMessage(totalCount);
@@ -165,6 +214,22 @@ public class HouseService {
 			.orElse(payer.getName());
 
 		return houseLevel.getPersonalizedMessage(payerDisplayName, totalCount);
+	}
+
+	private Optional<Transaction> resolveLatestPayment(House house, LocalDate paidAt) {
+		if (paidAt == null) {
+			return transactionRepository.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
+				house.getAccount().getId(),
+				TransactionType.SUBSCRIPTION
+			);
+		}
+
+		return transactionRepository
+			.findTopByReceiverAccountIdAndTransactionTypeAndCreatedAtLessThanEqualOrderByCreatedAtDesc(
+				house.getAccount().getId(),
+				TransactionType.SUBSCRIPTION,
+				paidAt.atTime(23, 59, 59)
+			);
 	}
 
 	private List<HouseHistoryItemDTO> buildHistories(House house, List<Transaction> transactions) {
