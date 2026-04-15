@@ -498,7 +498,7 @@ public class InitLoader implements ApplicationRunner {
 			Transaction transaction = Transaction.builder()
 				.transactionMoney(new BigDecimal("200000"))
 				.transactionBalance(new BigDecimal(200000L * (i + 1)))
-				.transactionType(TransactionType.DEPOSIT)
+				.transactionType(TransactionType.SUBSCRIPTION)
 				.senderAccount(senderAccount)
 				.receiverAccount(receiverAccount)
 				.build();
