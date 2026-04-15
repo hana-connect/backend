@@ -124,4 +124,15 @@ public class ControllerExceptionHandler {
 				"서버 에러가 발생했습니다."
 			));
 	}
+
+	@ExceptionHandler(IllegalStateException.class)
+	public ResponseEntity<CustomAPIResponse<?>> handleIllegalStateException(
+		IllegalStateException e) {
+
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+			.body(CustomAPIResponse.createFail(
+				HttpStatus.CONFLICT.value(),
+				Objects.toString(e.getMessage(), "요청을 처리할 수 없습니다.")
+			));
+	}
 }
