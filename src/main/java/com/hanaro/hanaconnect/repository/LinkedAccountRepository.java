@@ -35,4 +35,10 @@ public interface LinkedAccountRepository extends JpaRepository<LinkedAccount, Lo
 		MemberRole memberRole,
 		Pageable pageable
 	);
+
+	@EntityGraph(attributePaths = "account")
+	List<LinkedAccount> findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(
+		Long memberId,
+		Long kidId
+	);
 }

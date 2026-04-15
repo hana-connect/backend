@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.security.JwtTokenProvider;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.dto.HouseHistoryResponseDTO;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 
@@ -124,6 +125,47 @@ class HouseControllerTest {
 				.param("kidId", String.valueOf(kidWithHouse.getId())))
 			.andExpect(status().isForbidden())
 			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("아이가 청약 히스토리를 조회할 수 있다")
+	void getHouseHistoryByKidTest() throws Exception {
+		mvc.perform(get("/api/house/history")
+				.header("Authorization", "Bearer " + kidAccessToken))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.message").value("청약 히스토리 조회 성공"))
+			.andExpect(jsonPath("$.data.histories").isArray())
+			.andExpect(jsonPath("$.data.histories[0].totalCount").exists())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("조부모가 아이의 히스토리를 조회할 수 있다")
+	void getHouseHistoryByParentTest() throws Exception {
+		mvc.perform(get("/api/house/history")
+				.header("Authorization", "Bearer " + relatedParentAccessToken)
+				.param("kidId", String.valueOf(kidWithHouse.getId())))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.histories").isArray())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("조부모가 kidId 없이 히스토리를 조회하면 400 반환")
+	void getHouseHistoryWithoutKidIdTest() throws Exception {
+		mvc.perform(get("/api/house/history")
+				.header("Authorization", "Bearer " + relatedParentAccessToken))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("조부모가 관계 없는 아이 히스토리 조회 시 403")
+	void getHouseHistoryByUnrelatedParentTest() throws Exception {
+		mvc.perform(get("/api/house/history")
+				.header("Authorization", "Bearer " + unrelatedParentAccessToken)
+				.param("kidId", String.valueOf(kidWithHouse.getId())))
+			.andExpect(status().isForbidden());
 	}
 
 	private Member findMember(String name, MemberRole memberRole) {

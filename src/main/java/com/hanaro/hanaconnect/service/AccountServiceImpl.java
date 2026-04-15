@@ -21,6 +21,8 @@ import com.hanaro.hanaconnect.dto.AccountVerifyResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
+import com.hanaro.hanaconnect.dto.KidLinkedAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.KidWalletDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
@@ -218,6 +220,20 @@ public class AccountServiceImpl implements AccountService {
 	}
 
 	private void validateParentKidRelation(Long memberId, Long kidId) {
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
+
+		if (member.getMemberRole() != MemberRole.PARENT) {
+			throw new AccessDeniedException("접근 권한이 없습니다.");
+		}
+
+		Member kid = memberRepository.findById(kidId)
+			.orElseThrow(() -> new IllegalArgumentException("아이 회원이 존재하지 않습니다."));
+
+		if (kid.getMemberRole() != MemberRole.KID) {
+			throw new IllegalArgumentException("아이 회원이 존재하지 않습니다.");
+		}
+
 		boolean isLinkedKid = relationRepository.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(
 			memberId,
 			kidId,
@@ -247,4 +263,36 @@ public class AccountServiceImpl implements AccountService {
 			.map(TerminatedAccountResponseDTO::from)
 			.toList();
 	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public KidWalletDetailResponseDTO getKidLinkedAccounts(Long parentId, Long kidId) {
+		validateParentKidRelation(parentId, kidId);
+
+		Member kid = memberRepository.findById(kidId)
+			.orElseThrow(() -> new IllegalArgumentException("아이 회원이 존재하지 않습니다."));
+
+		List<LinkedAccount> linkedAccounts = linkedAccountRepository
+			.findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(parentId, kidId);
+
+		List<KidLinkedAccountResponseDTO> accountDTOs = linkedAccounts.stream()
+			.map(linkedAccount -> KidLinkedAccountResponseDTO.builder()
+				.linkedAccountId(linkedAccount.getId())
+				.accountId(linkedAccount.getAccount().getId())
+				.nickname(linkedAccount.getNickname())
+				.name(linkedAccount.getAccount().getName())
+				.accountNumber(AccountNumberFormatter.format(linkedAccount.getAccount().getAccountNumber()))
+				.balance(linkedAccount.getAccount().getBalance())
+				.accountType(linkedAccount.getAccount().getAccountType())
+				.build())
+			.toList();
+
+		return KidWalletDetailResponseDTO.builder()
+			.kidId(kid.getId())
+			.kidName(kid.getName())
+			.walletMoney(kid.getWalletMoney())
+			.accounts(accountDTOs)
+			.build();
+	}
+
 }

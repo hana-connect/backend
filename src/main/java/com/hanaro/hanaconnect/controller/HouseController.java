@@ -1,7 +1,10 @@
 package com.hanaro.hanaconnect.controller;
 
+import java.time.LocalDate;
+
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.dto.HouseHistoryResponseDTO;
 import com.hanaro.hanaconnect.dto.HouseStatusResponseDTO;
 import com.hanaro.hanaconnect.service.HouseService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,12 +35,12 @@ public class HouseController {
 	@Operation(
 		summary = "청약 집 상태 조회",
 		description = """
-			아이의 현재 청약 집 상태를 조회합니다.
+			아이의 청약 집 상태를 조회합니다.
 
 			- 아이(KID) 본인 요청 시: `kidId` 없이 호출합니다.
-			- 조부모(PARENT) 요청 시: 조회할 아이의 `kidId`가 필수입니다.
-			- 조부모는 본인과 연결된 아이만 조회할 수 있습니다.
-			- 청약이 없는 경우 `level=0`, `gauge=0`으로 반환됩니다.
+			- 조부모(PARENT) 요청 시: 조회할 아이의 `kidId`가 필요합니다.
+			- `paidAt`이 없으면 현재 상태를 조회합니다.
+			- `paidAt`이 있으면 해당 날짜 시점까지의 납입 내역을 기준으로 상태를 계산합니다.
 			""",
 		security = @SecurityRequirement(name = "bearerAuth")
 	)
@@ -49,7 +53,7 @@ public class HouseController {
 				schema = @Schema(implementation = HouseStatusResponseDTO.class),
 				examples = {
 					@ExampleObject(
-						name = "청약 있음",
+						name = "현재 상태 조회",
 						value = """
 							{
 							  "status": 200,
@@ -67,19 +71,19 @@ public class HouseController {
 							"""
 					),
 					@ExampleObject(
-						name = "청약 없음",
+						name = "특정 시점 상태 조회",
 						value = """
 							{
 							  "status": 200,
 							  "message": "청약 상태 조회 성공",
 							  "data": {
-							    "memberId": 1,
-							    "level": 0,
-							    "gauge": 0,
-							    "totalCount": null,
-							    "monthlyPayment": null,
-							    "startDate": null,
-							    "message": null
+							    "memberId": 2,
+							    "level": 2,
+							    "gauge": 100,
+							    "totalCount": 12,
+							    "monthlyPayment": 200000.00,
+							    "startDate": "2024-01-25",
+							    "message": "할머니가 놓아주신 덕분에 기초가 쌓이기 시작했어요! 12개월 동안 차곡차곡 쌓인 마음이 집의 첫 모습을 만들어가고 있어요."
 							  }
 							}
 							"""
@@ -87,66 +91,121 @@ public class HouseController {
 				}
 			)
 		),
-		@ApiResponse(
-			responseCode = "400",
-			description = "조부모 요청인데 kidId를 입력하지 않은 경우",
-			content = @Content(
-				mediaType = "application/json",
-				examples = @ExampleObject(
-					value = """
-						{
-						  "status": 400,
-						  "message": "kidId는 필수입니다.",
-						  "data": null
-						}
-						"""
-				)
-			)
-		),
-		@ApiResponse(
-			responseCode = "403",
-			description = "관계 없는 아이 조회 시도",
-			content = @Content(
-				mediaType = "application/json",
-				examples = @ExampleObject(
-					value = """
-						{
-						  "status": 403,
-						  "message": "접근 권한이 없습니다.",
-						  "data": null
-						}
-						"""
-				)
-			)
-		),
-		@ApiResponse(
-			responseCode = "404",
-			description = "회원 정보를 찾을 수 없음",
-			content = @Content(
-				mediaType = "application/json",
-				examples = @ExampleObject(
-					value = """
-						{
-						  "status": 404,
-						  "message": "회원 정보를 찾을 수 없습니다.",
-						  "data": null
-						}
-						"""
-				)
-			)
-		)
+		@ApiResponse(responseCode = "400", description = "잘못된 요청"),
+		@ApiResponse(responseCode = "403", description = "관계 없는 아이 조회 시도"),
+		@ApiResponse(responseCode = "404", description = "회원 또는 청약 정보를 찾을 수 없음")
 	})
 	@GetMapping("/status")
 	public ResponseEntity<CustomAPIResponse<HouseStatusResponseDTO>> getHouseStatus(
 		@AuthenticationPrincipal TokenMemberPrincipal principal,
 
 		@Parameter(
-			description = "조회할 아이 회원 ID. 아이 본인은 생략, 조부모는 필수",
+			description = "조회할 아이 회원 ID. 아이 본인은 생략, 조부모는 필요",
+			example = "2"
+		)
+		@RequestParam(required = false) Long kidId,
+
+		@Parameter(
+			description = "조회 기준 날짜. 없으면 현재 상태, 있으면 해당 날짜 시점 상태 조회",
+			example = "2024-12-12"
+		)
+		@RequestParam(required = false)
+		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+		LocalDate paidAt
+	) {
+		HouseStatusResponseDTO response =
+			houseService.getHouseStatus(principal.getMemberId(), kidId, paidAt);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(HttpStatus.OK.value(), response, "청약 상태 조회 성공")
+		);
+	}
+
+	@Operation(
+		summary = "청약 납입 히스토리 조회",
+		description = """
+			아이의 청약 납입 히스토리를 조회합니다.
+
+			- 아이(KID) 본인 요청 시: `kidId` 없이 호출합니다.
+			- 조부모(PARENT) 요청 시: 조회할 아이의 `kidId`가 필요합니다.
+			- 히스토리는 모든 납입 내역이 아니라, 의미 있는 마일스톤 기준으로 반환됩니다.
+
+			[히스토리 생성 기준]
+			- 첫 납입 (1회)
+			- 1년 납입 완료 (12회)
+			- 2년 납입 완료 (24회)
+			- 이후 12개월 단위
+			""",
+		security = @SecurityRequirement(name = "bearerAuth")
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "청약 히스토리 조회 성공",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = HouseHistoryResponseDTO.class),
+				examples = @ExampleObject(
+					value = """
+						{
+						  "status": 200,
+						  "message": "청약 히스토리 조회 성공",
+						  "data": {
+						    "histories": [
+						      {
+						        "year": 2,
+						        "level": 3,
+						        "totalCount": 24,
+						        "paidAt": "2025-12-12",
+						        "isFirst": false,
+						        "reward": "벽돌 6개 추가"
+						      },
+						      {
+						        "year": 1,
+						        "level": 2,
+						        "totalCount": 12,
+						        "paidAt": "2024-12-12",
+						        "isFirst": false,
+						        "reward": "벽돌 4개 추가"
+						      },
+						      {
+						        "year": 0,
+						        "level": 1,
+						        "totalCount": 1,
+						        "paidAt": "2024-01-12",
+						        "isFirst": true,
+						        "reward": "나무 심기"
+						      }
+						    ]
+						  }
+						}
+						"""
+				)
+			)
+		),
+		@ApiResponse(responseCode = "400", description = "잘못된 요청"),
+		@ApiResponse(responseCode = "403", description = "관계 없는 아이 조회 시도"),
+		@ApiResponse(responseCode = "404", description = "회원 또는 청약 정보를 찾을 수 없음")
+	})
+	@GetMapping("/history")
+	public ResponseEntity<CustomAPIResponse<HouseHistoryResponseDTO>> getHouseHistory(
+		@AuthenticationPrincipal TokenMemberPrincipal principal,
+
+		@Parameter(
+			description = "조회할 아이 회원 ID. 아이 본인은 생략, 조부모는 필요",
 			example = "2"
 		)
 		@RequestParam(required = false) Long kidId
 	) {
-		HouseStatusResponseDTO response = houseService.getHouseStatus(principal.getMemberId(), kidId);
-		return ResponseEntity.ok(CustomAPIResponse.createSuccess(HttpStatus.OK.value(), response, "청약 상태 조회 성공"));
+		HouseHistoryResponseDTO response =
+			houseService.getHouseHistory(principal.getMemberId(), kidId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"청약 히스토리 조회 성공"
+			)
+		);
 	}
 }
