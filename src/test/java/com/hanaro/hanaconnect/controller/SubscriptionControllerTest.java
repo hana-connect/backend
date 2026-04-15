@@ -178,7 +178,7 @@ class SubscriptionControllerTest {
 		request.setAmount(new BigDecimal("300000"));
 		request.setPrepaymentCount(null);
 		request.setPassword("123456");
-		request.setTransferExcessToReward(null);
+		request.setTransferExcessToReward(true);
 
 		SubscriptionResponseDto response = SubscriptionResponseDto.builder()
 			.subscriptionId(subscriptionId)
