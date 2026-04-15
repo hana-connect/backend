@@ -3,6 +3,7 @@ package com.hanaro.hanaconnect.repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,6 +31,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 		@Param("start") LocalDateTime start,
 		@Param("end") LocalDateTime end,
 		@Param("type") TransactionType type
+	);
+
+	List<Transaction> findByReceiverAccountIdAndTransactionTypeOrderByCreatedAtAsc(
+		Long receiverAccountId,
+		TransactionType transactionType
 	);
 
 }
