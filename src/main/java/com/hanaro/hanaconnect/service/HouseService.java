@@ -59,7 +59,7 @@ public class HouseService {
 
 		House house = houseOpt.get();
 		int totalCount = safeTotalCount(house);
-		int level = HouseLevelCalculator.calculateLevel(house.getStartDate(), totalCount);
+		int level = HouseLevelCalculator.calculateLevel(totalCount);
 		int gauge = HouseLevelCalculator.calculateGauge(totalCount);
 		HouseLevel houseLevel = HouseLevel.from(level);
 
@@ -184,7 +184,7 @@ public class HouseService {
 		}
 
 		int year = isFirst ? 0 : totalCount / 12;
-		int level = HouseLevelCalculator.calculateLevel(house.getStartDate(), totalCount);
+		int level = HouseLevelCalculator.calculateLevel(totalCount);
 		HouseLevel houseLevel = HouseLevel.from(level);
 
 		return Optional.of(
