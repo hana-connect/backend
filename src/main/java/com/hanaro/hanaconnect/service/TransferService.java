@@ -13,6 +13,8 @@ import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
 import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
 import com.hanaro.hanaconnect.dto.RelayResponseDTO;
+import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
+import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
@@ -88,17 +90,17 @@ public class TransferService {
 
 		// 7. 거래 저장
 		// (1) 할머니 지갑 기준 출금 내역 저장
-		Transaction withdrawTx = createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_TRANSFER);
+		Transaction withdrawTx = createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_WITHDRAW);
 		transactionRepository.save(withdrawTx);
 
 		// (2) 아이 적금 계좌 기준 입금 내역 저장
-		Transaction depositTx = createTransaction(sender, receiver, amount, receiver.getBalance(), TransactionType.SAVINGS_TRANSFER);
+		Transaction depositTx = createTransaction(sender, receiver, amount, receiver.getBalance(), TransactionType.SAVINGS_DEPOSIT);
 		Transaction savedTransaction = transactionRepository.save(depositTx);
 
 		// 메시지 정규화
 		String normalizedContent = (request.getContent() == null) ? null : request.getContent().trim();
 
-		// 8. Letter 저장
+		// 정규화된 값이 진짜 내용이 있을 때만 Letter 저장
 		if (normalizedContent != null && !normalizedContent.isEmpty()) {
 			Letter letter = Letter.builder()
 				.content(normalizedContent)
@@ -245,6 +247,34 @@ public class TransferService {
 			.productNickname(displayName)
 			.accountNumber(account.getAccountNumber())
 			.history(history)
+			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public SavingsDetailResponseDTO getExpiredSavingsDetail(Long memberId, Long accountId) {
+		Account account = accountRepository.findById(accountId)
+			.orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
+
+		if (!account.getMember().getId().equals(memberId)) {
+			throw new IllegalArgumentException("본인의 계좌만 조회할 수 있습니다.");
+		}
+
+		// 만기 여부 및 타입 확인
+		if (!Boolean.TRUE.equals(account.getIsEnd())) {
+			throw new IllegalArgumentException("만기된 계좌만 상세 조회가 가능합니다.");
+		}
+
+		if (account.getAccountType() != AccountType.SAVINGS) {
+			throw new IllegalArgumentException("적금 계좌가 아닙니다.");
+		}
+
+		// 거래 내역 조회
+		List<SavingsTransactionDTO> transactions = letterRepository.findAllSavingsDetails(accountId);
+
+		return SavingsDetailResponseDTO.builder()
+			.productName(account.getName())
+			.accountNumber(account.getAccountNumber())
+			.transactions(transactions)
 			.build();
 	}
 }
