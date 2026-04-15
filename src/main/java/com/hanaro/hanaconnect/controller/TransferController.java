@@ -102,4 +102,21 @@ public class TransferController {
 			)
 		);
 	}
+
+	@GetMapping("/savings/relay/recent")
+	@Operation(summary = "적금 릴레이 최근 3건 조회", description = "메인 화면용 최근 편지 3건을 조회합니다.")
+	public ResponseEntity<CustomAPIResponse<RelayResponseDTO>> getRecentRelayData(
+		@AuthenticationPrincipal TokenMemberPrincipal principal,
+		@RequestParam Long targetAccountId
+	) {
+		RelayResponseDTO response = transferService.getRecentRelayHistory(principal.getMemberId(), targetAccountId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"최근 적금 편지 3건 조회에 성공했습니다."
+			)
+		);
+	}
 }

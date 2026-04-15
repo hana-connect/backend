@@ -17,4 +17,19 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
 		"AND t.receiverAccount.id = :targetAccountId " +
 		"ORDER BY t.createdAt DESC")
 	List<RelayHistoryDTO> findMyRelayHistory(@Param("memberId") Long memberId,
-		@Param("targetAccountId") Long targetAccountId);}
+		@Param("targetAccountId") Long targetAccountId);
+
+	// 최근 3개만 가져오는 메서드
+	@Query("SELECT new com.hanaro.hanaconnect.dto.RelayHistoryDTO(" +
+		"t.id, t.createdAt, t.transactionMoney, l.content) " +
+		"FROM Letter l " +
+		"JOIN l.transaction t " +
+		"WHERE t.senderAccount.member.id = :memberId " +
+		"AND t.receiverAccount.id = :targetAccountId " +
+		"ORDER BY t.createdAt DESC")
+	List<RelayHistoryDTO> findTop3RelayHistory(@Param("memberId") Long memberId,
+		@Param("targetAccountId") Long targetAccountId,
+		org.springframework.data.domain.Pageable pageable);
+
+
+}

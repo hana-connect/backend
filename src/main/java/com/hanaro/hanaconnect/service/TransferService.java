@@ -225,21 +225,50 @@ public class TransferService {
 			.build();
 	}
 
-	@Transactional(readOnly = true)
-	public RelayResponseDTO getRelayHistory(Long memberId, Long targetAccountId) {
+	// 공통 로직: 권한 체크 및 적금 계좌 여부 검증
+	private LinkedAccount validateAndGetSavingsAccount(Long memberId, Long targetAccountId) {
+		// 1. 권한 체크 (연결된 계좌인지)
 		LinkedAccount linkedAccount = linkedAccountRepository.findByMemberIdAndAccountId(memberId, targetAccountId)
 			.orElseThrow(() -> new IllegalArgumentException("해당 계좌에 접근 권한이 없습니다."));
 
-		Account account = linkedAccount.getAccount();
-
-		if (account.getAccountType() != AccountType.SAVINGS) {
+		// 2. 적금 계좌 타입 검증
+		if (linkedAccount.getAccount().getAccountType() != AccountType.SAVINGS) {
 			throw new IllegalArgumentException("적금 계좌만 조회할 수 있습니다.");
 		}
+
+		return linkedAccount;
+	}
+
+	@Transactional(readOnly = true)
+	public RelayResponseDTO getRelayHistory(Long memberId, Long targetAccountId) {
+		LinkedAccount linkedAccount = validateAndGetSavingsAccount(memberId, targetAccountId);
+
+		Account account = linkedAccount.getAccount();
+
+		List<RelayHistoryDTO> history = letterRepository.findMyRelayHistory(memberId, targetAccountId);
 
 		String nickname = linkedAccount.getNickname();
 		String displayName = (nickname != null && !nickname.isBlank()) ? nickname : account.getName();
 
-		List<RelayHistoryDTO> history = letterRepository.findMyRelayHistory(memberId, targetAccountId);
+
+		return RelayResponseDTO.builder()
+			.productNickname(displayName)
+			.accountNumber(account.getAccountNumber())
+			.history(history)
+			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public RelayResponseDTO getRecentRelayHistory(Long memberId, Long targetAccountId) {
+		LinkedAccount linkedAccount = validateAndGetSavingsAccount(memberId, targetAccountId);
+
+		Account account = linkedAccount.getAccount();
+		String displayName = (linkedAccount.getNickname() != null && !linkedAccount.getNickname().isBlank())
+			? linkedAccount.getNickname() : account.getName();
+
+		// 딱 최근 3건만 가져오도록 PageRequest 생성
+		org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 3);
+		List<RelayHistoryDTO> history = letterRepository.findTop3RelayHistory(memberId, targetAccountId, pageable);
 
 		return RelayResponseDTO.builder()
 			.productNickname(displayName)
