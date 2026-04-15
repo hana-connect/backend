@@ -200,6 +200,20 @@ public class AccountServiceImpl implements AccountService {
 	}
 
 	private void validateParentKidRelation(Long memberId, Long kidId) {
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
+
+		if (member.getMemberRole() != MemberRole.PARENT) {
+			throw new AccessDeniedException("접근 권한이 없습니다.");
+		}
+
+		Member kid = memberRepository.findById(kidId)
+			.orElseThrow(() -> new IllegalArgumentException("아이 회원이 존재하지 않습니다."));
+
+		if (kid.getMemberRole() != MemberRole.KID) {
+			throw new IllegalArgumentException("아이 회원이 존재하지 않습니다.");
+		}
+
 		boolean isLinkedKid = relationRepository.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(
 			memberId,
 			kidId,
