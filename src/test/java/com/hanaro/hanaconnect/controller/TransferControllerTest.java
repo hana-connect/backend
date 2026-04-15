@@ -34,6 +34,7 @@ import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.SenderInfoDTO;
 import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
 import com.hanaro.hanaconnect.service.TransferService;
 
@@ -190,6 +191,7 @@ class TransferControllerTest {
 		SavingsDetailResponseDTO response = SavingsDetailResponseDTO.builder()
 			.productName("아이 적금 통장")
 			.accountNumber("12345678901")
+			.senders(List.of(new SenderInfoDTO(5L, "엄마")))
 			.transactions(List.of(
 				SavingsTransactionDTO.builder()
 					.transactionId(100L)
@@ -211,6 +213,11 @@ class TransferControllerTest {
 				.param("senderId", String.valueOf(senderId))
 				.with(authentication(createAuthentication(memberId))))
 			.andDo(print())
-			.andExpect(status().isOk());
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data.senders").isArray())
+			.andExpect(jsonPath("$.data.senders[0].senderName").value("엄마"))
+			.andExpect(jsonPath("$.data.transactions[0].senderName").value("엄마"))
+			.andExpect(jsonPath("$.data.transactions[0].message").value("사랑해!"));
 	}
 }

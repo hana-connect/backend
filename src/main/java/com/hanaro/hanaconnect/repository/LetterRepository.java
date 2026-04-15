@@ -2,6 +2,7 @@ package com.hanaro.hanaconnect.repository;
 
 import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
+import com.hanaro.hanaconnect.dto.SenderInfoDTO;
 import com.hanaro.hanaconnect.entity.Letter;
 
 import org.springframework.data.domain.Page;
@@ -56,4 +57,12 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
 		@Param("senderId") Long senderId,
 		Pageable pageable
 	);
+
+	@Query("SELECT DISTINCT new com.hanaro.hanaconnect.dto.SenderInfoDTO(m.id, m.name) " +
+		"FROM Transaction t " +
+		"JOIN t.senderAccount sa " +
+		"JOIN sa.member m " +
+		"WHERE t.receiverAccount.id = :accountId " +
+		"AND t.transactionType = com.hanaro.hanaconnect.common.enums.TransactionType.SAVINGS_DEPOSIT")
+	List<SenderInfoDTO> findDistinctSendersByAccountId(@Param("accountId") Long accountId);
 }

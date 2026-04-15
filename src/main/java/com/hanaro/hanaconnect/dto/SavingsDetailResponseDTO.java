@@ -29,4 +29,7 @@ public class SavingsDetailResponseDTO {
 
 	@Getter
 	private List<SavingsTransactionDTO> transactions;
+
+	@Getter
+	private List<SenderInfoDTO> senders;
 }

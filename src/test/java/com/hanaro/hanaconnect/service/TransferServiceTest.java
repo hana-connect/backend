@@ -199,6 +199,7 @@ class TransferServiceTest {
 			transferService.getExpiredSavingsDetail(ownerId, expiredSavings.getId(), 0, null);
 
 		assertThat(result).isNotNull();
+		assertThat(result.getSenders()).isNotNull();
 		assertThat(result.getProductName()).isNotBlank();
 
 		String rawAccountNumber = expiredSavings.getAccountNumber().replaceAll("-", "");
