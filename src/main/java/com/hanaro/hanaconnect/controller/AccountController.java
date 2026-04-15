@@ -23,8 +23,10 @@ import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.service.AccountService;
+import com.hanaro.hanaconnect.service.TransferService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 public class AccountController {
 
 	private final AccountService accountService;
+	private final TransferService transferService;
 
 	@PostMapping("/accounts/link")
 	@Operation(
@@ -184,6 +187,26 @@ public class AccountController {
 				HttpStatus.OK.value(),
 				response,
 				"만기된 적금 목록 조회에 성공했습니다."
+			)
+		);
+	}
+
+	@GetMapping("/accounts/terminated-savings/{accountId}")
+	@Operation(
+		summary = "만기된 적금 상세 내역 및 편지함 조회",
+		description = "로그인한 사용자의 계좌 중 만기된 적금 계좌의 상세 거래 내역과 편지를 조회합니다. 입금액, 잔액, 발신자 정보 및 메시지를 포함합니다."
+	)
+	public ResponseEntity<CustomAPIResponse<SavingsDetailResponseDTO>> getSavingsDetail(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@PathVariable Long accountId
+	) {
+		SavingsDetailResponseDTO response = transferService.getExpiredSavingsDetail(principal.getMemberId(), accountId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"만기된 적금의 상세 내역 조회에 성공했습니다."
 			)
 		);
 	}

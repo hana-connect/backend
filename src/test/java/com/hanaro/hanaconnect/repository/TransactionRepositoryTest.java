@@ -48,8 +48,8 @@ class TransactionRepositoryTest {
 
 		Transaction transaction = Transaction.builder()
 			.transactionMoney(new BigDecimal("10000"))
-			.transactionBalance(new BigDecimal("40000"))
-			.transactionType(TransactionType.SAVINGS_TRANSFER)
+			.transactionBalance(new BigDecimal("20000"))
+			.transactionType(TransactionType.SAVINGS_DEPOSIT)
 			.senderAccount(senderAccount)
 			.receiverAccount(receiverAccount)
 			.build();
@@ -58,8 +58,8 @@ class TransactionRepositoryTest {
 
 		assertThat(savedTransaction.getId()).isNotNull();
 		assertThat(savedTransaction.getTransactionMoney()).isEqualByComparingTo("10000");
-		assertThat(savedTransaction.getTransactionBalance()).isEqualByComparingTo("40000");
-		assertThat(savedTransaction.getTransactionType()).isEqualTo(TransactionType.SAVINGS_TRANSFER);
+		assertThat(savedTransaction.getTransactionBalance()).isEqualByComparingTo("20000");
+		assertThat(savedTransaction.getTransactionType()).isEqualTo(TransactionType.SAVINGS_DEPOSIT);
 		assertThat(savedTransaction.getSenderAccount().getId()).isEqualTo(senderAccount.getId());
 		assertThat(savedTransaction.getReceiverAccount().getId()).isEqualTo(receiverAccount.getId());
 	}
@@ -74,8 +74,8 @@ class TransactionRepositoryTest {
 
 		Transaction transaction = Transaction.builder()
 			.transactionMoney(new BigDecimal("15000"))
-			.transactionBalance(new BigDecimal("35000"))
-			.transactionType(TransactionType.SAVINGS_TRANSFER)
+			.transactionBalance(new BigDecimal("25000"))
+			.transactionType(TransactionType.SAVINGS_DEPOSIT)
 			.senderAccount(senderAccount)
 			.receiverAccount(receiverAccount)
 			.build();
@@ -89,8 +89,8 @@ class TransactionRepositoryTest {
 			.orElseThrow();
 
 		assertThat(foundTransaction.getTransactionMoney()).isEqualByComparingTo("15000");
-		assertThat(foundTransaction.getTransactionBalance()).isEqualByComparingTo("35000");
-		assertThat(foundTransaction.getTransactionType()).isEqualTo(TransactionType.SAVINGS_TRANSFER);
+		assertThat(foundTransaction.getTransactionBalance()).isEqualByComparingTo("25000");
+		assertThat(foundTransaction.getTransactionType()).isEqualTo(TransactionType.SAVINGS_DEPOSIT);
 		assertThat(foundTransaction.getSenderAccount().getId()).isEqualTo(senderAccount.getId());
 		assertThat(foundTransaction.getReceiverAccount().getId()).isEqualTo(receiverAccount.getId());
 	}
@@ -128,7 +128,4 @@ class TransactionRepositoryTest {
 	private String generateAccount() {
 		return String.valueOf(accountSeq++);
 	}
-
-
-  
 }

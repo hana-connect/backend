@@ -180,4 +180,69 @@ class TransferServiceTest {
 			.map(Account::getId)
 			.findFirst().orElseThrow();
 	}
+
+	@Test
+	@DisplayName("만기 적금 상세 내역 조회 성공")
+	void getExpiredSavingsDetail_Success() {
+		Account expiredSavings = accountRepository.findAll().stream()
+			.filter(a -> Boolean.TRUE.equals(a.getIsEnd()))
+			.filter(a -> a.getAccountType() == AccountType.SAVINGS)
+			.findFirst()
+			.orElseThrow(() -> new IllegalStateException("테스트를 위한 만기된 적금 계좌가 DB에 없습니다."));
+
+		Long ownerId = expiredSavings.getMember().getId();
+
+		com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO result =
+			transferService.getExpiredSavingsDetail(ownerId, expiredSavings.getId());
+
+		assertThat(result).isNotNull();
+		assertThat(result.getProductName()).isEqualTo(expiredSavings.getName());
+		assertThat(result.getAccountNumber()).isEqualTo(expiredSavings.getAccountNumber());
+		assertThat(result.getTransactions()).isNotNull();
+	}
+
+	@Test
+	@DisplayName("만기 적금 상세 내역 조회 실패 - 권한 없음")
+	void getExpiredSavingsDetail_Fail_NotOwner() {
+		Account expiredSavings = accountRepository.findAll().stream()
+			.filter(a -> Boolean.TRUE.equals(a.getIsEnd()))
+			.findFirst()
+			.orElseThrow();
+
+		Long strangerId = expiredSavings.getMember().getId() + 100;
+
+		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(strangerId, expiredSavings.getId()))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("본인의 계좌만 조회할 수 있습니다.");
+	}
+
+	@Test
+	@DisplayName("만기 적금 상세 내역 조회 실패 - 만기되지 않은 계좌")
+	void getExpiredSavingsDetail_Fail_NotExpired() {
+		Account activeAccount = accountRepository.findAll().stream()
+			.filter(a -> !Boolean.TRUE.equals(a.getIsEnd()))
+			.filter(a -> a.getAccountType() == AccountType.SAVINGS)
+			.findFirst()
+			.orElseThrow();
+
+		Long ownerId = activeAccount.getMember().getId();
+
+		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(ownerId, activeAccount.getId()))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("만기된 계좌만 상세 조회가 가능합니다.");
+	}
+
+	@Test
+	@DisplayName("만기 적금 상세 내역 조회 실패 - 적금 타입이 아님")
+	void getExpiredSavingsDetail_Fail_NotSavings() {
+		Account freeAccount = accountRepository.findAll().stream()
+			.filter(a -> a.getAccountType() == AccountType.FREE)
+			.findFirst()
+			.orElseThrow();
+
+		Long ownerId = freeAccount.getMember().getId();
+
+		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(ownerId, freeAccount.getId()))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
 }

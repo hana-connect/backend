@@ -94,8 +94,8 @@ class LetterRepositoryTest {
 			.senderAccount(momAccount)
 			.receiverAccount(kidSavings)
 			.transactionMoney(new BigDecimal("10000"))
-			.transactionBalance(new BigDecimal("90000"))
-			.transactionType(TransactionType.SAVINGS_TRANSFER)
+			.transactionBalance(new BigDecimal("60000"))
+			.transactionType(TransactionType.SAVINGS_DEPOSIT)
 			.build();
 		tx = transactionRepository.saveAndFlush(tx);
 
@@ -106,10 +106,8 @@ class LetterRepositoryTest {
 			.build();
 		letterRepository.saveAndFlush(letter);
 
-		// When
 		List<RelayHistoryDTO> result = letterRepository.findMyRelayHistory(parent.getId(), kidSavings.getId());
 
-		// Then
 		assertThat(result).isNotNull();
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getMessage()).isEqualTo("첫 번째 응원 메시지");

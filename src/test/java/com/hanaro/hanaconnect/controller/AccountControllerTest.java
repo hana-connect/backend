@@ -117,4 +117,26 @@ class AccountControllerTest {
 			.andExpect(status().isUnauthorized())
 			.andDo(print());
 	}
+
+	@Test
+	@DisplayName("만기된 적금 상세 내역 및 편지함 조회 - 성공")
+	void getSavingsDetail_success() throws Exception {
+		Account expiredAccount = accountRepository.findByMemberId(memberId).stream()
+			.filter(Account::getIsEnd)
+			.findFirst()
+			.orElseThrow();
+
+		Long accountId = expiredAccount.getId();
+
+		mvc.perform(get("/api/accounts/terminated-savings/" + accountId)
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data.productName").value("만기 테스트 적금"))
+			.andExpect(jsonPath("$.data.accountNumber").value("49494848474"))
+			.andExpect(jsonPath("$.data.transactions").isArray())
+			.andExpect(jsonPath("$.message").value("만기된 적금의 상세 내역 조회에 성공했습니다."))
+			.andDo(print());
+	}
 }
