@@ -148,21 +148,26 @@ public class AccountServiceImpl implements AccountService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<MyAccountResponseDTO> getMyAccounts(Long memberId, Integer limit) {
-		List<Account> accounts = accountRepository.findByMemberIdAndIsEndFalseOrderByCreatedAtDesc(memberId);
+		List<LinkedAccount> linkedAccounts =
+			linkedAccountRepository.findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(memberId);
 
-		if (limit != null && limit > 0 && accounts.size() > limit) {
-			accounts = accounts.subList(0, limit);
+		if (limit != null && limit > 0 && linkedAccounts.size() > limit) {
+			linkedAccounts = linkedAccounts.subList(0, limit);
 		}
 
-		return accounts.stream()
-			.map(account -> MyAccountResponseDTO.builder()
-				.accountId(account.getId())
-				.name(account.getName())
-				.accountNumber(AccountNumberFormatter.format(account.getAccountNumber()))
-				.balance(account.getBalance())
-				.accountType(account.getAccountType())
-				.createdAt(account.getCreatedAt().format(LINKED_AT_FORMATTER))
-				.build())
+		return linkedAccounts.stream()
+			.map(linkedAccount -> {
+				Account account = linkedAccount.getAccount();
+
+				return MyAccountResponseDTO.builder()
+					.accountId(account.getId())
+					.name(account.getName())
+					.accountNumber(AccountNumberFormatter.format(account.getAccountNumber()))
+					.balance(account.getBalance())
+					.accountType(account.getAccountType())
+					.createdAt(linkedAccount.getCreatedAt().format(LINKED_AT_FORMATTER))
+					.build();
+			})
 			.toList();
 	}
 

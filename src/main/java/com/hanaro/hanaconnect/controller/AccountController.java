@@ -97,17 +97,17 @@ public class AccountController {
 
 	@GetMapping("/accounts/me")
 	@Operation(
-		summary = "본인 계좌 목록 조회",
-		description = "로그인한 사용자의 본인 계좌 목록을 조회합니다. 만기 계좌는 제외되며, limit를 전달하면 최근 등록순으로 해당 개수만 반환합니다."
+		summary = "내 연결 계좌 목록 조회",
+		description = "로그인한 사용자가 연결(등록)한 본인 계좌 목록을 조회합니다. 만기 계좌는 제외되며, limit를 전달하면 최근 연결순으로 해당 개수만 반환합니다."
 	)
 	@ApiResponses({
-		@ApiResponse(responseCode = "200", description = "본인 계좌 목록 조회 성공"),
+		@ApiResponse(responseCode = "200", description = "내 연결 계좌 목록 조회 성공"),
 		@ApiResponse(responseCode = "401", description = "인증 필요"),
 		@ApiResponse(responseCode = "500", description = "서버 내부 오류")
 	})
 	public ResponseEntity<CustomAPIResponse<List<MyAccountResponseDTO>>> getMyAccounts(
 		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
-		@Parameter(description = "최근 등록순으로 조회할 최대 개수", example = "2")
+		@Parameter(description = "최근 연결순으로 조회할 최대 개수", example = "2")
 		@RequestParam(required = false) Integer limit
 	) {
 		List<MyAccountResponseDTO> response = accountService.getMyAccounts(principal.getMemberId(), limit);
@@ -116,7 +116,7 @@ public class AccountController {
 			CustomAPIResponse.createSuccess(
 				HttpStatus.OK.value(),
 				response,
-				"본인 계좌 목록 조회에 성공했습니다."
+				"내 연결 계좌 목록 조회에 성공했습니다."
 			)
 		);
 	}

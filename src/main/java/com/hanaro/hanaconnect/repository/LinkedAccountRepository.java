@@ -15,6 +15,8 @@ public interface LinkedAccountRepository extends JpaRepository<LinkedAccount, Lo
 
 	Optional<LinkedAccount> findByMemberIdAndAccountId(Long memberId, Long accountId);
 
+	List<LinkedAccount> findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(Long memberId);
+
 	List<LinkedAccount> findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
 		Long memberId,
 		MemberRole memberRole
