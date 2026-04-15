@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.util.HouseLevelCalculator;
+import com.hanaro.hanaconnect.dto.HouseHistoryResponseDTO;
 import com.hanaro.hanaconnect.dto.HouseStatusResponseDTO;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.MemberRepository;
@@ -139,5 +140,59 @@ class HouseServiceTest {
 		assertThatThrownBy(() -> houseService.getHouseStatus(999999L, null))
 			.isInstanceOf(EntityNotFoundException.class)
 			.hasMessageContaining("회원 정보를 찾을 수 없습니다.");
+	}
+
+	@Test
+	@DisplayName("청약 히스토리를 정상적으로 조회한다 (아이 기준)")
+	void getHouseHistoryByKidTest() {
+		Member kid = findKidWithHouse();
+
+		HouseHistoryResponseDTO result =
+			houseService.getHouseHistory(kid.getId(), null);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getHistories()).isNotEmpty();
+
+		// 최신순 정렬 확인
+		assertThat(result.getHistories().get(0).getTotalCount()).isGreaterThan(
+			result.getHistories().get(1).getTotalCount()
+		);
+
+		// milestone 검증
+		assertThat(result.getHistories())
+			.allMatch(h ->
+				h.isFirst() ||
+					h.getTotalCount() % 12 == 0
+			);
+
+		// 레벨 계산 검증
+		result.getHistories().forEach(h ->
+			assertThat(h.getLevel())
+				.isEqualTo(HouseLevelCalculator.calculateLevel(h.getTotalCount()))
+		);
+	}
+
+	@Test
+	@DisplayName("조부모가 연결된 아이의 히스토리를 조회할 수 있다")
+	void getHouseHistoryByParentTest() {
+		Member parent = findRelatedParent();
+		Member kid = findKidWithHouse();
+
+		HouseHistoryResponseDTO result =
+			houseService.getHouseHistory(parent.getId(), kid.getId());
+
+		assertThat(result).isNotNull();
+		assertThat(result.getHistories()).isNotEmpty();
+	}
+
+	@Test
+	@DisplayName("조부모가 kidId 없이 히스토리를 조회하면 예외 발생")
+	void getHouseHistoryWithoutKidIdTest() {
+		Member parent = findRelatedParent();
+
+		assertThatThrownBy(() ->
+			houseService.getHouseHistory(parent.getId(), null)
+		)
+			.isInstanceOf(IllegalArgumentException.class);
 	}
 }
