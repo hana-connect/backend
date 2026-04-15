@@ -89,9 +89,10 @@ public class TransferController {
 	@GetMapping("/recent")
 	@Operation(summary = "최근 송금 내역 단건 조회", description = "특정 계좌로 가장 최근에 보낸 금액과 날짜를 조회합니다.")
 	public ResponseEntity<CustomAPIResponse<RecentTransferResponseDTO>> getRecentTransfer(
+		@AuthenticationPrincipal TokenMemberPrincipal principal, // 요거 추가!
 		@RequestParam Long targetAccountId
 	) {
-		RecentTransferResponseDTO response = transferService.getRecentTransferAmount(targetAccountId);
+		RecentTransferResponseDTO response = transferService.getRecentTransferAmount(principal.getMemberId(), targetAccountId);
 
 		return ResponseEntity.ok(
 			CustomAPIResponse.createSuccess(

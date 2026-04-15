@@ -230,15 +230,18 @@ public class TransferService {
 
 	// 최근 적금_송금 내역 단건 조회
 	@Transactional(readOnly = true)
-	public RecentTransferResponseDTO getRecentTransferAmount(Long receiverAccountId) {
+	public RecentTransferResponseDTO getRecentTransferAmount(Long memberId, Long receiverAccountId) {
 
-		// 1. '아이 적금 계좌'에 '적금 입금'된 가장 최신 내역 조회
+		// 1. 권한 체크 (로그인한 memberId가 receiverAccountId에 접근 가능한지 검증)
+		validateAndGetSavingsAccount(memberId, receiverAccountId);
+
+		// 2. 검증 통과 후, '아이 적금 계좌'에 '적금_송금'된 가장 최신 내역 조회
 		Transaction latestTx = transactionRepository.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
 			receiverAccountId,
 			TransactionType.SAVINGS_DEPOSIT
 		).orElse(null);
 
-		// 2. 내역 없으면 null
+		// 3. 내역 없으면 null
 		if (latestTx == null) {
 			return null;
 		}
