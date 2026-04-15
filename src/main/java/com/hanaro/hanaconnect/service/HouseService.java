@@ -108,7 +108,7 @@ public class HouseService {
 		Optional<Transaction> latestPaymentOpt = transactionRepository
 			.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
 				house.getAccount().getId(),
-				TransactionType.DEPOSIT
+				TransactionType.SUBSCRIPTION
 			);
 
 		if (latestPaymentOpt.isEmpty()) {
