@@ -9,6 +9,7 @@ import com.hanaro.hanaconnect.dto.AccountVerifyResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
+import com.hanaro.hanaconnect.dto.KidWalletDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 
@@ -25,4 +26,6 @@ public interface AccountService {
 	List<KidAccountListResponseDTO> getKidAccounts(Long memberId, Integer limit);
 
 	List<TerminatedAccountResponseDTO> getTerminatedSavings(Long memberId);
+
+	KidWalletDetailResponseDTO getKidLinkedAccounts(Long parentId, Long kidId);
 }
