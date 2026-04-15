@@ -87,13 +87,18 @@ public class TransferService {
 		receiver.deposit(amount);
 
 		// 7. 거래 저장
-		Transaction transaction = createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_TRANSFER);
-		Transaction savedTransaction = transactionRepository.save(transaction);
+		// (1) 할머니 지갑 기준 출금 내역 저장
+		Transaction withdrawTx = createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_TRANSFER);
+		transactionRepository.save(withdrawTx);
+
+		// (2) 아이 적금 계좌 기준 입금 내역 저장
+		Transaction depositTx = createTransaction(sender, receiver, amount, receiver.getBalance(), TransactionType.SAVINGS_TRANSFER);
+		Transaction savedTransaction = transactionRepository.save(depositTx);
 
 		// 메시지 정규화
 		String normalizedContent = (request.getContent() == null) ? null : request.getContent().trim();
 
-		// 정규화된 값이 진짜 내용이 있을 때만 Letter 저장
+		// 8. Letter 저장
 		if (normalizedContent != null && !normalizedContent.isEmpty()) {
 			Letter letter = Letter.builder()
 				.content(normalizedContent)

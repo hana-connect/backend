@@ -112,14 +112,14 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		accountRepository.save(createAccount(
+		Account kid1SavingsAccount = accountRepository.save(createAccount(
 			"아이 적금 통장",
 			"66677778888",
 			"1234",
 			AccountType.SAVINGS,
 			new BigDecimal("80000"),
 			kid1,
-			null
+			new BigDecimal("300000")
 		));
 
 		accountRepository.save(createAccount(
@@ -165,7 +165,7 @@ public class InitLoader implements ApplicationRunner {
 			new BigDecimal("300000")
 		));
 
-		accountRepository.save(createAccount(
+		Account grandmaFreeAccount = accountRepository.save(createAccount(
 			"할머니 지갑",
 			"33344455566",
 			"1234",
@@ -234,6 +234,20 @@ public class InitLoader implements ApplicationRunner {
 			.member(kid1)
 			.isEnd(true)
 			.build());
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kid1SavingsAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kid1SavingsAccount)
+				.member(parent2)
+				.build()
+		);
 
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
