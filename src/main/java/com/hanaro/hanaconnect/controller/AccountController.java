@@ -17,11 +17,16 @@ import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
 import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
+import com.hanaro.hanaconnect.dto.AccountVerifyRequestDTO;
+import com.hanaro.hanaconnect.dto.AccountVerifyResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
+import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
-import com.hanaro.hanaconnect.dto.TerminatedAccountResponse;
+import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
+import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.service.AccountService;
+import com.hanaro.hanaconnect.service.TransferService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 public class AccountController {
 
 	private final AccountService accountService;
+	private final TransferService transferService;
 
 	@PostMapping("/accounts/link")
 	@Operation(
@@ -63,6 +69,32 @@ public class AccountController {
 			));
 	}
 
+	@PostMapping("/accounts/verify")
+	@Operation(
+		summary = "본인 계좌 확인",
+		description = "로그인한 사용자가 입력한 계좌번호를 확인합니다. 본인 소유 계좌이고 아직 등록되지 않은 경우에만 성공합니다."
+	)
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "계좌 확인 성공"),
+		@ApiResponse(responseCode = "400", description = "계좌 정보 오류 또는 이미 등록된 계좌"),
+		@ApiResponse(responseCode = "401", description = "인증 필요"),
+		@ApiResponse(responseCode = "500", description = "서버 내부 오류")
+	})
+	public ResponseEntity<CustomAPIResponse<AccountVerifyResponseDTO>> verifyMyAccount(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@Valid @RequestBody AccountVerifyRequestDTO request
+	) {
+		AccountVerifyResponseDTO response = accountService.verifyMyAccount(principal.getMemberId(), request);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"계좌 확인이 완료되었습니다."
+			)
+		);
+	}
+
 	@GetMapping("/accounts/me")
 	@Operation(
 		summary = "본인 계좌 목록 조회",
@@ -85,6 +117,32 @@ public class AccountController {
 				HttpStatus.OK.value(),
 				response,
 				"본인 계좌 목록 조회에 성공했습니다."
+			)
+		);
+	}
+
+	@GetMapping("/accounts/kids")
+	@Operation(
+		summary = "아이 계좌 목록 조회",
+		description = "로그인한 부모(조부모 포함) 사용자가 본인이 추가한 아이 계좌 목록을 조회합니다. 만기 계좌는 제외되며, limit를 전달하면 최근 추가순으로 해당 개수만 반환합니다."
+	)
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "아이 계좌 목록 조회 성공"),
+		@ApiResponse(responseCode = "401", description = "인증 필요"),
+		@ApiResponse(responseCode = "500", description = "서버 내부 오류")
+	})
+	public ResponseEntity<CustomAPIResponse<List<KidAccountListResponseDTO>>> getKidAccounts(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@Parameter(description = "최근 추가순으로 조회할 최대 개수", example = "2")
+		@RequestParam(required = false) Integer limit
+	) {
+		List<KidAccountListResponseDTO> response = accountService.getKidAccounts(principal.getMemberId(), limit);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"아이 계좌 목록 조회에 성공했습니다."
 			)
 		);
 	}
@@ -119,16 +177,36 @@ public class AccountController {
 		summary = "나의 만기된 적금 계좌 목록 조회",
 		description = "로그인한 사용자의 계좌 중 만기된(is_end=true) 적금(SAVINGS) 목록을 조회합니다."
 	)
-	public ResponseEntity<CustomAPIResponse<List<TerminatedAccountResponse>>> getTerminatedSavings(
+	public ResponseEntity<CustomAPIResponse<List<TerminatedAccountResponseDTO>>> getTerminatedSavings(
 		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal
 	) {
-		List<TerminatedAccountResponse> response = accountService.getTerminatedSavings(principal.getMemberId());
+		List<TerminatedAccountResponseDTO> response = accountService.getTerminatedSavings(principal.getMemberId());
 
 		return ResponseEntity.ok(
 			CustomAPIResponse.createSuccess(
 				HttpStatus.OK.value(),
 				response,
 				"만기된 적금 목록 조회에 성공했습니다."
+			)
+		);
+	}
+
+	@GetMapping("/accounts/terminated-savings/{accountId}")
+	@Operation(
+		summary = "만기된 적금 상세 내역 및 편지함 조회",
+		description = "로그인한 사용자의 계좌 중 만기된 적금 계좌의 상세 거래 내역과 편지를 조회합니다. 입금액, 잔액, 발신자 정보 및 메시지를 포함합니다."
+	)
+	public ResponseEntity<CustomAPIResponse<SavingsDetailResponseDTO>> getSavingsDetail(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@PathVariable Long accountId
+	) {
+		SavingsDetailResponseDTO response = transferService.getExpiredSavingsDetail(principal.getMemberId(), accountId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"만기된 적금의 상세 내역 조회에 성공했습니다."
 			)
 		);
 	}

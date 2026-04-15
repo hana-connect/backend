@@ -2,6 +2,7 @@ package com.hanaro.hanaconnect.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,15 +11,22 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
+import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
+import com.hanaro.hanaconnect.dto.RelayResponseDTO;
+import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
+import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
 import com.hanaro.hanaconnect.dto.TransferRequestDto;
 import com.hanaro.hanaconnect.dto.TransferResponseDto;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.Letter;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
+import com.hanaro.hanaconnect.repository.LetterRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
@@ -38,6 +46,7 @@ public class TransferService {
 	private final RelationRepository relationRepository;
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final LetterRepository letterRepository;
 
 	// 적금
 	@Transactional
@@ -80,14 +89,31 @@ public class TransferService {
 		receiver.deposit(amount);
 
 		// 7. 거래 저장
-		Transaction transaction = createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_TRANSFER);
-		Transaction savedTransaction = transactionRepository.save(transaction);
+		// (1) 할머니 지갑 기준 출금 내역 저장
+		Transaction withdrawTx = createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_WITHDRAW);
+		transactionRepository.save(withdrawTx);
+
+		// (2) 아이 적금 계좌 기준 입금 내역 저장
+		Transaction depositTx = createTransaction(sender, receiver, amount, receiver.getBalance(), TransactionType.SAVINGS_DEPOSIT);
+		Transaction savedTransaction = transactionRepository.save(depositTx);
+
+		// 메시지 정규화
+		String normalizedContent = (request.getContent() == null) ? null : request.getContent().trim();
+
+		// 8. Letter 저장
+		if (normalizedContent != null && !normalizedContent.isEmpty()) {
+			Letter letter = Letter.builder()
+				.content(normalizedContent)
+				.transaction(savedTransaction)
+				.build();
+			letterRepository.save(letter);
+		}
 
 		// 8. 응답
 		return SavingsTransferResponseDTO.builder()
 			.transactionMoney(savedTransaction.getTransactionMoney())
 			.transactionBalance(savedTransaction.getTransactionBalance())
-			.message(request.getContent())
+			.message(normalizedContent)
 			.build();
 	}
 
@@ -198,6 +224,86 @@ public class TransferService {
 			.transactionMoney(amount)
 			.transactionBalance(balance)
 			.transactionType(type)
+			.build();
+	}
+
+	// 공통 로직: 권한 체크 및 적금 계좌 여부 검증
+	private LinkedAccount validateAndGetSavingsAccount(Long memberId, Long targetAccountId) {
+		// 1. 권한 체크 (연결된 계좌인지)
+		LinkedAccount linkedAccount = linkedAccountRepository.findByMemberIdAndAccountId(memberId, targetAccountId)
+			.orElseThrow(() -> new IllegalArgumentException("해당 계좌에 접근 권한이 없습니다."));
+
+		// 2. 적금 계좌 타입 검증
+		if (linkedAccount.getAccount().getAccountType() != AccountType.SAVINGS) {
+			throw new IllegalArgumentException("적금 계좌만 조회할 수 있습니다.");
+		}
+
+		return linkedAccount;
+	}
+
+	@Transactional(readOnly = true)
+	public RelayResponseDTO getRelayHistory(Long memberId, Long targetAccountId) {
+		LinkedAccount linkedAccount = validateAndGetSavingsAccount(memberId, targetAccountId);
+
+		Account account = linkedAccount.getAccount();
+
+		List<RelayHistoryDTO> history = letterRepository.findMyRelayHistory(memberId, targetAccountId);
+
+		String nickname = linkedAccount.getNickname();
+		String displayName = (nickname != null && !nickname.isBlank()) ? nickname : account.getName();
+
+
+		return RelayResponseDTO.builder()
+			.productNickname(displayName)
+			.accountNumber(account.getAccountNumber())
+			.history(history)
+			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public RelayResponseDTO getRecentRelayHistory(Long memberId, Long targetAccountId) {
+		LinkedAccount linkedAccount = validateAndGetSavingsAccount(memberId, targetAccountId);
+
+		Account account = linkedAccount.getAccount();
+		String displayName = (linkedAccount.getNickname() != null && !linkedAccount.getNickname().isBlank())
+			? linkedAccount.getNickname() : account.getName();
+
+		// 딱 최근 3건만 가져오도록 PageRequest 생성
+		org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 3);
+		List<RelayHistoryDTO> history = letterRepository.findTop3RelayHistory(memberId, targetAccountId, pageable);
+
+		return RelayResponseDTO.builder()
+			.productNickname(displayName)
+			.accountNumber(account.getAccountNumber())
+			.history(history)
+			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public SavingsDetailResponseDTO getExpiredSavingsDetail(Long memberId, Long accountId) {
+		Account account = accountRepository.findById(accountId)
+			.orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
+
+		if (!account.getMember().getId().equals(memberId)) {
+			throw new IllegalArgumentException("본인의 계좌만 조회할 수 있습니다.");
+		}
+
+		// 만기 여부 및 타입 확인
+		if (!Boolean.TRUE.equals(account.getIsEnd())) {
+			throw new IllegalArgumentException("만기된 계좌만 상세 조회가 가능합니다.");
+		}
+
+		if (account.getAccountType() != AccountType.SAVINGS) {
+			throw new IllegalArgumentException("적금 계좌가 아닙니다.");
+		}
+
+		// 거래 내역 조회
+		List<SavingsTransactionDTO> transactions = letterRepository.findAllSavingsDetails(accountId);
+
+		return SavingsDetailResponseDTO.builder()
+			.productName(account.getName())
+			.accountNumber(account.getAccountNumber())
+			.transactions(transactions)
 			.build();
 	}
 }

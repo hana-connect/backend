@@ -51,4 +51,24 @@ public interface RelationRepository extends JpaRepository<Relation, Long> {
 		Long connectMemberId,
 		MemberRole connectMemberRole
 	);
+
+	boolean existsByMemberIdAndConnectMemberId(Long kidId, Long parentId);
+
+	@Query("""
+	select new com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO(
+		parent.id,
+		parent.name,
+		pn.whomName,
+		parent.memberRole
+	)
+	from Relation r
+	join r.connectMember parent
+	left join PhoneName pn
+		on pn.who.id = :memberId
+		and pn.whom.id = parent.id
+	where r.member.id = :kidId
+	  and r.connectMemberRole = com.hanaro.hanaconnect.common.enums.MemberRole.PARENT
+	  and parent.id <> :memberId
+	""")
+	List<ConnectMemberResponseDTO> findOtherParents(Long memberId, Long kidId);
 }

@@ -60,4 +60,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 	);
 
 	// 만기된(isEnd=true) 적금(SAVINGS) 계좌 목록 조회
-	List<Account> findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc(Long memberId, AccountType accountType);}
+	List<Account> findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc(Long memberId, AccountType accountType);
+
+	List<Account> findByMemberId(Long memberId);
+}

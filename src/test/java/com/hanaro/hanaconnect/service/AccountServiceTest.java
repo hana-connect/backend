@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
-import com.hanaro.hanaconnect.dto.TerminatedAccountResponse;
+import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
@@ -62,11 +62,11 @@ class AccountServiceTest {
 			.build());
 
 		// When
-		List<TerminatedAccountResponse> result = accountService.getTerminatedSavings(member.getId());
+		List<TerminatedAccountResponseDTO> result = accountService.getTerminatedSavings(member.getId());
 
 		// Then
 		assertThat(result).isNotEmpty();
-		assertThat(result.get(0).name()).isEqualTo("369 행복 적금");
-		assertThat(result.get(0).accountNumber()).isEqualTo("999888777");
+		assertThat(result.get(0).getName()).isEqualTo("369 행복 적금");
+		assertThat(result.get(0).getAccountNumber()).isEqualTo("999888777");
 	}
 }
