@@ -17,6 +17,8 @@ import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
 import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
 import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
+import com.hanaro.hanaconnect.dto.AccountVerifyRequestDTO;
+import com.hanaro.hanaconnect.dto.AccountVerifyResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
@@ -65,6 +67,32 @@ public class AccountController {
 				response,
 				"계좌 연결이 완료되었습니다."
 			));
+	}
+
+	@PostMapping("/accounts/verify")
+	@Operation(
+		summary = "본인 계좌 확인",
+		description = "로그인한 사용자가 입력한 계좌번호를 확인합니다. 본인 소유 계좌이고 아직 등록되지 않은 경우에만 성공합니다."
+	)
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "계좌 확인 성공"),
+		@ApiResponse(responseCode = "400", description = "계좌 정보 오류 또는 이미 등록된 계좌"),
+		@ApiResponse(responseCode = "401", description = "인증 필요"),
+		@ApiResponse(responseCode = "500", description = "서버 내부 오류")
+	})
+	public ResponseEntity<CustomAPIResponse<AccountVerifyResponseDTO>> verifyMyAccount(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@Valid @RequestBody AccountVerifyRequestDTO request
+	) {
+		AccountVerifyResponseDTO response = accountService.verifyMyAccount(principal.getMemberId(), request);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"계좌 확인이 완료되었습니다."
+			)
+		);
 	}
 
 	@GetMapping("/accounts/me")

@@ -108,6 +108,7 @@ class LetterRepositoryTest {
 
 		List<RelayHistoryDTO> result = letterRepository.findMyRelayHistory(parent.getId(), kidSavings.getId());
 
+		assertThat(result).isNotNull();
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getMessage()).isEqualTo("첫 번째 응원 메시지");
 	}
