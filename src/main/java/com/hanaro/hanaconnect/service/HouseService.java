@@ -4,6 +4,8 @@ import com.hanaro.hanaconnect.common.enums.HouseLevel;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
 import com.hanaro.hanaconnect.common.util.HouseLevelCalculator;
+import com.hanaro.hanaconnect.dto.HouseHistoryItemDTO;
+import com.hanaro.hanaconnect.dto.HouseHistoryResponseDTO;
 import com.hanaro.hanaconnect.dto.HouseStatusResponseDTO;
 import com.hanaro.hanaconnect.entity.House;
 import com.hanaro.hanaconnect.entity.Member;
@@ -21,6 +23,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -130,5 +135,60 @@ public class HouseService {
 			.orElse(payer.getName());
 
 		return houseLevel.getPersonalizedMessage(payerDisplayName, totalCount);
+	}
+
+	public HouseHistoryResponseDTO getHouseHistory(Long requesterId, Long kidId) {
+		Member requester = memberRepository.findById(requesterId)
+			.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
+
+		Member kid = resolveTargetKid(requester, kidId);
+
+		House house = houseRepository.findByMemberId(kid.getId())
+			.orElseThrow(() -> new EntityNotFoundException("청약 정보를 찾을 수 없습니다."));
+
+		List<Transaction> transactions = transactionRepository
+			.findByReceiverAccountIdAndTransactionTypeOrderByCreatedAtAsc(
+				house.getAccount().getId(),
+				TransactionType.SUBSCRIPTION
+			);
+
+		List<HouseHistoryItemDTO> histories = buildHistories(house, transactions);
+
+		return HouseHistoryResponseDTO.builder()
+			.histories(histories)
+			.build();
+	}
+
+	private List<HouseHistoryItemDTO> buildHistories(House house, List<Transaction> transactions) {
+		List<HouseHistoryItemDTO> histories = new ArrayList<>();
+
+		for (int i = 0; i < transactions.size(); i++) {
+			int totalCount = i + 1;
+			Transaction transaction = transactions.get(i);
+
+			boolean isFirst = totalCount == 1;
+			boolean isYearlyMilestone = totalCount % 12 == 0;
+
+			if (!isFirst && !isYearlyMilestone) {
+				continue;
+			}
+
+			int year = isFirst ? 0 : totalCount / 12;
+			int level = HouseLevelCalculator.calculateLevel(house.getStartDate(), totalCount);
+
+			histories.add(
+				HouseHistoryItemDTO.builder()
+					.year(year)
+					.level(level)
+					.totalCount(totalCount)
+					.paidAt(transaction.getCreatedAt().toLocalDate())
+					.isFirst(isFirst)
+					.reward(buildReward(level, isFirst))
+					.build()
+			);
+		}
+
+		Collections.reverse(histories);
+		return histories;
 	}
 }
