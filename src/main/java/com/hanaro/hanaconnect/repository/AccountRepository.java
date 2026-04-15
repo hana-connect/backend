@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -43,6 +44,11 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
 	// 리워드 계좌 조회
 	Optional<Account> findByMemberIdAndIsRewardTrue(Long memberId);
+
+	// 리워드 계좌 변경
+	@Modifying
+	@Query("UPDATE Account a SET a.isReward = :isReward WHERE a.id = :accountId")
+	void updateIsReward(@Param("accountId") Long accountId, @Param("isReward") boolean isReward);
 
 	Optional<Account> findByMemberIdAndAccountTypeAndIsRewardFalse(Long memberId, AccountType accountType);
 

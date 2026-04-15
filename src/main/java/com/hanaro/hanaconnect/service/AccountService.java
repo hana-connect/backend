@@ -28,4 +28,6 @@ public interface AccountService {
 	List<TerminatedAccountResponseDTO> getTerminatedSavings(Long memberId);
 
 	RewardAccountResponseDTO getRewardAccount(Long memberId);
+
+	RewardAccountResponseDTO updateRewardAccount(Long memberId, Long linkedAccountId);
 }

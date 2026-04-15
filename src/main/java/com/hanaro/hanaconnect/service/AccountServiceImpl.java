@@ -238,4 +238,32 @@ public class AccountServiceImpl implements AccountService {
 
 		return RewardAccountResponseDTO.from(account);
 	}
+
+	@Override
+	@Transactional
+	public RewardAccountResponseDTO updateRewardAccount(Long memberId, Long linkedAccountId) {
+		LinkedAccount linkedAccount = linkedAccountRepository.findById(linkedAccountId)
+			.orElseThrow(() -> new EntityNotFoundException("계좌를 찾을 수 없습니다."));
+
+		if (!linkedAccount.getMember().getId().equals(memberId)) {
+			throw new AccessDeniedException("해당 계좌에 접근할 수 없습니다.");
+		}
+
+		Account target = linkedAccount.getAccount();
+
+		if (target.getAccountType() != AccountType.PENSION) {
+			throw new IllegalArgumentException("연금 계좌만 리워드 계좌로 설정할 수 있습니다.");
+		}
+
+		if (Boolean.TRUE.equals(target.getIsReward())) {
+			throw new IllegalStateException("이미 리워드 계좌로 설정되어 있습니다.");
+		}
+
+		accountRepository.findByMemberIdAndIsRewardTrue(memberId)
+			.ifPresent(prev -> accountRepository.updateIsReward(prev.getId(), false));
+
+		accountRepository.updateIsReward(target.getId(), true);
+
+		return RewardAccountResponseDTO.from(target);
+	}
 }
