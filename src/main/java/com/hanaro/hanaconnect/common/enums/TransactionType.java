@@ -5,4 +5,5 @@ public enum TransactionType {
 	WITHDRAW,
 	DEPOSIT,
 	SAVINGS_TRANSFER,
+	SUBSCRIPTION
 }
