@@ -19,8 +19,6 @@ import lombok.NoArgsConstructor;
 public class RelayHistoryDTO {
 	private Long letterId;
 
-	private String senderName;
-
 	@JsonIgnore
 	private LocalDateTime date;
 
