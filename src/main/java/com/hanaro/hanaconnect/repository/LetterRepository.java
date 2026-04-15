@@ -60,6 +60,7 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
 
 	@Query("SELECT DISTINCT new com.hanaro.hanaconnect.dto.SenderInfoDTO(m.id, m.name) " +
 		"FROM Transaction t " +
+		"JOIN Letter l ON l.transaction = t " +
 		"JOIN t.senderAccount sa " +
 		"JOIN sa.member m " +
 		"WHERE t.receiverAccount.id = :accountId " +

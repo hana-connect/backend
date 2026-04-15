@@ -13,16 +13,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
+import com.hanaro.hanaconnect.common.enums.TransactionType;
 import com.hanaro.hanaconnect.dto.RelayResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.Letter;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
+import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
+import com.hanaro.hanaconnect.repository.LetterRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.repository.TransactionRepository;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -40,6 +45,12 @@ class TransferServiceTest {
 
 	@Autowired
 	private LinkedAccountRepository linkedAccountRepository;
+
+	@Autowired
+	private TransactionRepository transactionRepository;
+
+	@Autowired
+	private LetterRepository letterRepository;
 
 	private Member findParent() {
 		return memberRepository.findAll().stream()
@@ -214,17 +225,47 @@ class TransferServiceTest {
 	void getExpiredSavingsDetail_Filter_Success() {
 		Account expiredSavings = accountRepository.findAll().stream()
 			.filter(a -> Boolean.TRUE.equals(a.getIsEnd()))
+			.filter(a -> a.getAccountType() == AccountType.SAVINGS)
+			.findFirst()
+			.orElseThrow(() -> new IllegalStateException("테스트용 만기 적금 계좌가 없습니다."));
+
+		// 보낸 사람 계좌
+		Account senderAcc = accountRepository.findAll().stream()
+			.filter(a -> !a.getId().equals(expiredSavings.getId()))
 			.findFirst().orElseThrow();
 
+		// 거래 내역 생성
+		Transaction tx = Transaction.builder()
+			.senderAccount(senderAcc)
+			.receiverAccount(expiredSavings)
+			.transactionMoney(new BigDecimal("1000"))
+			.transactionBalance(new BigDecimal("100000"))
+			.transactionType(TransactionType.SAVINGS_DEPOSIT)
+			.build();
+		transactionRepository.save(tx);
+
+		// 편지 생성
+		Letter letter = Letter.builder()
+			.content("테스트 편지")
+			.transaction(tx)
+			.build();
+		letterRepository.save(letter);
+
 		Long ownerId = expiredSavings.getMember().getId();
-		Long specificSenderId = 1L;
+
+		SavingsDetailResponseDTO unfiltered =
+			transferService.getExpiredSavingsDetail(ownerId, expiredSavings.getId(), 0, null);
+
+		Long specificSenderId = unfiltered.getSenders().get(0).getSenderId();
 
 		SavingsDetailResponseDTO result =
 			transferService.getExpiredSavingsDetail(ownerId, expiredSavings.getId(), 0, specificSenderId);
 
 		assertThat(result).isNotNull();
-		result.getTransactions().forEach(tx ->
-			assertThat(tx.getSenderId()).isEqualTo(specificSenderId)
+		assertThat(result.getTransactions()).isNotEmpty();
+
+		result.getTransactions().forEach(txData ->
+			assertThat(txData.getSenderId()).isEqualTo(specificSenderId)
 		);
 	}
 
