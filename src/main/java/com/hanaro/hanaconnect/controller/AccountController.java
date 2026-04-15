@@ -25,6 +25,7 @@ import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.RewardAccountResponseDTO;
 import com.hanaro.hanaconnect.service.AccountService;
 import com.hanaro.hanaconnect.service.TransferService;
 
@@ -207,6 +208,25 @@ public class AccountController {
 				HttpStatus.OK.value(),
 				response,
 				"만기된 적금의 상세 내역 조회에 성공했습니다."
+			)
+		);
+	}
+
+	@GetMapping("/accounts/reward")
+	@Operation(
+		summary = "리워드 계좌 조회",
+		description = "현재 리워드로 설정된 계좌를 조회합니다. 연금 계좌 중 is_reward=true인 계좌를 반환합니다."
+	)
+	public ResponseEntity<CustomAPIResponse<RewardAccountResponseDTO>> getRewardAccount(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal
+	) {
+		RewardAccountResponseDTO response = accountService.getRewardAccount(principal.getMemberId());
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"리워드 계좌 조회 성공"
 			)
 		);
 	}

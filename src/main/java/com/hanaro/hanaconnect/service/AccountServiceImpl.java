@@ -20,6 +20,7 @@ import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.RewardAccountResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
@@ -29,6 +30,7 @@ import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -226,5 +228,14 @@ public class AccountServiceImpl implements AccountService {
 			).stream()
 			.map(TerminatedAccountResponseDTO::from)
 			.toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public RewardAccountResponseDTO getRewardAccount(Long memberId) {
+		Account account = accountRepository.findByMemberIdAndIsRewardTrue(memberId)
+			.orElseThrow(() -> new EntityNotFoundException("리워드 계좌를 찾을 수 없습니다."));
+
+		return RewardAccountResponseDTO.from(account);
 	}
 }

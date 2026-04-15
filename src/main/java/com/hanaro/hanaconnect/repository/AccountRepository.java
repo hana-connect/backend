@@ -53,7 +53,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 	where a.member.id = :memberId
 	  and a.accountType = :accountType
 	  and a.isReward = false
-""")
+	""")
 	Optional<Account> findByMemberIdAndAccountTypeAndIsRewardFalseWithLock(
 		@Param("memberId") Long memberId,
 		@Param("accountType") AccountType accountType
