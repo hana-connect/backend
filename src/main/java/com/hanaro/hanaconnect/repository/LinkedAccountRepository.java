@@ -3,6 +3,8 @@ package com.hanaro.hanaconnect.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
@@ -15,11 +17,26 @@ public interface LinkedAccountRepository extends JpaRepository<LinkedAccount, Lo
 
 	Optional<LinkedAccount> findByMemberIdAndAccountId(Long memberId, Long accountId);
 
+	@EntityGraph(attributePaths = "account")
+	List<LinkedAccount> findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(Long memberId);
+
+	@EntityGraph(attributePaths = "account")
+	List<LinkedAccount> findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(Long memberId, Pageable pageable);
+
+	@EntityGraph(attributePaths = "account")
 	List<LinkedAccount> findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
 		Long memberId,
 		MemberRole memberRole
 	);
 
+	@EntityGraph(attributePaths = "account")
+	List<LinkedAccount> findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
+		Long memberId,
+		MemberRole memberRole,
+		Pageable pageable
+	);
+
+	@EntityGraph(attributePaths = "account")
 	List<LinkedAccount> findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(
 		Long memberId,
 		Long kidId
