@@ -1,7 +1,8 @@
 package com.hanaro.hanaconnect.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +14,7 @@ public class HouseHistoryItemDTO {
 	private int level;
 	private int totalCount;
 	private LocalDate paidAt;
+	@JsonProperty("isFirst")
 	private boolean isFirst;
 	private String reward;
 }

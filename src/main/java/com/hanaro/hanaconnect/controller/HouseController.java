@@ -186,7 +186,7 @@ public class HouseController {
 					    "histories": [
 					      {
 					        "year": 2,
-					        "level": 5,
+					        "level": 3,
 					        "totalCount": 24,
 					        "paidAt": "2025-01-25",
 					        "isFirst": false,
@@ -194,7 +194,7 @@ public class HouseController {
 					      },
 					      {
 					        "year": 1,
-					        "level": 3,
+					        "level": 2,
 					        "totalCount": 12,
 					        "paidAt": "2024-01-25",
 					        "isFirst": false,
