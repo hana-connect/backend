@@ -235,10 +235,10 @@ public class TransferService {
 		// 1. 권한 체크 (로그인한 memberId가 receiverAccountId에 접근 가능한지 검증)
 		validateAndGetSavingsAccount(memberId, receiverAccountId);
 
-		// 2. 검증 통과 후, '아이 적금 계좌'에 '적금_송금'된 가장 최신 내역 조회
+		// 2. receiverAccountId로 가장 최근에 보낸 적금_송금 내역 조회
 		Transaction latestTx = transactionRepository.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
 			receiverAccountId,
-			TransactionType.SAVINGS_DEPOSIT
+			TransactionType.SAVINGS_WITHDRAW
 		).orElse(null);
 
 		// 3. 내역 없으면 null
