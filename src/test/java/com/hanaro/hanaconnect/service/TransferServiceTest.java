@@ -15,6 +15,8 @@ import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.TransferRequestDto;
+import com.hanaro.hanaconnect.dto.TransferResponseDto;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
@@ -246,4 +248,102 @@ class TransferServiceTest {
 		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(ownerId, freeAccount.getId()))
 			.isInstanceOf(IllegalArgumentException.class);
 	}
+
+	@Test
+	@DisplayName("일반 송금 성공")
+	void transferSuccessTest() {
+		Member parent = findParent();
+		Account parentFreeAccount = findParentFreeAccount(parent.getId());
+		Account kidFreeAccount = findLinkedKidFreeAccount(parent.getId());
+
+		BigDecimal senderBefore = parentFreeAccount.getBalance();
+		BigDecimal receiverBefore = kidFreeAccount.getBalance();
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(kidFreeAccount.getId())
+			.amount(new BigDecimal("10000"))
+			.password("123456")
+			.build();
+
+		TransferResponseDto result = transferService.transfer(parent.getId(), request);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getTransferId()).isNotNull();
+		assertThat(result.getToAccountId()).isEqualTo(kidFreeAccount.getId());
+		assertThat(result.getToAccountNumber()).isEqualTo(kidFreeAccount.getAccountNumber());
+		assertThat(result.getAmount()).isEqualByComparingTo("10000");
+		assertThat(result.getTransferredAt()).isNotNull();
+
+		Account updatedSender = accountRepository.findById(parentFreeAccount.getId())
+			.orElseThrow(() -> new IllegalArgumentException("부모 계좌를 다시 찾을 수 없습니다."));
+		Account updatedReceiver = accountRepository.findById(kidFreeAccount.getId())
+			.orElseThrow(() -> new IllegalArgumentException("아이 계좌를 다시 찾을 수 없습니다."));
+
+		assertThat(updatedSender.getBalance())
+			.isEqualByComparingTo(senderBefore.subtract(new BigDecimal("10000")));
+		assertThat(updatedReceiver.getBalance())
+			.isEqualByComparingTo(receiverBefore.add(new BigDecimal("10000")));
+	}
+
+	@Test
+	@DisplayName("일반 송금 실패 - 비밀번호 불일치")
+	void transferFailWrongPasswordTest() {
+		Member parent = findParent();
+		Account kidFreeAccount = findLinkedKidFreeAccount(parent.getId());
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(kidFreeAccount.getId())
+			.amount(new BigDecimal("10000"))
+			.password("000000")
+			.build();
+
+		assertThatThrownBy(() -> transferService.transfer(parent.getId(), request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("비밀번호가 일치하지 않습니다.");
+	}
+
+	@Test
+	@DisplayName("송금 결과 조회 성공")
+	void getTransferResultSuccessTest() {
+		Member parent = findParent();
+		Account kidFreeAccount = findLinkedKidFreeAccount(parent.getId());
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(kidFreeAccount.getId())
+			.amount(new BigDecimal("15000"))
+			.password("123456")
+			.build();
+
+		TransferResponseDto transferResult =
+			transferService.transfer(parent.getId(), request);
+
+		TransferResponseDto result =
+			transferService.getTransferResult(parent.getId(), transferResult.getTransferId());
+
+		assertThat(result).isNotNull();
+		assertThat(result.getTransferId()).isEqualTo(transferResult.getTransferId());
+		assertThat(result.getToAccountId()).isEqualTo(kidFreeAccount.getId());
+		assertThat(result.getToAccountNumber()).isEqualTo(kidFreeAccount.getAccountNumber());
+		assertThat(result.getAmount()).isEqualByComparingTo("15000");
+		assertThat(result.getTransferredAt()).isNotNull();
+	}
+
+	@Test
+	@DisplayName("송금 결과 조회 실패 - 존재하지 않는 거래")
+	void getTransferResultFailNotFoundTest() {
+		Member parent = findParent();
+
+		assertThatThrownBy(() -> transferService.getTransferResult(parent.getId(), 999999L))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("거래를 찾을 수 없습니다.");
+	}
+
+	private Account findLinkedKidFreeAccount(Long parentId) {
+		return accountRepository.findAll().stream()
+			.filter(account -> account.getAccountType() == AccountType.FREE)
+			.filter(account -> linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), parentId))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 연결된 아이 입출금 계좌를 찾을 수 없습니다."));
+	}
+
 }
