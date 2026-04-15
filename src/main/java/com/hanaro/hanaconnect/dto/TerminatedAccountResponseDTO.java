@@ -15,11 +15,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TerminatedAccountResponseDTO {
 
+	private Long accountId;
 	private String name;
 	private String accountNumber;
 
 	public static TerminatedAccountResponseDTO from(Account account) {
 		return TerminatedAccountResponseDTO.builder()
+			.accountId(account.getId())
 			.name(account.getName())
 			.accountNumber(account.getAccountNumber())
 			.build();
