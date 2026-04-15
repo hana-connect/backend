@@ -187,7 +187,7 @@ class TransferControllerTest {
 			.accountNumber("123-456-789")
 			.history(List.of(
 				com.hanaro.hanaconnect.dto.RelayHistoryDTO.builder()
-					.id(1L)
+					.letterId(1L)
 					.amount(new BigDecimal("10000"))
 					.message("응원한다!")
 					.date(java.time.LocalDateTime.now())
