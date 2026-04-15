@@ -241,8 +241,8 @@ public class HouseService {
 	}
 
 	private Optional<HouseHistoryItemDTO> toHistoryItem(House house, Transaction transaction, int totalCount) {
-		boolean isFirst = totalCount == 1;
-		boolean isYearlyMilestone = totalCount % 12 == 0;
+		boolean isFirst = totalCount == 1 ? true : false;
+		boolean isYearlyMilestone = totalCount % 12 == 0 ? true : false;
 
 		if (!isFirst && !isYearlyMilestone) {
 			return Optional.empty();
