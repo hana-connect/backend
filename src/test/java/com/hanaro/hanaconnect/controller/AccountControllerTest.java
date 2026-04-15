@@ -104,7 +104,7 @@ class AccountControllerTest {
 			.andExpect(jsonPath("$.status").value(200))
 			.andExpect(jsonPath("$.data").isArray())
 			.andExpect(jsonPath("$.data[0].name").value("만기 테스트 적금"))
-			.andExpect(jsonPath("$.data[0].accountNumber").value("49494848474"))
+			.andExpect(jsonPath("$.data[0].accountNumber").value("494-9484-8474"))
 			.andExpect(jsonPath("$.message").value("만기된 적금 목록 조회에 성공했습니다."))
 			.andDo(print());
 	}
