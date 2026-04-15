@@ -29,6 +29,6 @@ public class MyAccountResponseDTO {
 	@Schema(description = "계좌 타입", example = "DEPOSIT")
 	private AccountType accountType;
 
-	@Schema(description = "계좌 생성일", example = "2026.04.14")
+	@Schema(description = "계좌 연결일", example = "2026.04.14")
 	private String createdAt;
 }
