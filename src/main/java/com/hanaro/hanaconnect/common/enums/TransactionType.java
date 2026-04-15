@@ -4,6 +4,7 @@ package com.hanaro.hanaconnect.common.enums;
 public enum TransactionType {
 	WITHDRAW,
 	DEPOSIT,
+	SUBSCRIPTION,
 	SAVINGS_WITHDRAW,
 	SAVINGS_DEPOSIT
 }

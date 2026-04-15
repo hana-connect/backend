@@ -59,7 +59,7 @@ public class TransferService {
 		BigDecimal amount = request.getAmount();
 
 		// 1. 계좌 조회
-		Account sender = accountRepository.findByMemberIdAndAccountTypeWithLock(memberId, AccountType.FREE)
+		Account sender = accountRepository.findByMemberIdAndAccountTypeAndIsRewardFalseWithLock(memberId, AccountType.FREE)
 			.orElseThrow(() -> new IllegalArgumentException("지갑 계좌를 찾을 수 없습니다."));
 
 		Account receiver = accountRepository.findByIdWithLock(request.getTargetAccountId())
@@ -125,7 +125,7 @@ public class TransferService {
 			.orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
 
 		Account parentAccount = accountRepository
-			.findByMemberIdAndAccountTypeWithLock(loginMemberId, AccountType.FREE)
+			.findByMemberIdAndAccountTypeAndIsRewardFalseWithLock(loginMemberId, AccountType.FREE)
 			.orElseThrow(() -> new IllegalArgumentException("출금 계좌가 없습니다."));
 
 		Account kidAccount = accountRepository.findByIdWithLock(request.getAccountId())

@@ -49,7 +49,7 @@ class HouseControllerTest {
 	void setUp() {
 		kidWithHouse = findMember("김청약", MemberRole.KID);
 		kidWithoutHouse = findMember("홍길동", MemberRole.KID);
-		relatedParent = findMember("할청약", MemberRole.PARENT);
+		relatedParent = findMember("청약할머니", MemberRole.PARENT);
 		unrelatedParent = findMember("김엄마", MemberRole.PARENT);
 
 		kidAccessToken = createAccessToken(kidWithHouse);

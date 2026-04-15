@@ -79,6 +79,7 @@ class TransferServiceTest {
 		request.setPassword("123456");
 		request.setContent("적금 응원 편지");
 
+
 		SavingsTransferResponseDTO result =
 			transferService.transferToChildSavings(parent.getId(), request);
 

@@ -23,6 +23,7 @@ import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Mission;
 import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Relation;
+import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.HouseRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
@@ -88,14 +89,13 @@ public class InitLoader implements ApplicationRunner {
 		);
 
 		Member parent3 = createMember(
-			"할청약",
+			"청약할머니",
 			encodedPassword,
 			LocalDate.of(1958, 7, 15),
 			"88880000111",
 			MemberRole.PARENT
 		);
 
-		// 객체를 DB에 저장
 		kid1 = memberRepository.save(kid1);
 		kid2 = memberRepository.save(kid2);
 		parent1 = memberRepository.save(parent1);
@@ -122,7 +122,7 @@ public class InitLoader implements ApplicationRunner {
 			new BigDecimal("300000")
 		));
 
-		accountRepository.save(createAccount(
+		Account kid1SubscriptionAccount = accountRepository.save(createAccount(
 			"아이 청약 통장",
 			"77788889999",
 			"1234",
@@ -132,8 +132,6 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-
-		// 부모1 입출금 계좌
 		Account parentFreeAccount = accountRepository.save(createAccount(
 			"부모 입출금 통장",
 			"22233335555",
@@ -144,7 +142,16 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 부모1 저축 예금 계좌
+		Account parent1RewardAccount = accountRepository.save(Account.builder()
+			.name("부모 리워드 통장")
+			.accountNumber("22233336666")
+			.password(passwordEncoder.encode("5678"))
+			.accountType(AccountType.FREE)
+			.balance(BigDecimal.ZERO)
+			.member(parent1)
+			.isReward(true)
+			.build());
+
 		Account parentDepositAccount = accountRepository.save(createAccount(
 			"부모 저축 예금",
 			"22233334444",
@@ -186,7 +193,7 @@ public class InitLoader implements ApplicationRunner {
 		));
 
 		Account parent3FreeAccount = accountRepository.save(createAccount(
-			"할청약 입출금 통장",
+			"청약할머니 입출금 통장",
 			"777788889999",
 			"1234",
 			AccountType.FREE,
@@ -194,6 +201,16 @@ public class InitLoader implements ApplicationRunner {
 			parent3,
 			null
 		));
+
+		Account parent3RewardAccount = accountRepository.save(Account.builder()
+			.name("청약할머니 리워드 통장")
+			.accountNumber("777788880000")
+			.password(passwordEncoder.encode("1234"))
+			.accountType(AccountType.FREE)
+			.balance(BigDecimal.ZERO)
+			.member(parent3)
+			.isReward(true)
+			.build());
 
 		Account kid2HousingAccount = accountRepository.save(createAccount(
 			"김청약 주택청약",
@@ -279,6 +296,13 @@ public class InitLoader implements ApplicationRunner {
 
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
+				.account(parent1RewardAccount)
+				.member(parent1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
 				.account(kidSavingsAccount)
 				.member(kid1)
 				.build()
@@ -291,11 +315,19 @@ public class InitLoader implements ApplicationRunner {
 				.build()
 		);
 
-		System.out.println("kid1 = " + kid1);
-		System.out.println("kid2 = " + kid2);
-		System.out.println("parent1 = " + parent1);
-		System.out.println("parent2 = " + parent2);
-		System.out.println("parent3 = " + parent3);
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kid1SubscriptionAccount)
+				.member(kid1)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kid1SubscriptionAccount)
+				.member(parent1)
+				.build()
+		);
 
 		relationRepository.save(createRelation(kid1, parent1));
 		relationRepository.save(createRelation(kid1, parent2));
@@ -306,7 +338,6 @@ public class InitLoader implements ApplicationRunner {
 		relationRepository.save(createRelation(parent2, kid1));
 		relationRepository.save(createRelation(parent2, parent1));
 
-		// 청약이들 입장에서 보이는 연결
 		relationRepository.save(createRelation(kid2, parent3));
 		relationRepository.save(createRelation(parent3, kid2));
 
@@ -324,7 +355,14 @@ public class InitLoader implements ApplicationRunner {
 				.member(parent3)
 				.account(parent3FreeAccount)
 				.build()
-			);
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.member(parent3)
+				.account(parent3RewardAccount)
+				.build()
+		);
 
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
@@ -334,7 +372,7 @@ public class InitLoader implements ApplicationRunner {
 		);
 
 		linkedAccountRepository.save(
-				LinkedAccount.builder()
+			LinkedAccount.builder()
 				.member(parent3)
 				.account(kid2HousingAccount)
 				.build()
@@ -353,7 +391,7 @@ public class InitLoader implements ApplicationRunner {
 
 		createCheongyakTransactions(parent3FreeAccount, kid2HousingAccount);
 
-    createSampleMissions(kid1, parent1);
+		createSampleMissions(kid1, parent1);
 	}
 
 	private Member createMember(
@@ -443,27 +481,27 @@ public class InitLoader implements ApplicationRunner {
 				.build(),
 
 			Mission.builder()
-		        .kid(kid)
-		        .parent(parent)
-		        .name("오늘 소비 내역 확인하기")
-		        .isCompleted(true)
-		        .build()
-    ));
-  }
+				.kid(kid)
+				.parent(parent)
+				.name("오늘 소비 내역 확인하기")
+				.isCompleted(true)
+				.build()
+		));
+	}
+
 	private void createCheongyakTransactions(Account senderAccount, Account receiverAccount) {
 		LocalDate startDate = LocalDate.of(2024, 1, 12);
 
 		for (int i = 0; i < 28; i++) {
 			LocalDate paymentDate = startDate.plusMonths(i);
 
-			com.hanaro.hanaconnect.entity.Transaction transaction =
-				com.hanaro.hanaconnect.entity.Transaction.builder()
-					.transactionMoney(new BigDecimal("200000"))
-					.transactionBalance(new BigDecimal(200000L * (i + 1)))
-					.transactionType(TransactionType.DEPOSIT)
-					.senderAccount(senderAccount)
-					.receiverAccount(receiverAccount)
-					.build();
+			Transaction transaction = Transaction.builder()
+				.transactionMoney(new BigDecimal("200000"))
+				.transactionBalance(new BigDecimal(200000L * (i + 1)))
+				.transactionType(TransactionType.SUBSCRIPTION)
+				.senderAccount(senderAccount)
+				.receiverAccount(receiverAccount)
+				.build();
 
 			transaction.setCreatedAtForInit(paymentDate.atTime(12, 0));
 

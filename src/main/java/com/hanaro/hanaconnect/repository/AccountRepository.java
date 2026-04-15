@@ -39,8 +39,25 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 	Optional<Account> findByAccountNumberAndMemberId(String accountNumber, Long memberId);
 	List<Account> findByMemberIdAndIsEndFalseOrderByCreatedAtDesc(Long memberId);
 
-
 	Optional<Account> findByMemberIdAndAccountType(Long memberId, AccountType accountType);
+
+	// 리워드 계좌 조회
+	Optional<Account> findByMemberIdAndIsRewardTrue(Long memberId);
+
+	Optional<Account> findByMemberIdAndAccountTypeAndIsRewardFalse(Long memberId, AccountType accountType);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("""
+	select a
+	from Account a
+	where a.member.id = :memberId
+	  and a.accountType = :accountType
+	  and a.isReward = false
+""")
+	Optional<Account> findByMemberIdAndAccountTypeAndIsRewardFalseWithLock(
+		@Param("memberId") Long memberId,
+		@Param("accountType") AccountType accountType
+	);
 
 	// 만기된(isEnd=true) 적금(SAVINGS) 계좌 목록 조회
 	List<Account> findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc(Long memberId, AccountType accountType);
