@@ -23,10 +23,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -40,9 +40,7 @@ public class HouseService {
 	private final TransactionRepository transactionRepository;
 
 	public HouseStatusResponseDTO getHouseStatus(Long requesterId, Long kidId) {
-		Member requester = memberRepository.findById(requesterId)
-			.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
-
+		Member requester = findRequester(requesterId);
 		Member kid = resolveTargetKid(requester, kidId);
 
 		Optional<House> houseOpt = houseRepository.findByMemberId(kid.getId());
@@ -60,11 +58,10 @@ public class HouseService {
 		}
 
 		House house = houseOpt.get();
-		int totalCount = house.getTotalCount() != null ? house.getTotalCount() : 0;
+		int totalCount = safeTotalCount(house);
 		int level = HouseLevelCalculator.calculateLevel(house.getStartDate(), totalCount);
 		int gauge = HouseLevelCalculator.calculateGauge(totalCount);
 		HouseLevel houseLevel = HouseLevel.from(level);
-
 
 		String message = buildMessage(requester, kid, houseLevel, house, totalCount);
 
@@ -77,6 +74,39 @@ public class HouseService {
 			.startDate(house.getStartDate())
 			.message(message)
 			.build();
+	}
+
+	public HouseHistoryResponseDTO getHouseHistory(Long requesterId, Long kidId) {
+		HouseContext context = resolveHouseContext(requesterId, kidId);
+
+		List<Transaction> transactions = transactionRepository
+			.findByReceiverAccountIdAndTransactionTypeOrderByCreatedAtAsc(
+				context.house().getAccount().getId(),
+				TransactionType.SUBSCRIPTION
+			);
+
+		List<HouseHistoryItemDTO> histories = buildHistories(context.house(), transactions);
+
+		return HouseHistoryResponseDTO.builder()
+			.histories(histories)
+			.build();
+	}
+
+	private Member findRequester(Long requesterId) {
+		return memberRepository.findById(requesterId)
+			.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
+	}
+
+	private HouseContext resolveHouseContext(Long requesterId, Long kidId) {
+		Member requester = findRequester(requesterId);
+		Member kid = resolveTargetKid(requester, kidId);
+		House house = houseRepository.findByMemberId(kid.getId())
+			.orElseThrow(() -> new EntityNotFoundException("청약 정보를 찾을 수 없습니다."));
+		return new HouseContext(requester, kid, house);
+	}
+
+	private int safeTotalCount(House house) {
+		return house.getTotalCount() != null ? house.getTotalCount() : 0;
 	}
 
 	private Member resolveTargetKid(Member requester, Long kidId) {
@@ -137,58 +167,42 @@ public class HouseService {
 		return houseLevel.getPersonalizedMessage(payerDisplayName, totalCount);
 	}
 
-	public HouseHistoryResponseDTO getHouseHistory(Long requesterId, Long kidId) {
-		Member requester = memberRepository.findById(requesterId)
-			.orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
-
-		Member kid = resolveTargetKid(requester, kidId);
-
-		House house = houseRepository.findByMemberId(kid.getId())
-			.orElseThrow(() -> new EntityNotFoundException("청약 정보를 찾을 수 없습니다."));
-
-		List<Transaction> transactions = transactionRepository
-			.findByReceiverAccountIdAndTransactionTypeOrderByCreatedAtAsc(
-				house.getAccount().getId(),
-				TransactionType.SUBSCRIPTION
-			);
-
-		List<HouseHistoryItemDTO> histories = buildHistories(house, transactions);
-
-		return HouseHistoryResponseDTO.builder()
-			.histories(histories)
-			.build();
+	private List<HouseHistoryItemDTO> buildHistories(House house, List<Transaction> transactions) {
+		return IntStream.range(0, transactions.size())
+			.mapToObj(index -> toHistoryItem(house, transactions.get(index), index + 1))
+			.flatMap(Optional::stream)
+			.sorted((a, b) -> b.getPaidAt().compareTo(a.getPaidAt()))
+			.collect(Collectors.toList());
 	}
 
-	private List<HouseHistoryItemDTO> buildHistories(House house, List<Transaction> transactions) {
-		List<HouseHistoryItemDTO> histories = new ArrayList<>();
+	private Optional<HouseHistoryItemDTO> toHistoryItem(House house, Transaction transaction, int totalCount) {
+		boolean isFirst = totalCount == 1;
+		boolean isYearlyMilestone = totalCount % 12 == 0;
 
-		for (int i = 0; i < transactions.size(); i++) {
-			int totalCount = i + 1;
-			Transaction transaction = transactions.get(i);
-
-			boolean isFirst = totalCount == 1;
-			boolean isYearlyMilestone = totalCount % 12 == 0;
-
-			if (!isFirst && !isYearlyMilestone) {
-				continue;
-			}
-
-			int year = isFirst ? 0 : totalCount / 12;
-			int level = HouseLevelCalculator.calculateLevel(house.getStartDate(), totalCount);
-
-			histories.add(
-				HouseHistoryItemDTO.builder()
-					.year(year)
-					.level(level)
-					.totalCount(totalCount)
-					.paidAt(transaction.getCreatedAt().toLocalDate())
-					.isFirst(isFirst)
-					.reward(buildReward(level, isFirst))
-					.build()
-			);
+		if (!isFirst && !isYearlyMilestone) {
+			return Optional.empty();
 		}
 
-		Collections.reverse(histories);
-		return histories;
+		int year = isFirst ? 0 : totalCount / 12;
+		int level = HouseLevelCalculator.calculateLevel(house.getStartDate(), totalCount);
+		HouseLevel houseLevel = HouseLevel.from(level);
+
+		return Optional.of(
+			HouseHistoryItemDTO.builder()
+				.year(year)
+				.level(level)
+				.totalCount(totalCount)
+				.paidAt(transaction.getCreatedAt().toLocalDate())
+				.isFirst(isFirst)
+				.reward(houseLevel.getChangeDescription())
+				.build()
+		);
+	}
+
+	private record HouseContext(
+		Member requester,
+		Member kid,
+		House house
+	) {
 	}
 }
