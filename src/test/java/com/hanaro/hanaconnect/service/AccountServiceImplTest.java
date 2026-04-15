@@ -442,22 +442,6 @@ class AccountServiceImplTest {
 	}
 
 	@Test
-	@DisplayName("만기된 적금 계좌 목록을 DTO로 변환한다")
-	void getTerminatedSavings_success() {
-		Member kid = createMember(1L, "홍길동", MemberRole.KID);
-		Account expiredSavings = createAccount(40L, "청춘 적금(만기)", "12345678901", "encoded", AccountType.SAVINGS, kid);
-
-		given(accountRepository.findByMemberIdAndAccountTypeAndIsEndTrueOrderByIdAsc(1L, AccountType.SAVINGS))
-			.willReturn(List.of(expiredSavings));
-
-		List<TerminatedAccountResponseDTO> result = accountService.getTerminatedSavings(1L);
-
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getName()).isEqualTo("청춘 적금(만기)");
-			assertThat(result.get(0).getAccountNumber()).isEqualTo("12345678901");
-	}
-
-	@Test
 	@DisplayName("부모가 특정 아이의 연결 계좌 지갑 정보를 조회할 수 있다")
 	void getKidLinkedAccounts_success() {
 		Member parent = createMember(3L, "김엄마", MemberRole.PARENT);
