@@ -10,5 +10,6 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class WalletResponseDTO {
+	private String name;
 	private BigDecimal walletMoney;
 }
