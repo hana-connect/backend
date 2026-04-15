@@ -4,6 +4,8 @@ import java.util.List;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -148,12 +150,7 @@ public class AccountServiceImpl implements AccountService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<MyAccountResponseDTO> getMyAccounts(Long memberId, Integer limit) {
-		List<LinkedAccount> linkedAccounts =
-			linkedAccountRepository.findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(memberId);
-
-		if (limit != null && limit > 0 && linkedAccounts.size() > limit) {
-			linkedAccounts = linkedAccounts.subList(0, limit);
-		}
+		List<LinkedAccount> linkedAccounts = getLinkedAccounts(memberId, limit);
 
 		return linkedAccounts.stream()
 			.map(linkedAccount -> {
@@ -176,15 +173,7 @@ public class AccountServiceImpl implements AccountService {
 	public List<KidAccountListResponseDTO> getKidAccounts(Long memberId, Integer limit) {
 		validateParentRole(memberId);
 
-		List<LinkedAccount> linkedAccounts =
-			linkedAccountRepository.findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
-				memberId,
-				MemberRole.KID
-			);
-
-		if (limit != null && limit > 0 && linkedAccounts.size() > limit) {
-			linkedAccounts = linkedAccounts.subList(0, limit);
-		}
+		List<LinkedAccount> linkedAccounts = getLinkedKidAccounts(memberId, limit);
 
 		return linkedAccounts.stream()
 			.map(linkedAccount -> KidAccountListResponseDTO.builder()
@@ -194,6 +183,32 @@ public class AccountServiceImpl implements AccountService {
 				.accountNumber(AccountNumberFormatter.format(linkedAccount.getAccount().getAccountNumber()))
 				.build())
 			.toList();
+	}
+
+	private List<LinkedAccount> getLinkedAccounts(Long memberId, Integer limit) {
+		if (limit != null && limit > 0) {
+			Pageable pageable = PageRequest.of(0, limit);
+			return linkedAccountRepository.findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(memberId, pageable);
+		}
+
+		return linkedAccountRepository.findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(memberId);
+	}
+
+	private List<LinkedAccount> getLinkedKidAccounts(Long memberId, Integer limit) {
+		if (limit != null && limit > 0) {
+			Pageable pageable = PageRequest.of(0, limit);
+			return linkedAccountRepository
+				.findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
+					memberId,
+					MemberRole.KID,
+					pageable
+				);
+		}
+
+		return linkedAccountRepository.findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
+			memberId,
+			MemberRole.KID
+		);
 	}
 
 	private void validateAccountNumber(String accountNumber) {
