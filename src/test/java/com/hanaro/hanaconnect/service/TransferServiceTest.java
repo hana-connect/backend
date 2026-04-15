@@ -133,7 +133,7 @@ class TransferServiceTest {
 
 		transferService.transferToChildSavings(parent.getId(), request);
 
-		// When (page 파라미터 0 추가)
+		// When
 		RelayResponseDTO result =
 			transferService.getRelayHistory(parent.getId(), kidSavingsAccount.getId(), 0);
 
@@ -238,7 +238,6 @@ class TransferServiceTest {
 
 		Long strangerId = expiredSavings.getMember().getId() + 100;
 
-		// 파라미터 개수 맞추기 (null 추가)
 		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(strangerId, expiredSavings.getId(), 0, null))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("본인의 계좌만 조회할 수 있습니다.");
@@ -255,7 +254,6 @@ class TransferServiceTest {
 
 		Long ownerId = activeAccount.getMember().getId();
 
-		// 파라미터 개수 맞추기 (null 추가)
 		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(ownerId, activeAccount.getId(), 0, null))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("만기된 계좌만 상세 조회가 가능합니다.");
