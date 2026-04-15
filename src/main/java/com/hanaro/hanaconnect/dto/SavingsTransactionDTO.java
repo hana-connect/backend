@@ -19,4 +19,5 @@ public class SavingsTransactionDTO {
 	private BigDecimal balance;
 	private String message;
 	private String senderName;
+	private Long senderId;
 }

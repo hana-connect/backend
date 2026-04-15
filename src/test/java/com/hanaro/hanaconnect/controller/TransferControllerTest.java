@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,6 +30,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
+import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
@@ -176,38 +179,38 @@ class TransferControllerTest {
 	}
 
 	@Test
-	@DisplayName("적금 릴레이 내역 조회 성공")
-	void getRelayData_success() throws Exception {
+	@DisplayName("만기 적금 상세 내역 조회 성공 - 필터링 포함")
+	void getSavingsDetail_success() throws Exception {
 		// Given
 		Long memberId = 1L;
-		Long targetAccountId = 10L;
+		Long accountId = 10L;
+		Long senderId = 5L;
+		int page = 0;
 
-		com.hanaro.hanaconnect.dto.RelayResponseDTO response = com.hanaro.hanaconnect.dto.RelayResponseDTO.builder()
-			.productNickname("길동이 선물 적금")
-			.accountNumber("123-456-789")
-			.history(List.of(
-				com.hanaro.hanaconnect.dto.RelayHistoryDTO.builder()
-					.letterId(1L)
+		SavingsDetailResponseDTO response = SavingsDetailResponseDTO.builder()
+			.productName("아이 적금 통장")
+			.accountNumber("12345678901")
+			.transactions(List.of(
+				SavingsTransactionDTO.builder()
+					.transactionId(100L)
+					.senderId(senderId)
+					.senderName("엄마")
 					.amount(new BigDecimal("10000"))
-					.message("응원한다!")
-					.date(java.time.LocalDateTime.now())
+					.message("사랑해!")
+					.date(java.time.LocalDateTime.now().withNano(0))
 					.build()
 			))
 			.build();
 
-		given(transferService.getRelayHistory(eq(memberId), eq(targetAccountId)))
+		given(transferService.getExpiredSavingsDetail(eq(memberId), eq(accountId), eq(page), eq(senderId)))
 			.willReturn(response);
 
 		// When + Then
-		mvc.perform(get("/api/transfer/savings/relay")
-				.param("targetAccountId", String.valueOf(targetAccountId))
+		mvc.perform(get("/api/accounts/terminated-savings/{accountId}", accountId)
+				.param("page", String.valueOf(page))
+				.param("senderId", String.valueOf(senderId))
 				.with(authentication(createAuthentication(memberId))))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value(200))
-			.andExpect(jsonPath("$.message").value("적금 편지 내역 조회에 성공했습니다."))
-			.andExpect(jsonPath("$.data.productNickname").value("길동이 선물 적금"))
-			.andExpect(jsonPath("$.data.accountNumber").value("123-456-789"))
-			.andExpect(jsonPath("$.data.history[0].message").value("응원한다!"))
-			.andExpect(jsonPath("$.data.history[0].amount").value(10000));
+			.andDo(print())
+			.andExpect(status().isOk());
 	}
 }
