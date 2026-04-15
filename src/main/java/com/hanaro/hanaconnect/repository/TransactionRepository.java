@@ -22,12 +22,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 	select coalesce(sum(t.transactionMoney), 0)
 	from Transaction t
 	where t.receiverAccount.id = :subscriptionId
+	  and t.transactionType = :type
 	  and t.createdAt between :start and :end
-	""")
+""")
 	BigDecimal sumMonthlyPaymentAmount(
 		@Param("subscriptionId") Long subscriptionId,
 		@Param("start") LocalDateTime start,
-		@Param("end") LocalDateTime end
+		@Param("end") LocalDateTime end,
+		@Param("type") TransactionType type
 	);
 
 }
