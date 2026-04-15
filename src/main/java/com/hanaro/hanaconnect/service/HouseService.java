@@ -41,6 +41,10 @@ public class HouseService {
 	private final PhoneNameRepository phoneNameRepository;
 	private final TransactionRepository transactionRepository;
 
+	public HouseStatusResponseDTO getHouseStatus(Long parentId, Long kidId) {
+		return getHouseStatus(parentId, kidId, null);
+	}
+
 	public HouseStatusResponseDTO getHouseStatus(Long requesterId, Long kidId, LocalDate paidAt) {
 		Member requester = findRequester(requesterId);
 		Member kid = resolveTargetKid(requester, kidId);
