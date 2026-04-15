@@ -1,5 +1,7 @@
 package com.hanaro.hanaconnect.common.util;
 
+import static java.lang.Math.*;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
@@ -12,14 +14,13 @@ public class HouseLevelCalculator {
 	 * 납입 시작일 기준으로 레벨 계산
 	 * 시작하면 lv1, 이후 12개월마다 +1
 	 */
-	public static int calculateLevel(LocalDate startDate, int totalCount) {
-		if (startDate == null || totalCount <= 0) return 0;
-
-		long monthsElapsed = ChronoUnit.MONTHS.between(startDate, LocalDate.now());
-		if (monthsElapsed < 0) return 0;
-		int level = 1 + (int)(monthsElapsed / MONTHS_PER_LEVEL);
-		return Math.min(level, MAX_LEVEL);
+	public static int calculateLevel(int totalCount) {
+		if (totalCount <= 0) {
+			return 0;
+		}
+		return min(1 + (totalCount /12), MAX_LEVEL);
 	}
+
 
 	/**
 	 * 게이지: 현재 레벨 내에서의 진행도 (0~100)
