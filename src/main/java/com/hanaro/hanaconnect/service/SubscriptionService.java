@@ -68,7 +68,8 @@ public class SubscriptionService {
 		BigDecimal alreadyPaidAmount = transactionRepository.sumMonthlyPaymentAmount(
 			subscriptionId,
 			startOfMonth,
-			endOfMonth
+			endOfMonth,
+			TransactionType.SUBSCRIPTION
 		);
 
 		boolean hasPaidThisMonth = alreadyPaidAmount.compareTo(BigDecimal.ZERO) > 0;
@@ -145,7 +146,8 @@ public class SubscriptionService {
 		BigDecimal monthlyAmount = transactionRepository.sumMonthlyPaymentAmount(
 			subscriptionId,
 			startOfMonth,
-			endOfMonth
+			endOfMonth,
+			TransactionType.SUBSCRIPTION
 		);
 
 		return monthlyAmount.compareTo(BigDecimal.ZERO) > 0;
