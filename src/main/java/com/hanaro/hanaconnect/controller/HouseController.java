@@ -151,9 +151,91 @@ public class HouseController {
 		return ResponseEntity.ok(CustomAPIResponse.createSuccess(HttpStatus.OK.value(), response, "청약 상태 조회 성공"));
 	}
 
+	@Operation(
+		summary = "청약 납입 히스토리 조회",
+		description = """
+		아이의 청약 납입 히스토리를 조회합니다.
+
+		- 아이(KID) 본인 요청 시: `kidId` 없이 호출합니다.
+		- 조부모(PARENT) 요청 시: 조회할 아이의 `kidId`가 필요합니다.
+		- 히스토리는 모든 납입 내역이 아니라, 의미 있는 마일스톤 기준으로 반환됩니다.
+
+		[히스토리 생성 기준]
+		- 첫 납입 (1회)
+		- 1년 납입 (12회)
+		- 2년 납입 (24회)
+		- 이후 12개월 단위
+
+		각 항목은 해당 시점의 집 레벨과 변화(reward)를 포함합니다.
+		""",
+		security = @SecurityRequirement(name = "bearerAuth")
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "청약 히스토리 조회 성공",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = HouseHistoryResponseDTO.class),
+				examples = @ExampleObject(
+					value = """
+					{
+					  "status": 200,
+					  "message": "청약 히스토리 조회 성공",
+					  "data": {
+					    "histories": [
+					      {
+					        "year": 2,
+					        "level": 5,
+					        "totalCount": 24,
+					        "paidAt": "2025-01-25",
+					        "isFirst": false,
+					        "reward": "벽 1개, 문 추가"
+					      },
+					      {
+					        "year": 1,
+					        "level": 3,
+					        "totalCount": 12,
+					        "paidAt": "2024-01-25",
+					        "isFirst": false,
+					        "reward": "벽돌 6개 추가"
+					      },
+					      {
+					        "year": 0,
+					        "level": 1,
+					        "totalCount": 1,
+					        "paidAt": "2023-02-25",
+					        "isFirst": true,
+					        "reward": "나무 심기"
+					      }
+					    ]
+					  }
+					}
+					"""
+				)
+			)
+		),
+		@ApiResponse(
+			responseCode = "400",
+			description = "조부모 요청인데 kidId를 입력하지 않은 경우"
+		),
+		@ApiResponse(
+			responseCode = "403",
+			description = "관계 없는 아이 조회 시도"
+		),
+		@ApiResponse(
+			responseCode = "404",
+			description = "회원 또는 청약 정보를 찾을 수 없음"
+		)
+	})
 	@GetMapping("/history")
 	public ResponseEntity<CustomAPIResponse<HouseHistoryResponseDTO>> getHouseHistory(
 		@AuthenticationPrincipal TokenMemberPrincipal principal,
+
+		@Parameter(
+			description = "조회할 아이 회원 ID. 아이 본인은 생략, 조부모는 필요",
+			example = "2"
+		)
 		@RequestParam(required = false) Long kidId
 	) {
 		HouseHistoryResponseDTO response =
