@@ -22,6 +22,7 @@ import com.hanaro.hanaconnect.dto.AccountVerifyResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
 import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
+import com.hanaro.hanaconnect.dto.KidWalletDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
@@ -207,6 +208,23 @@ public class AccountController {
 				HttpStatus.OK.value(),
 				response,
 				"만기된 적금의 상세 내역 조회에 성공했습니다."
+			)
+		);
+	}
+
+	@GetMapping("/kids/{kidId}/linked-accounts")
+	public ResponseEntity<CustomAPIResponse<KidWalletDetailResponseDTO>> getKidLinkedAccounts(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@PathVariable Long kidId
+	) {
+		KidWalletDetailResponseDTO response =
+			accountService.getKidLinkedAccounts(principal.getMemberId(), kidId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"아이 지갑 및 연결 계좌 조회에 성공했습니다."
 			)
 		);
 	}
