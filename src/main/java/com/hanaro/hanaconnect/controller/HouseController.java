@@ -2,6 +2,7 @@ package com.hanaro.hanaconnect.controller;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.dto.HouseHistoryResponseDTO;
 import com.hanaro.hanaconnect.dto.HouseStatusResponseDTO;
 import com.hanaro.hanaconnect.service.HouseService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -148,5 +149,22 @@ public class HouseController {
 	) {
 		HouseStatusResponseDTO response = houseService.getHouseStatus(principal.getMemberId(), kidId);
 		return ResponseEntity.ok(CustomAPIResponse.createSuccess(HttpStatus.OK.value(), response, "청약 상태 조회 성공"));
+	}
+
+	@GetMapping("/history")
+	public ResponseEntity<CustomAPIResponse<HouseHistoryResponseDTO>> getHouseHistory(
+		@AuthenticationPrincipal TokenMemberPrincipal principal,
+		@RequestParam(required = false) Long kidId
+	) {
+		HouseHistoryResponseDTO response =
+			houseService.getHouseHistory(principal.getMemberId(), kidId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"청약 히스토리 조회 성공"
+			)
+		);
 	}
 }
