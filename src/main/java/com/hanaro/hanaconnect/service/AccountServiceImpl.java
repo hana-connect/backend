@@ -86,12 +86,13 @@ public class AccountServiceImpl implements AccountService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public AccountVerifyResponseDTO verifyMyAccount(Long memberId, AccountVerifyRequestDTO request) {
 		String normalizedAccountNumber = AccountNumberFormatter.normalize(request.getAccountNumber());
 
 		validateAccountNumber(normalizedAccountNumber);
 
-		Account account = accountRepository.findByAccountNumberAndMemberIdWithLock(normalizedAccountNumber, memberId)
+		Account account = accountRepository.findByAccountNumberAndMemberId(normalizedAccountNumber, memberId)
 			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
 
 		if (linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), memberId)) {
