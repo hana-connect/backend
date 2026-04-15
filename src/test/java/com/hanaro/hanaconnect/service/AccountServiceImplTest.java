@@ -454,7 +454,7 @@ class AccountServiceImplTest {
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getName()).isEqualTo("청춘 적금(만기)");
-		assertThat(result.get(0).getAccountNumber()).isEqualTo("123-4567-8901");
+			assertThat(result.get(0).getAccountNumber()).isEqualTo("12345678901");
 	}
 
 	@Test
