@@ -99,7 +99,7 @@ public class AccountController {
 	@GetMapping("/accounts/me")
 	@Operation(
 		summary = "내 연결 계좌 목록 조회",
-		description = "로그인한 사용자가 연결(등록)한 본인 계좌 목록을 조회합니다. 만기 계좌는 제외되며, limit를 전달하면 최근 연결순으로 해당 개수만 반환합니다."
+		description = "로그인한 사용자가 연결(등록)한 계좌 목록을 조회합니다. 만기 계좌는 제외되며, limit를 전달하면 최근 연결순으로 해당 개수만 반환합니다."
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "내 연결 계좌 목록 조회 성공"),
