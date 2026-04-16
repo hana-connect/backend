@@ -26,4 +26,11 @@ public class RelayResponseDTO {
 
 	@Getter
 	private List<RelayHistoryDTO> history;
+
+	private boolean isLast;
+
+	@JsonProperty("isLast")
+	public boolean isLast() {
+		return isLast;
+	}
 }
