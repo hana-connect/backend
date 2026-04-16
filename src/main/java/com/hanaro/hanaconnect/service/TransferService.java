@@ -192,6 +192,8 @@ public class TransferService {
 			.displayName(displayName)
 			.accountAlias(kidAccount.getName())
 			.balance(parentAccount.getBalance())
+			.currentSaving(kidAccount.getBalance())
+			.savingLimit(kidAccount.getTotalLimit())
 			.build();
 	}
 
