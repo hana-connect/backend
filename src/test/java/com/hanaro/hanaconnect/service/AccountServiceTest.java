@@ -10,12 +10,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
@@ -37,13 +39,19 @@ class AccountServiceTest {
 	@Autowired
 	private AccountRepository accountRepository;
 
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private AccountCryptoService accountCryptoService;
+
 	@Test
 	@DisplayName("나의 만기된 적금 계좌 목록 조회 성공")
 	void getTerminatedSavingsSuccessTest() {
 		// Given
 		Member member = memberRepository.save(Member.builder()
 			.name("홍길동")
-			.password("1234")
+			.password(passwordEncoder.encode("123456"))
 			.virtualAccount("33338888777")
 			.walletMoney(BigDecimal.ZERO)
 			.memberRole(MemberRole.KID)
@@ -55,8 +63,9 @@ class AccountServiceTest {
 		Account savedAccount = accountRepository.save(Account.builder()
 			.member(member)
 			.name("369 행복 적금")
-			.accountNumber("99988877700")
-			.password("1234")
+			.accountNumber(accountCryptoService.encrypt("99988877700"))
+			.accountNumberHash(accountCryptoService.encrypt("99988877700"))
+			.password(passwordEncoder.encode("1234"))
 			.accountType(AccountType.SAVINGS)
 			.balance(BigDecimal.valueOf(50000))
 			.isEnd(true)

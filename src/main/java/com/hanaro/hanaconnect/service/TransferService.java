@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
+import com.hanaro.hanaconnect.common.util.AccountMaskingUtil;
 import com.hanaro.hanaconnect.dto.RecentTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
 import com.hanaro.hanaconnect.dto.RelayResponseDTO;
@@ -51,6 +53,7 @@ public class TransferService {
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final LetterRepository letterRepository;
+	private final AccountCryptoService accountCryptoService;
 
 	// 적금
 	@Transactional
@@ -155,7 +158,7 @@ public class TransferService {
 		transactionRepository.save(depositTransaction);
 
 		return TransferResponseDto.builder()
-			.accountNumber(kidAccount.getAccountNumber())
+			.accountNumber(accountCryptoService.decrypt(kidAccount.getAccountNumber()))
 			.amount(amount)
 			.transferDate(LocalDate.now())
 			.build();
@@ -299,7 +302,7 @@ public class TransferService {
 
 		return RelayResponseDTO.builder()
 			.productNickname(displayName)
-			.accountNumber(account.getAccountNumber())
+			.accountNumber(accountCryptoService.decrypt((account.getAccountNumber())))
 			.history(historyPage.getContent())
 			.isLast(historyPage.isLast())
 			.build();
@@ -319,7 +322,7 @@ public class TransferService {
 
 		return RelayResponseDTO.builder()
 			.productNickname(displayName)
-			.accountNumber(account.getAccountNumber())
+			.accountNumber(accountCryptoService.decrypt((account.getAccountNumber())))
 			.history(history)
 			.build();
 	}
@@ -355,7 +358,7 @@ public class TransferService {
 
 		return SavingsDetailResponseDTO.builder()
 			.productName(account.getName())
-			.accountNumber(account.getAccountNumber())
+			.accountNumber(accountCryptoService.decrypt((account.getAccountNumber())))
 			.senders(senders)
 			.transactions(transactionsPage.getContent())
 			.isLast(transactionsPage.isLast())

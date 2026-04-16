@@ -39,7 +39,7 @@ public class Member extends BaseEntity {
 	@Column(nullable = false)
 	private LocalDate birthday;
 
-	@Column(name = "virtual_account", nullable = false, unique = true, length = 30)
+	@Column(name = "virtual_account", nullable = false, unique = true, length = 100)
 	private String virtualAccount;
 
 	@Column(name = "wallet_money", nullable = false)

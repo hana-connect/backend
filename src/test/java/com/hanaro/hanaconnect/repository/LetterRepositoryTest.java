@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Letter;
@@ -42,6 +44,12 @@ class LetterRepositoryTest {
 	@Autowired
 	private TransactionRepository transactionRepository;
 
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private AccountCryptoService accountCryptoService;
+
 	@Test
 	@DisplayName("내가 특정 계좌로 보낸 편지 내역만 정확히 조회되는지 확인 (페이징 적용)")
 	void findMyRelayHistorySuccess() {
@@ -49,7 +57,7 @@ class LetterRepositoryTest {
 		// 부모 생성
 		Member parent = Member.builder()
 			.name("엄마")
-			.password("1234")
+			.password(passwordEncoder.encode("123456"))
 			.birthday(LocalDate.of(1980, 5, 19))
 			.virtualAccount("PARENT_V_ACC")
 			.memberRole(MemberRole.PARENT)
@@ -61,7 +69,7 @@ class LetterRepositoryTest {
 		// 아이 생성
 		Member kid = Member.builder()
 			.name("아이")
-			.password("1234")
+			.password(passwordEncoder.encode("123456"))
 			.birthday(LocalDate.of(2015, 1, 1))
 			.virtualAccount("KID_V_ACC")
 			.memberRole(MemberRole.KID)
@@ -73,8 +81,9 @@ class LetterRepositoryTest {
 		// Account 생성
 		Account momAccount = Account.builder()
 			.name("엄마계좌")
-			.accountNumber("111222")
-			.password("1234")
+			.accountNumber("11102220222")
+			.accountNumberHash("hashed-11102220222")
+			.password(passwordEncoder.encode("1234"))
 			.accountType(AccountType.FREE)
 			.balance(new BigDecimal("100000"))
 			.member(parent)
@@ -83,8 +92,9 @@ class LetterRepositoryTest {
 
 		Account kidSavings = Account.builder()
 			.name("아이적금")
-			.accountNumber("333444")
-			.password("1234")
+			.accountNumber("33344434443")
+			.accountNumberHash("hashed-33344434443")
+			.password(passwordEncoder.encode("1234"))
 			.accountType(AccountType.SAVINGS)
 			.balance(new BigDecimal("50000"))
 			.member(kid)

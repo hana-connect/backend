@@ -23,11 +23,11 @@ public class TerminatedAccountResponseDTO {
 
 	private String accountNumber;
 
-	public static TerminatedAccountResponseDTO from(Account account) {
+	public static TerminatedAccountResponseDTO from(Account account, String decryptedAccountNumber) {
 		return TerminatedAccountResponseDTO.builder()
 			.accountId(account.getId())
 			.name(account.getName())
-			.accountNumber(account.getAccountNumber())
+			.accountNumber(decryptedAccountNumber)
 			.build();
 	}
 

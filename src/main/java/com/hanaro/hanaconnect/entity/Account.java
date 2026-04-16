@@ -19,7 +19,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "account")
+@Table(
+	name = "account",
+	uniqueConstraints = {
+		@UniqueConstraint(columnNames = {"account_number_hash", "member_id"})
+	}
+)
 public class Account extends BaseEntity {
 
 	@Id
@@ -30,8 +35,11 @@ public class Account extends BaseEntity {
 	@Column(nullable = false, length = 31)
 	private String name;
 
-	@Column(name = "account_number", nullable = false, unique = true, length = 30)
+	@Column(name = "account_number", nullable = false, unique = true, length = 100)
 	private String accountNumber;
+
+	@Column(name = "account_number_hash", nullable = false, length = 64)
+	private String accountNumberHash;
 
 	@Column(nullable = false, length = 255)
 	private String password;

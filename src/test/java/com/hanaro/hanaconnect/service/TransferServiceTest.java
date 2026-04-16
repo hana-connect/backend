@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.dto.RelayResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
@@ -51,6 +52,9 @@ class TransferServiceTest {
 
 	@Autowired
 	private LetterRepository letterRepository;
+
+	@Autowired
+	private AccountCryptoService accountCryptoService;
 
 	private Member findParent() {
 		return memberRepository.findAll().stream()
@@ -213,8 +217,10 @@ class TransferServiceTest {
 		assertThat(result.getSenders()).isNotNull();
 		assertThat(result.getProductName()).isNotBlank();
 
-		String rawAccountNumber = expiredSavings.getAccountNumber().replaceAll("-", "");
-		String resultAccountNumber = result.getAccountNumber().replaceAll("-", "");
+		String rawAccountNumber =
+			accountCryptoService.decrypt(expiredSavings.getAccountNumber()).replaceAll("-", "");
+		String resultAccountNumber =
+			result.getAccountNumber().replaceAll("-", "");
 		assertThat(resultAccountNumber).isEqualTo(rawAccountNumber);
 
 		assertThat(result.getTransactions()).isNotNull();
