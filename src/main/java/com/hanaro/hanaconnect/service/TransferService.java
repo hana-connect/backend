@@ -287,6 +287,7 @@ public class TransferService {
 			.productNickname(displayName)
 			.accountNumber(account.getAccountNumber())
 			.history(historyPage.getContent())
+			.isLast(historyPage.isLast())
 			.build();
 	}
 
@@ -343,6 +344,7 @@ public class TransferService {
 			.accountNumber(account.getAccountNumber())
 			.senders(senders)
 			.transactions(transactionsPage.getContent())
+			.isLast(transactionsPage.isLast())
 			.build();
 	}
 }
