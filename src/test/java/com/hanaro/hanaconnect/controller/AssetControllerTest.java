@@ -29,6 +29,8 @@ import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.service.AccountHashService;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootTest
@@ -57,6 +59,9 @@ class AssetControllerTest {
 
 	@Autowired
 	JwtTokenProvider jwtTokenProvider;
+
+	@Autowired
+	private AccountHashService accountHashService;
 
 	private String accessToken;
 	private Long memberId;
@@ -94,7 +99,7 @@ class AssetControllerTest {
 		Account account1 = Account.builder()
 			.name("예금계좌")
 			.accountNumber(accountCryptoService.encrypt(normalizedAccount1))
-			.accountNumberHash(accountCryptoService.encrypt(normalizedAccount1))
+			.accountNumberHash(accountHashService.hash(normalizedAccount1))
 			.password("1234")
 			.accountType(com.hanaro.hanaconnect.common.enums.AccountType.DEPOSIT)
 			.balance(new BigDecimal("1000000"))
@@ -110,7 +115,7 @@ class AssetControllerTest {
 		Account account2 = Account.builder()
 			.name("연금계좌")
 			.accountNumber(accountCryptoService.encrypt(normalizedAccount2))
-			.accountNumberHash(accountCryptoService.encrypt(normalizedAccount2))
+			.accountNumberHash(accountHashService.hash(normalizedAccount2))
 			.password("1234")
 			.accountType(com.hanaro.hanaconnect.common.enums.AccountType.PENSION)
 			.balance(new BigDecimal("500000"))

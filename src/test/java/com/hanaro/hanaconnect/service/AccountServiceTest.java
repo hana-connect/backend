@@ -44,6 +44,9 @@ class AccountServiceTest {
 	@Autowired
 	private AccountCryptoService accountCryptoService;
 
+	@Autowired
+	private AccountHashService accountHashService;
+
 	@Test
 	@DisplayName("나의 만기된 적금 계좌 목록 조회 성공")
 	void getTerminatedSavingsSuccessTest() {
@@ -63,7 +66,7 @@ class AccountServiceTest {
 			.member(member)
 			.name("369 행복 적금")
 			.accountNumber(accountCryptoService.encrypt("99988877700"))
-			.accountNumberHash(accountCryptoService.encrypt("99988877700"))
+			.accountNumberHash(accountHashService.hash("99988877700"))
 			.password(passwordEncoder.encode("1234"))
 			.accountType(AccountType.SAVINGS)
 			.balance(BigDecimal.valueOf(50000))

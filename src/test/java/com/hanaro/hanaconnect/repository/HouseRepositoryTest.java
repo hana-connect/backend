@@ -20,8 +20,9 @@ import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.House;
 import com.hanaro.hanaconnect.entity.Member;
+import com.hanaro.hanaconnect.service.AccountHashService;
 
-@Import({AccountCryptoService.class, TestSecurityConfig.class})
+@Import({AccountCryptoService.class, TestSecurityConfig.class, AccountHashService.class})
 class HouseRepositoryTest extends BaseRepositoryTest {
 
 	@Autowired
@@ -38,6 +39,9 @@ class HouseRepositoryTest extends BaseRepositoryTest {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private AccountHashService accountHashService;
 
 	private static long virtualAccountSeq = 10000000000L;
 	private static long accountNumberSeq = 20000000000L;
@@ -63,7 +67,7 @@ class HouseRepositoryTest extends BaseRepositoryTest {
 			Account.builder()
 				.name(name)
 				.accountNumber(accountCryptoService.encrypt(rawAccountNumber))
-				.accountNumberHash(accountCryptoService.encrypt(rawAccountNumber))
+				.accountNumberHash(accountHashService.hash(rawAccountNumber))
 				.password(passwordEncoder.encode("1234"))
 				.accountType(accountType)
 				.balance(new BigDecimal("100000"))
