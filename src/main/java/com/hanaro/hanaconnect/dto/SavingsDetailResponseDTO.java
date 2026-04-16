@@ -33,6 +33,10 @@ public class SavingsDetailResponseDTO {
 	@Getter
 	private List<SenderInfoDTO> senders;
 
-	@Getter
 	private boolean isLast;
+
+	@JsonProperty("isLast")
+	public boolean isLast() {
+		return isLast;
+	}
 }
