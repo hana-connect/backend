@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -85,6 +86,28 @@ public class TransferController {
 			)
 		);
 	}
+
+	@GetMapping("/{transferId}")
+	@Operation(summary = "거래 ID", description = "거래ID")
+	public ResponseEntity<CustomAPIResponse<TransferResponseDto>> getTransferResult(
+		@AuthenticationPrincipal TokenMemberPrincipal principal,
+		@PathVariable Long transferId
+	) {
+		Long memberId = principal.getMemberId();
+
+		TransferResponseDto response =
+			transferService.getTransferResult(memberId, transferId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"송금 결과 조회에 성공했습니다."
+			)
+		);
+	}
+
+
 
 	@GetMapping("/recent")
 	@Operation(summary = "최근 송금 내역 단건 조회", description = "특정 계좌로 가장 최근에 보낸 금액과 날짜를 조회합니다.")

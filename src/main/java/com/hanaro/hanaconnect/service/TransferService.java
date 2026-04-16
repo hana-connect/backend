@@ -1,7 +1,6 @@
 package com.hanaro.hanaconnect.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -152,12 +151,14 @@ public class TransferService {
 			createTransaction(parentAccount, kidAccount, amount, kidAccount.getBalance(), TransactionType.DEPOSIT);
 
 		transactionRepository.save(withdrawTransaction);
-		transactionRepository.save(depositTransaction);
+		Transaction savedDepositTransaction = transactionRepository.save(depositTransaction);
 
 		return TransferResponseDto.builder()
-			.accountNumber(kidAccount.getAccountNumber())
+			.transferId(savedDepositTransaction.getId())
+			.toAccountId(kidAccount.getId())
+			.toAccountNumber(kidAccount.getAccountNumber())
 			.amount(amount)
-			.transferDate(LocalDate.now())
+			.transferredAt(savedDepositTransaction.getCreatedAt())
 			.build();
 	}
 
@@ -184,7 +185,7 @@ public class TransferService {
 			: kid.getName();
 
 		Account parentAccount = accountRepository
-			.findByMemberIdAndAccountType(loginMemberId, AccountType.FREE)
+			.findByMemberIdAndAccountTypeAndIsRewardFalse(loginMemberId, AccountType.FREE)
 			.orElseThrow(() -> new IllegalArgumentException("출금 계좌가 없습니다."));
 
 		// 1. 기본 빌더 생성
@@ -359,6 +360,29 @@ public class TransferService {
 			.senders(senders)
 			.transactions(transactionsPage.getContent())
 			.isLast(transactionsPage.isLast())
+			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public TransferResponseDto getTransferResult(Long loginMemberId, Long transferId) {
+
+		Transaction tx = transactionRepository.findById(transferId)
+			.orElseThrow(() -> new IllegalArgumentException("거래를 찾을 수 없습니다."));
+
+		if (!tx.getSenderAccount().getMember().getId().equals(loginMemberId)) {
+			throw new IllegalArgumentException("해당 거래에 접근 권한이 없습니다.");
+		}
+
+		if (tx.getTransactionType() != TransactionType.DEPOSIT) {
+			throw new IllegalArgumentException("송금 결과 조회 대상이 아닙니다.");
+		}
+
+		return TransferResponseDto.builder()
+			.transferId(tx.getId())
+			.toAccountId(tx.getReceiverAccount().getId())
+			.toAccountNumber(tx.getReceiverAccount().getAccountNumber())
+			.amount(tx.getTransactionMoney())
+			.transferredAt(tx.getCreatedAt())
 			.build();
 	}
 }
