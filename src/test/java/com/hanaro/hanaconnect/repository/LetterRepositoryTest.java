@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +43,7 @@ class LetterRepositoryTest {
 	private TransactionRepository transactionRepository;
 
 	@Test
-	@DisplayName("내가 특정 계좌로 보낸 편지 내역만 정확히 조회되는지 확인")
+	@DisplayName("내가 특정 계좌로 보낸 편지 내역만 정확히 조회되는지 확인 (페이징 적용)")
 	void findMyRelayHistorySuccess() {
 		// Given
 		// 부모 생성
@@ -106,10 +108,16 @@ class LetterRepositoryTest {
 			.build();
 		letterRepository.saveAndFlush(letter);
 
-		List<RelayHistoryDTO> result = letterRepository.findMyRelayHistory(parent.getId(), kidSavings.getId());
+		Pageable pageable = PageRequest.of(0, 12);
+
+		Page<RelayHistoryDTO> result = letterRepository.findMyRelayHistory(
+			parent.getId(),
+			kidSavings.getId(),
+			pageable
+		);
 
 		assertThat(result).isNotNull();
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getMessage()).isEqualTo("첫 번째 응원 메시지");
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).getMessage()).isEqualTo("첫 번째 응원 메시지");
 	}
 }

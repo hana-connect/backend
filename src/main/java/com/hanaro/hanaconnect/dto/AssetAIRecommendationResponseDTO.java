@@ -15,4 +15,10 @@ public class AssetAIRecommendationResponseDTO {
 
 	private List<BigDecimal> assetHistory;
 	private Integer increaseRate;
+
+	private BigDecimal recommendedDepositSavings;
+	private BigDecimal recommendedDepositWithdrawal;
+	private BigDecimal recommendedInvestment;
+	private BigDecimal recommendedPension;
+	private BigDecimal totalAssets;
 }

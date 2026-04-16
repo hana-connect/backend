@@ -126,14 +126,19 @@ public class TransferController {
 		);
 	}
 
+	// 부모용
 	@GetMapping("/savings/relay")
-	@Operation(summary = "적금 릴레이 내역 조회", description = "프론트 릴레이 화면에 필요한 계좌 정보와 편지 목록을 조회합니다.")
+	@Operation(summary = "부모 적금 송금 - 적금 릴레이 내역 조회", description = "프론트 릴레이 화면에 필요한 계좌 정보와 편지 목록을 12개씩 페이징하여 조회합니다.")
 	public ResponseEntity<CustomAPIResponse<RelayResponseDTO>> getRelayData(
 		@AuthenticationPrincipal TokenMemberPrincipal principal,
-		@RequestParam Long targetAccountId
+		@RequestParam Long targetAccountId,
+		@RequestParam(defaultValue = "0") int page
 	) {
-
-		RelayResponseDTO response = transferService.getRelayHistory(principal.getMemberId(), targetAccountId);
+		RelayResponseDTO response = transferService.getRelayHistory(
+			principal.getMemberId(),
+			targetAccountId,
+			page
+		);
 
 		return ResponseEntity.ok(
 			CustomAPIResponse.createSuccess(

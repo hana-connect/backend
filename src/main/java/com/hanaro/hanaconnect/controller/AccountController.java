@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +27,7 @@ import com.hanaro.hanaconnect.dto.KidWalletDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.RewardAccountResponseDTO;
 import com.hanaro.hanaconnect.service.AccountService;
 import com.hanaro.hanaconnect.service.TransferService;
 
@@ -175,7 +177,7 @@ public class AccountController {
 
 	@GetMapping("/accounts/terminated-savings")
 	@Operation(
-		summary = "나의 만기된 적금 계좌 목록 조회",
+		summary = "아이 내 지갑 - 나의 만기된 적금 계좌 목록 조회",
 		description = "로그인한 사용자의 계좌 중 만기된(is_end=true) 적금(SAVINGS) 목록을 조회합니다."
 	)
 	public ResponseEntity<CustomAPIResponse<List<TerminatedAccountResponseDTO>>> getTerminatedSavings(
@@ -192,22 +194,79 @@ public class AccountController {
 		);
 	}
 
+	// 아이용
 	@GetMapping("/accounts/terminated-savings/{accountId}")
 	@Operation(
-		summary = "만기된 적금 상세 내역 및 편지함 조회",
-		description = "로그인한 사용자의 계좌 중 만기된 적금 계좌의 상세 거래 내역과 편지를 조회합니다. 입금액, 잔액, 발신자 정보 및 메시지를 포함합니다."
+		summary = "아이 내 지갑 - 만기된 적금 상세 내역 및 편지함 조회",
+		description = "전체 또는 특정 발신인 별 거래 내역을 12개씩 페이징하여 조회합니다."
 	)
 	public ResponseEntity<CustomAPIResponse<SavingsDetailResponseDTO>> getSavingsDetail(
 		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
-		@PathVariable Long accountId
+		@PathVariable Long accountId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(required = false) Long senderId
 	) {
-		SavingsDetailResponseDTO response = transferService.getExpiredSavingsDetail(principal.getMemberId(), accountId);
+		SavingsDetailResponseDTO response = transferService.getExpiredSavingsDetail(
+			principal.getMemberId(),
+			accountId,
+			page,
+			senderId
+		);
 
 		return ResponseEntity.ok(
 			CustomAPIResponse.createSuccess(
 				HttpStatus.OK.value(),
 				response,
 				"만기된 적금의 상세 내역 조회에 성공했습니다."
+			)
+		);
+	}
+
+	@GetMapping("/accounts/reward")
+	@Operation(
+		summary = "리워드 계좌 조회",
+		description = "현재 리워드로 설정된 계좌를 조회합니다. 연금 계좌 중 is_reward=true인 계좌를 반환합니다."
+	)
+	public ResponseEntity<CustomAPIResponse<RewardAccountResponseDTO>> getRewardAccount(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal
+	) {
+		RewardAccountResponseDTO response = accountService.getRewardAccount(principal.getMemberId());
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"리워드 계좌 조회 성공"
+			)
+		);
+	}
+
+	@PatchMapping("/accounts/reward/{linkedAccountId}")
+	@Operation(
+		summary = "리워드 계좌 변경",
+		description = """
+        리워드를 받을 연금 계좌를 변경합니다.
+
+        - 본인이 연결한 계좌(`linked_account`)만 설정 가능합니다.
+        - 연금(PENSION) 타입 계좌만 리워드 계좌로 설정할 수 있습니다.
+        - 기존 리워드 계좌는 자동으로 해제됩니다.
+        """
+	)
+	public ResponseEntity<CustomAPIResponse<RewardAccountResponseDTO>> updateRewardAccount(
+		@Parameter(hidden = true) @AuthenticationPrincipal TokenMemberPrincipal principal,
+		@Parameter(description = "리워드로 설정할 연금 계좌의 linked_account ID", example = "5")
+		@PathVariable Long linkedAccountId
+	) {
+		RewardAccountResponseDTO response = accountService.updateRewardAccount(
+			principal.getMemberId(),
+			linkedAccountId
+		);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"리워드 계좌 변경 성공"
 			)
 		);
 	}

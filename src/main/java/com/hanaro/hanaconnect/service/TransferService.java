@@ -17,6 +17,7 @@ import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.SenderInfoDTO;
 import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
 import com.hanaro.hanaconnect.dto.TransferRequestDto;
 import com.hanaro.hanaconnect.dto.TransferResponseDto;
@@ -38,6 +39,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class TransferService {
+
+	private static final BigDecimal NO_LIMIT = new BigDecimal("1000000000000");
 
 	private final AccountRepository accountRepository;
 	private final TransactionRepository transactionRepository;
@@ -185,14 +188,26 @@ public class TransferService {
 			.findByMemberIdAndAccountTypeAndIsRewardFalse(loginMemberId, AccountType.FREE)
 			.orElseThrow(() -> new IllegalArgumentException("출금 계좌가 없습니다."));
 
-		return TransferPrepareResponseDto.builder()
+		// 1. 기본 빌더 생성
+		var builder = TransferPrepareResponseDto.builder()
 			.accountId(accountId)
 			.targetMemberName(kid.getName())
 			.phoneSavedName(phoneSavedName)
 			.displayName(displayName)
 			.accountAlias(kidAccount.getName())
-			.balance(parentAccount.getBalance())
-			.build();
+			.balance(parentAccount.getBalance());
+
+		// 2. 적금 계좌(SAVINGS)일 때만 한도 관련 데이터 추가
+		if (kidAccount.getAccountType() == AccountType.SAVINGS) {
+			builder.currentSaving(kidAccount.getBalance())
+				.savingLimit(kidAccount.getTotalLimit());
+		} else {
+			// 3. 적금이 아니면(일반/청약) 한도 체크가 필요 없으니 null이나 기본값 설정
+			builder.currentSaving(BigDecimal.ZERO)
+				.savingLimit(NO_LIMIT);
+		}
+
+		return builder.build();
 	}
 
 	private void validatePassword(String rawPassword, String encodedPassword) {
@@ -267,22 +282,27 @@ public class TransferService {
 		return linkedAccount;
 	}
 
+	// 부모용
 	@Transactional(readOnly = true)
-	public RelayResponseDTO getRelayHistory(Long memberId, Long targetAccountId) {
+	public RelayResponseDTO getRelayHistory(Long memberId, Long targetAccountId, int page) {
 		LinkedAccount linkedAccount = validateAndGetSavingsAccount(memberId, targetAccountId);
 
 		Account account = linkedAccount.getAccount();
 
-		List<RelayHistoryDTO> history = letterRepository.findMyRelayHistory(memberId, targetAccountId);
+		org.springframework.data.domain.Pageable pageable =
+			org.springframework.data.domain.PageRequest.of(page, 12);
+
+		org.springframework.data.domain.Page<RelayHistoryDTO> historyPage =
+			letterRepository.findMyRelayHistory(memberId, targetAccountId, pageable);
 
 		String nickname = linkedAccount.getNickname();
 		String displayName = (nickname != null && !nickname.isBlank()) ? nickname : account.getName();
 
-
 		return RelayResponseDTO.builder()
 			.productNickname(displayName)
 			.accountNumber(account.getAccountNumber())
-			.history(history)
+			.history(historyPage.getContent())
+			.isLast(historyPage.isLast())
 			.build();
 	}
 
@@ -305,8 +325,14 @@ public class TransferService {
 			.build();
 	}
 
+	// 아이용
 	@Transactional(readOnly = true)
-	public SavingsDetailResponseDTO getExpiredSavingsDetail(Long memberId, Long accountId) {
+	public SavingsDetailResponseDTO getExpiredSavingsDetail(
+		Long memberId,
+		Long accountId,
+		int page,
+		Long senderId
+	) {
 		Account account = accountRepository.findById(accountId)
 			.orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
 
@@ -314,7 +340,6 @@ public class TransferService {
 			throw new IllegalArgumentException("본인의 계좌만 조회할 수 있습니다.");
 		}
 
-		// 만기 여부 및 타입 확인
 		if (!Boolean.TRUE.equals(account.getIsEnd())) {
 			throw new IllegalArgumentException("만기된 계좌만 상세 조회가 가능합니다.");
 		}
@@ -323,13 +348,18 @@ public class TransferService {
 			throw new IllegalArgumentException("적금 계좌가 아닙니다.");
 		}
 
-		// 거래 내역 조회
-		List<SavingsTransactionDTO> transactions = letterRepository.findAllSavingsDetails(accountId);
+		org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, 12);
+		org.springframework.data.domain.Page<SavingsTransactionDTO> transactionsPage =
+			letterRepository.findAllSavingsDetails(accountId, senderId, pageable);
+
+		List<SenderInfoDTO> senders = letterRepository.findDistinctSendersByAccountId(accountId);
 
 		return SavingsDetailResponseDTO.builder()
 			.productName(account.getName())
 			.accountNumber(account.getAccountNumber())
-			.transactions(transactions)
+			.senders(senders)
+			.transactions(transactionsPage.getContent())
+			.isLast(transactionsPage.isLast())
 			.build();
 	}
 
