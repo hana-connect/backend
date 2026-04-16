@@ -161,7 +161,7 @@ public class AccountServiceImpl implements AccountService {
 				Account account = linkedAccount.getAccount();
 
 				return MyAccountResponseDTO.builder()
-					.accountId(account.getId())
+					.accountId(linkedAccount.getId())
 					.name(account.getName())
 					.accountNumber(AccountNumberFormatter.format(account.getAccountNumber()))
 					.balance(account.getBalance())

@@ -146,7 +146,7 @@ public class InitLoader implements ApplicationRunner {
 			.name("부모 리워드 통장")
 			.accountNumber("22233336666")
 			.password(passwordEncoder.encode("5678"))
-			.accountType(AccountType.FREE)
+			.accountType(AccountType.PENSION)
 			.balance(BigDecimal.ZERO)
 			.member(parent1)
 			.isReward(true)
