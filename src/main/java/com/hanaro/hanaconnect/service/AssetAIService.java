@@ -131,7 +131,7 @@ public class AssetAIService {
 			.kidAllowance(new BigDecimal("50000"))
 			.aiComment("안정적인 관리를 추천드립니다.")
 			.assetHistory(List.of(total, total, total, total))
-			.increaseRate(0)
+			.increaseRate(5)
 			.totalAssets(total)
 			.recommendedDepositSavings(total)
 			.recommendedDepositWithdrawal(BigDecimal.ZERO)
