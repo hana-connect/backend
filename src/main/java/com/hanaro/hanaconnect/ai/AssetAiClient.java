@@ -44,9 +44,14 @@ public class AssetAiClient {
 							"recommendRatio", Map.of("type", "string"),
 							"kidAllowance", Map.of("type", "integer"),
 							"aiComment", Map.of("type", "string"),
-							"increaseRate", Map.of("type", "integer")
+							"increaseRate", Map.of("type", "integer"),
+							"recommendedDepositSavings", Map.of("type", "integer"),
+							"recommendedDepositWithdrawal", Map.of("type", "integer"),
+							"recommendedInvestment", Map.of("type", "integer"),
+							"recommendedPension", Map.of("type", "integer")
 						),
-						"required", List.of("recommendRatio", "kidAllowance", "aiComment", "increaseRate"),
+						"required", List.of("recommendRatio", "kidAllowance", "aiComment", "increaseRate",
+							"recommendedDepositSavings", "recommendedDepositWithdrawal", "recommendedInvestment", "recommendedPension"),
 						"additionalProperties", false
 					)
 				)
