@@ -42,7 +42,7 @@ public class AssetAIService {
           5. 사용자의 총 자산(%s원)을 고려하여 적정 한 달 생활비를 산출할 것.
 		  6. **응답 JSON의 "aiComment"는 반드시 아래 형식을 엄격히 지켜줘:**
 		     "성향(%s)을 고려한 분석입니다. 이번 달 생활비는 [산출된 생활비]원이고, 자산 분배 결과 [추천비율]을 추천드려요. 직접 입력하거나 슬라이더를 옮겨서 비율을 조정해보세요!"
-          6. **응답은 반드시 아래의 JSON 형식만 출력하고, 다른 설명이나 텍스트는 앞뒤에 절대 붙이지 마:**
+          7. **응답은 반드시 아래의 JSON 형식만 출력하고, 다른 설명이나 텍스트는 앞뒤에 절대 붙이지 마:**
           {
             "aiComment": "[위에서 지시한 문구]",
             "increaseRate": [숫자],
@@ -53,7 +53,7 @@ public class AssetAIService {
             "recommendedInvestment": [금액],
             "recommendedPension": [금액]
           }
-          7. **중요: 모든 비율은 반드시 '10:90' 또는 '20:80'과 같은 [숫자:숫자] 형식으로만 작성해줘.**
+          8. **중요: 모든 비율은 반드시 '10:90' 또는 '20:80'과 같은 [숫자:숫자] 형식으로만 작성해줘.**
           """,
 			realTotal, summary.getDepositSavings(), summary.getDepositWithdrawal(),
 			summary.getInvestment(), summary.getPension(),
