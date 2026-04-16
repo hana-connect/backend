@@ -28,9 +28,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.SubscriptionInfoResponseDto;
-import com.hanaro.hanaconnect.dto.SubscriptionRequestDto;
-import com.hanaro.hanaconnect.dto.SubscriptionResponseDto;
+import com.hanaro.hanaconnect.dto.subscription.SubscriptionInfoResponseDto;
+import com.hanaro.hanaconnect.dto.subscription.SubscriptionRequestDto;
+import com.hanaro.hanaconnect.dto.subscription.SubscriptionResponseDto;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.service.SubscriptionService;

@@ -18,8 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.security.JwtTokenProvider;
-import com.hanaro.hanaconnect.dto.LoginRequestDTO;
-import com.hanaro.hanaconnect.dto.LoginResponseDTO;
+import com.hanaro.hanaconnect.dto.login.LoginRequestDTO;
+import com.hanaro.hanaconnect.dto.login.LoginResponseDTO;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 

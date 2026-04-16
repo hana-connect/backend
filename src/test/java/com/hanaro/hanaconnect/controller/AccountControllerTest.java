@@ -27,7 +27,7 @@ import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.util.AccountCryptoService;
-import com.hanaro.hanaconnect.dto.LoginRequestDTO;
+import com.hanaro.hanaconnect.dto.login.LoginRequestDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;

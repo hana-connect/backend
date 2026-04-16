@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
-import com.hanaro.hanaconnect.dto.AssetSummaryResponseDTO;
+import com.hanaro.hanaconnect.dto.asset.AssetSummaryResponseDTO;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 

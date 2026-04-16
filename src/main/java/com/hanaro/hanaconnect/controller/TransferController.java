@@ -18,13 +18,13 @@ import lombok.RequiredArgsConstructor;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.RecentTransferResponseDTO;
-import com.hanaro.hanaconnect.dto.RelayResponseDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
-import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
-import com.hanaro.hanaconnect.dto.TransferRequestDto;
-import com.hanaro.hanaconnect.dto.TransferResponseDto;
+import com.hanaro.hanaconnect.dto.transfer.RecentTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.saving.RelayResponseDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransferRequestDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.transfer.TransferPrepareResponseDto;
+import com.hanaro.hanaconnect.dto.transfer.TransferRequestDto;
+import com.hanaro.hanaconnect.dto.transfer.TransferResponseDto;
 import com.hanaro.hanaconnect.service.TransferService;
 
 @RestController

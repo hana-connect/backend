@@ -5,8 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
-import com.hanaro.hanaconnect.dto.LoginRequestDTO;
-import com.hanaro.hanaconnect.dto.LoginResponseDTO;
+import com.hanaro.hanaconnect.dto.login.LoginRequestDTO;
+import com.hanaro.hanaconnect.dto.login.LoginResponseDTO;
 import com.hanaro.hanaconnect.service.AuthService;
 
 import jakarta.validation.Valid;

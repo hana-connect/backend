@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.QuizQuestionStatus;
-import com.hanaro.hanaconnect.dto.QuizAnswerResponseDTO;
-import com.hanaro.hanaconnect.dto.QuizEntryResponseDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizAnswerResponseDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizEntryResponseDTO;
 import com.hanaro.hanaconnect.entity.QuizQuestion;
 import com.hanaro.hanaconnect.entity.QuizSet;
 import com.hanaro.hanaconnect.repository.QuizQuestionRepository;

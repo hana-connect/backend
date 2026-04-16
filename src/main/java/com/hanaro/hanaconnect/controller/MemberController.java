@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO;
-import com.hanaro.hanaconnect.dto.WalletResponseDTO;
+import com.hanaro.hanaconnect.dto.account.ConnectMemberResponseDTO;
+import com.hanaro.hanaconnect.dto.account.WalletResponseDTO;
 import com.hanaro.hanaconnect.service.MemberService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

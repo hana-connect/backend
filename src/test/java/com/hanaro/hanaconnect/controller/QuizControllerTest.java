@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.List;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
@@ -32,9 +31,9 @@ import com.hanaro.hanaconnect.common.enums.QuizSetStatus;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.security.JwtAuthenticationFilter;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.QuizAnswerRequestDTO;
-import com.hanaro.hanaconnect.dto.QuizAnswerResponseDTO;
-import com.hanaro.hanaconnect.dto.QuizEntryResponseDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizAnswerRequestDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizAnswerResponseDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizEntryResponseDTO;
 import com.hanaro.hanaconnect.service.QuizService;
 
 // @Disabled("로컬 환경에서만 OpenAI 실제 호출 테스트 실행")
