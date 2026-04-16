@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.dto.SubscriptionInfoResponseDto;
 import com.hanaro.hanaconnect.dto.SubscriptionRequestDto;
 import com.hanaro.hanaconnect.dto.SubscriptionResponseDto;
@@ -36,31 +37,28 @@ class SubscriptionServiceTest {
 	@Test
 	@DisplayName("청약 진입 정보 조회 성공")
 	void getSubscriptionPaymentInfo_success() {
-		// given
-		Member parent3 = findMemberByName("청약할머니");
-		Account subscriptionAccount = findAccountByNumber("999900001111");
+		Member parent = findMemberByName("청약할머니");
+		Account subscriptionAccount = findSubscriptionAccountByMemberName("김청약");
+		Account rewardAccount = findRewardFreeAccount(parent.getId());
 
-		// when
 		SubscriptionInfoResponseDto result =
-			subscriptionService.getSubscriptionPaymentInfo(parent3.getId(), subscriptionAccount.getId());
+			subscriptionService.getSubscriptionPaymentInfo(parent.getId(), subscriptionAccount.getId());
 
-		// then
 		assertThat(result).isNotNull();
 		assertThat(result.getSubscriptionId()).isEqualTo(subscriptionAccount.getId());
-		assertThat(result.getAccountNumber()).isEqualTo("999900001111");
+		assertThat(result.getAccountNumber()).isEqualTo(subscriptionAccount.getAccountNumber());
 		assertThat(result.getDisplayName()).contains("김청약");
-		assertThat(result.getAccountNickname()).isEqualTo("김청약 주택청약");
-		assertThat(result.getRewardAccountName()).isEqualTo("청약할머니 리워드 통장");
+		assertThat(result.getAccountNickname()).isEqualTo(subscriptionAccount.getName());
+		assertThat(result.getRewardAccountName()).isEqualTo(rewardAccount.getName());
 		assertThat(result.getAlreadyPaidAmount()).isNotNull();
 	}
 
 	@Test
 	@DisplayName("첫 청약 납입 성공 - 25만원 이하")
 	void paySubscription_firstPayment_success() {
-		// given
-		Member parent1 = findMemberByName("김엄마");
-		Account freeAccount = findAccountByNumber("22233335555");
-		Account subscriptionAccount = findAccountByNumber("77788889999");
+		Member parent = findMemberByName("김엄마");
+		Account freeAccount = findNormalFreeAccount(parent.getId());
+		Account subscriptionAccount = findSubscriptionAccountByMemberName("홍길동");
 
 		BigDecimal beforeFreeBalance = freeAccount.getBalance();
 		BigDecimal beforeSubscriptionBalance = subscriptionAccount.getBalance();
@@ -71,14 +69,12 @@ class SubscriptionServiceTest {
 		request.setPrepaymentCount(null);
 		request.setTransferExcessToReward(null);
 
-		// when
 		SubscriptionResponseDto result =
-			subscriptionService.paySubscription(parent1.getId(), subscriptionAccount.getId(), request);
+			subscriptionService.paySubscription(parent.getId(), subscriptionAccount.getId(), request);
 
-		// then
 		assertThat(result).isNotNull();
 		assertThat(result.getSubscriptionId()).isEqualTo(subscriptionAccount.getId());
-		assertThat(result.getSubscriptionAccountNumber()).isEqualTo("77788889999");
+		assertThat(result.getSubscriptionAccountNumber()).isEqualTo(subscriptionAccount.getAccountNumber());
 		assertThat(result.getSubscriptionAmount()).isEqualByComparingTo("200000");
 		assertThat(result.getRewardAmount()).isEqualByComparingTo("0");
 		assertThat(result.getRewardAccountNumber()).isNull();
@@ -93,11 +89,10 @@ class SubscriptionServiceTest {
 	@Test
 	@DisplayName("첫 청약 납입 성공 - 25만원 초과분 리워드 계좌 입금")
 	void paySubscription_firstPayment_withReward_success() {
-		// given
-		Member parent1 = findMemberByName("김엄마");
-		Account freeAccount = findAccountByNumber("22233335555");
-		Account subscriptionAccount = findAccountByNumber("77788889999");
-		Account rewardAccount = findAccountByNumber("22233336666");
+		Member parent = findMemberByName("김엄마");
+		Account freeAccount = findNormalFreeAccount(parent.getId());
+		Account subscriptionAccount = findSubscriptionAccountByMemberName("홍길동");
+		Account rewardAccount = findRewardAccountByType(parent.getId(), AccountType.PENSION);
 
 		BigDecimal beforeFreeBalance = freeAccount.getBalance();
 		BigDecimal beforeSubscriptionBalance = subscriptionAccount.getBalance();
@@ -109,17 +104,15 @@ class SubscriptionServiceTest {
 		request.setPrepaymentCount(null);
 		request.setTransferExcessToReward(true);
 
-		// when
 		SubscriptionResponseDto result =
-			subscriptionService.paySubscription(parent1.getId(), subscriptionAccount.getId(), request);
+			subscriptionService.paySubscription(parent.getId(), subscriptionAccount.getId(), request);
 
-		// then
 		assertThat(result).isNotNull();
 		assertThat(result.getSubscriptionId()).isEqualTo(subscriptionAccount.getId());
-		assertThat(result.getSubscriptionAccountNumber()).isEqualTo("77788889999");
+		assertThat(result.getSubscriptionAccountNumber()).isEqualTo(subscriptionAccount.getAccountNumber());
 		assertThat(result.getSubscriptionAmount()).isEqualByComparingTo("250000");
 		assertThat(result.getRewardAmount()).isEqualByComparingTo("50000");
-		assertThat(result.getRewardAccountNumber()).isEqualTo("22233336666");
+		assertThat(result.getRewardAccountNumber()).isEqualTo(rewardAccount.getAccountNumber());
 		assertThat(result.getPrepaymentCount()).isNull();
 
 		assertThat(freeAccount.getBalance())
@@ -133,10 +126,9 @@ class SubscriptionServiceTest {
 	@Test
 	@DisplayName("이번 달 이미 납입한 뒤 선납 성공")
 	void paySubscription_prepayment_success() {
-		// given
-		Member parent3 = findMemberByName("청약할머니");
-		Account freeAccount = findAccountByNumber("777788889999");
-		Account subscriptionAccount = findAccountByNumber("999900001111");
+		Member parent = findMemberByName("청약할머니");
+		Account freeAccount = findNormalFreeAccount(parent.getId());
+		Account subscriptionAccount = findSubscriptionAccountByMemberName("김청약");
 
 		BigDecimal beforeFreeBalance = freeAccount.getBalance();
 		BigDecimal beforeSubscriptionBalance = subscriptionAccount.getBalance();
@@ -145,12 +137,11 @@ class SubscriptionServiceTest {
 		request.setAmount(new BigDecimal("400000"));
 		request.setPassword("123456");
 		request.setPrepaymentCount(2);
+		request.setTransferExcessToReward(null);
 
-		// when
 		SubscriptionResponseDto result =
-			subscriptionService.paySubscription(parent3.getId(), subscriptionAccount.getId(), request);
+			subscriptionService.paySubscription(parent.getId(), subscriptionAccount.getId(), request);
 
-		// then
 		assertThat(result).isNotNull();
 		assertThat(result.getSubscriptionAmount()).isEqualByComparingTo("400000");
 		assertThat(result.getPrepaymentCount()).isEqualTo(2);
@@ -166,17 +157,17 @@ class SubscriptionServiceTest {
 	@Test
 	@DisplayName("비밀번호가 일치하지 않으면 예외 발생")
 	void paySubscription_fail_invalidPassword() {
-		// given
-		Member parent1 = findMemberByName("김엄마");
-		Account subscriptionAccount = findAccountByNumber("77788889999");
+		Member parent = findMemberByName("김엄마");
+		Account subscriptionAccount = findSubscriptionAccountByMemberName("홍길동");
 
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
 		request.setAmount(new BigDecimal("100000"));
 		request.setPassword("999999");
+		request.setPrepaymentCount(null);
+		request.setTransferExcessToReward(null);
 
-		// when & then
 		assertThatThrownBy(() ->
-			subscriptionService.paySubscription(parent1.getId(), subscriptionAccount.getId(), request)
+			subscriptionService.paySubscription(parent.getId(), subscriptionAccount.getId(), request)
 		)
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("비밀번호가 일치하지 않습니다.");
@@ -185,9 +176,8 @@ class SubscriptionServiceTest {
 	@Test
 	@DisplayName("25만원 초과인데 리워드 여부를 선택하지 않으면 예외 발생")
 	void paySubscription_fail_overMaxWithoutRewardChoice() {
-		// given
-		Member parent1 = findMemberByName("김엄마");
-		Account subscriptionAccount = findAccountByNumber("77788889999");
+		Member parent = findMemberByName("김엄마");
+		Account subscriptionAccount = findSubscriptionAccountByMemberName("홍길동");
 
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
 		request.setAmount(new BigDecimal("300000"));
@@ -195,9 +185,8 @@ class SubscriptionServiceTest {
 		request.setPrepaymentCount(null);
 		request.setTransferExcessToReward(null);
 
-		// when & then
 		assertThatThrownBy(() ->
-			subscriptionService.paySubscription(parent1.getId(), subscriptionAccount.getId(), request)
+			subscriptionService.paySubscription(parent.getId(), subscriptionAccount.getId(), request)
 		)
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("25만 원 초과 시 리워드 계좌 입금 여부를 선택해주세요.");
@@ -206,25 +195,23 @@ class SubscriptionServiceTest {
 	@Test
 	@DisplayName("최근 청약 납입 결과 조회 성공")
 	void getSubscriptionPaymentResult_success() {
-		// given
-		Member parent3 = findMemberByName("청약할머니");
-		Account subscriptionAccount = findAccountByNumber("999900001111");
+		Member parent = findMemberByName("청약할머니");
+		Account subscriptionAccount = findSubscriptionAccountByMemberName("김청약");
 
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
 		request.setAmount(new BigDecimal("300000"));
 		request.setPassword("123456");
 		request.setPrepaymentCount(1);
+		request.setTransferExcessToReward(null);
 
-		subscriptionService.paySubscription(parent3.getId(), subscriptionAccount.getId(), request);
+		subscriptionService.paySubscription(parent.getId(), subscriptionAccount.getId(), request);
 
-		// when
 		SubscriptionResponseDto result =
-			subscriptionService.getSubscriptionPaymentResult(parent3.getId(), subscriptionAccount.getId());
+			subscriptionService.getSubscriptionPaymentResult(parent.getId(), subscriptionAccount.getId());
 
-		// then
 		assertThat(result).isNotNull();
 		assertThat(result.getSubscriptionId()).isEqualTo(subscriptionAccount.getId());
-		assertThat(result.getSubscriptionAccountNumber()).isEqualTo("999900001111");
+		assertThat(result.getSubscriptionAccountNumber()).isEqualTo(subscriptionAccount.getAccountNumber());
 		assertThat(result.getSubscriptionAmount()).isEqualByComparingTo("300000");
 		assertThat(result.getPaidAt()).isNotNull();
 	}
@@ -236,10 +223,39 @@ class SubscriptionServiceTest {
 			.orElseThrow(() -> new IllegalArgumentException("테스트 회원을 찾을 수 없습니다. name=" + name));
 	}
 
-	private Account findAccountByNumber(String accountNumber) {
+	private Account findSubscriptionAccountByMemberName(String memberName) {
 		return accountRepository.findAll().stream()
-			.filter(account -> accountNumber.equals(account.getAccountNumber()))
+			.filter(account -> account.getAccountType() == AccountType.SUBSCRIPTION)
+			.filter(account -> memberName.equals(account.getMember().getName()))
 			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트 계좌를 찾을 수 없습니다. accountNumber=" + accountNumber));
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 청약 계좌를 찾을 수 없습니다. memberName=" + memberName));
+	}
+
+	private Account findNormalFreeAccount(Long memberId) {
+		return accountRepository.findAll().stream()
+			.filter(account -> account.getMember().getId().equals(memberId))
+			.filter(account -> account.getAccountType() == AccountType.FREE)
+			.filter(account -> !Boolean.TRUE.equals(account.getIsReward()))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 일반 입출금 계좌를 찾을 수 없습니다. memberId=" + memberId));
+	}
+
+	private Account findRewardFreeAccount(Long memberId) {
+		return accountRepository.findAll().stream()
+			.filter(account -> account.getMember().getId().equals(memberId))
+			.filter(account -> account.getAccountType() == AccountType.FREE)
+			.filter(account -> Boolean.TRUE.equals(account.getIsReward()))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("테스트용 리워드 계좌를 찾을 수 없습니다. memberId=" + memberId));
+	}
+
+	private Account findRewardAccountByType(Long memberId, AccountType accountType) {
+		return accountRepository.findAll().stream()
+			.filter(account -> account.getMember().getId().equals(memberId))
+			.filter(account -> account.getAccountType() == accountType)
+			.filter(account -> Boolean.TRUE.equals(account.getIsReward()))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException(
+				"테스트용 리워드 계좌를 찾을 수 없습니다. memberId=" + memberId + ", accountType=" + accountType));
 	}
 }
