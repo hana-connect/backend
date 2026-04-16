@@ -78,6 +78,16 @@ public class AssetAIService {
 			BigDecimal recInvestment = new BigDecimal(root.path("recommendedInvestment").asText("0"));
 			BigDecimal recPension = new BigDecimal(root.path("recommendedPension").asText("0"));
 
+			BigDecimal recommendedTotal = recDeposit.add(recWithdrawal).add(recInvestment).add(recPension);
+
+			// 음수가 하나라도 있거나, 합계가 실제 자산과 다르다면 (오차 허용 없이) fallback 실행
+			boolean hasNegative = recDeposit.signum() < 0 || recWithdrawal.signum() < 0 ||
+				recInvestment.signum() < 0 || recPension.signum() < 0;
+
+			if (hasNegative || recommendedTotal.compareTo(realTotal) != 0) {
+				return getFallback(realTotal);
+			}
+
 			// 4. 추출된 메소드를 통해 과거 자산 히스토리(그래프 데이터) 생성
 			List<BigDecimal> assetHistory = calculateAssetHistory(realTotal, aiIncreaseRate);
 
