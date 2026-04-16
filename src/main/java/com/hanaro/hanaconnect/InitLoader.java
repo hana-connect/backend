@@ -268,6 +268,13 @@ public class InitLoader implements ApplicationRunner {
 
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
+				.account(grandmaFreeAccount)
+				.member(parent2)
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
 				.account(kidAccount)
 				.member(kid1)
 				.build()
