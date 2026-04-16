@@ -41,6 +41,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TransferService {
 
+	private static final BigDecimal NO_LIMIT = new BigDecimal("1000000000000");
+
 	private final AccountRepository accountRepository;
 	private final TransactionRepository transactionRepository;
 	private final LinkedAccountRepository linkedAccountRepository;
@@ -185,14 +187,26 @@ public class TransferService {
 			.findByMemberIdAndAccountType(loginMemberId, AccountType.FREE)
 			.orElseThrow(() -> new IllegalArgumentException("출금 계좌가 없습니다."));
 
-		return TransferPrepareResponseDto.builder()
+		// 1. 기본 빌더 생성
+		var builder = TransferPrepareResponseDto.builder()
 			.accountId(accountId)
 			.targetMemberName(kid.getName())
 			.phoneSavedName(phoneSavedName)
 			.displayName(displayName)
 			.accountAlias(kidAccount.getName())
-			.balance(parentAccount.getBalance())
-			.build();
+			.balance(parentAccount.getBalance());
+
+		// 2. 적금 계좌(SAVINGS)일 때만 한도 관련 데이터 추가
+		if (kidAccount.getAccountType() == AccountType.SAVINGS) {
+			builder.currentSaving(kidAccount.getBalance())
+				.savingLimit(kidAccount.getTotalLimit());
+		} else {
+			// 3. 적금이 아니면(일반/청약) 한도 체크가 필요 없으니 null이나 기본값 설정
+			builder.currentSaving(BigDecimal.ZERO)
+				.savingLimit(NO_LIMIT);
+		}
+
+		return builder.build();
 	}
 
 	private void validatePassword(String rawPassword, String encodedPassword) {
