@@ -36,6 +36,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 		LocalDateTime createdAt
 	);
 
+	Optional<Transaction> findTopByReceiverAccountIdAndTransactionTypeAndCreatedAtBetweenOrderByCreatedAtDesc(
+		Long receiverAccountId,
+		TransactionType transactionType,
+		LocalDateTime start,
+		LocalDateTime end
+	);
+
 	@Query("""
 		select coalesce(sum(t.transactionMoney), 0)
 		from Transaction t

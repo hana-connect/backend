@@ -69,4 +69,22 @@ public class SubscriptionController {
 		);
 	}
 
+	@GetMapping("/{subscriptionId}/payments/result")
+	@Operation(summary = "청약 납입 결과 조회", description = "가장 최근 청약 납입 결과를 조회합니다.")
+	public ResponseEntity<CustomAPIResponse<SubscriptionResponseDto>> getSubscriptionPaymentResult(
+		@AuthenticationPrincipal TokenMemberPrincipal principal,
+		@PathVariable Long subscriptionId
+	) {
+		SubscriptionResponseDto response =
+			subscriptionService.getSubscriptionPaymentResult(principal.getMemberId(), subscriptionId);
+
+		return ResponseEntity.ok(
+			CustomAPIResponse.createSuccess(
+				HttpStatus.OK.value(),
+				response,
+				"청약 납입 결과 조회 성공"
+			)
+		);
+	}
+
 }
