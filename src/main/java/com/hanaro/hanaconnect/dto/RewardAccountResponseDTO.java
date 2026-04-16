@@ -2,6 +2,7 @@ package com.hanaro.hanaconnect.dto;
 
 import com.hanaro.hanaconnect.common.util.AccountNumberFormatter;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -14,9 +15,11 @@ public class RewardAccountResponseDTO {
 	private String name;
 	private String accountNumber;
 
-	public static RewardAccountResponseDTO from(Account account) {
+	public static RewardAccountResponseDTO from(LinkedAccount linkedAccount) {
+		Account account = linkedAccount.getAccount();
+
 		return RewardAccountResponseDTO.builder()
-			.accountId(account.getId())
+			.accountId(linkedAccount.getId())
 			.name(account.getName())
 			.accountNumber(AccountNumberFormatter.format(account.getAccountNumber()))
 			.build();
