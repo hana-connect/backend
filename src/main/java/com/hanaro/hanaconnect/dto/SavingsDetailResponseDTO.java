@@ -34,4 +34,5 @@ public class SavingsDetailResponseDTO {
 	private List<SenderInfoDTO> senders;
 
 	@Getter
-	private boolean isLast;}
+	private boolean isLast;
+}
