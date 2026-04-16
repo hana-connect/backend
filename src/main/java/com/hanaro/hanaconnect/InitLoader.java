@@ -124,7 +124,7 @@ public class InitLoader implements ApplicationRunner {
 
 		Account kid1SubscriptionAccount = accountRepository.save(createAccount(
 			"아이 청약 통장",
-			"77788889999",
+			"77788881111",
 			"1234",
 			AccountType.SUBSCRIPTION,
 			new BigDecimal("120000"),
@@ -146,7 +146,7 @@ public class InitLoader implements ApplicationRunner {
 			.name("부모 리워드 통장")
 			.accountNumber("22233336666")
 			.password(passwordEncoder.encode("5678"))
-			.accountType(AccountType.FREE)
+			.accountType(AccountType.PENSION)
 			.balance(BigDecimal.ZERO)
 			.member(parent1)
 			.isReward(true)
@@ -194,7 +194,7 @@ public class InitLoader implements ApplicationRunner {
 
 		Account parent3FreeAccount = accountRepository.save(createAccount(
 			"청약할머니 입출금 통장",
-			"777788889999",
+			"77788889999",
 			"1234",
 			AccountType.FREE,
 			new BigDecimal("10000000"),
@@ -204,7 +204,7 @@ public class InitLoader implements ApplicationRunner {
 
 		Account parent3RewardAccount = accountRepository.save(Account.builder()
 			.name("청약할머니 리워드 통장")
-			.accountNumber("777788880000")
+			.accountNumber("77788880000")
 			.password(passwordEncoder.encode("1234"))
 			.accountType(AccountType.FREE)
 			.balance(BigDecimal.ZERO)
@@ -214,7 +214,7 @@ public class InitLoader implements ApplicationRunner {
 
 		Account kid2HousingAccount = accountRepository.save(createAccount(
 			"김청약 주택청약",
-			"999900001111",
+			"99900001111",
 			"4321",
 			AccountType.SUBSCRIPTION,
 			new BigDecimal("5600000"),

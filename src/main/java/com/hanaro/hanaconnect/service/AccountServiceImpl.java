@@ -162,7 +162,7 @@ public class AccountServiceImpl implements AccountService {
 				Account account = linkedAccount.getAccount();
 
 				return MyAccountResponseDTO.builder()
-					.accountId(account.getId())
+					.accountId(linkedAccount.getId())
 					.name(account.getName())
 					.accountNumber(AccountNumberFormatter.format(account.getAccountNumber()))
 					.balance(account.getBalance())
@@ -270,10 +270,11 @@ public class AccountServiceImpl implements AccountService {
 	@Override
 	@Transactional(readOnly = true)
 	public RewardAccountResponseDTO getRewardAccount(Long memberId) {
-		Account account = accountRepository.findByMemberIdAndIsRewardTrue(memberId)
+		LinkedAccount linkedAccount = linkedAccountRepository
+			.findByMemberIdAndAccount_IsRewardTrue(memberId)
 			.orElseThrow(() -> new EntityNotFoundException("리워드 계좌를 찾을 수 없습니다."));
 
-		return RewardAccountResponseDTO.from(account);
+		return RewardAccountResponseDTO.from(linkedAccount);
 	}
 
 	@Override
@@ -301,7 +302,7 @@ public class AccountServiceImpl implements AccountService {
 
 		accountRepository.updateIsReward(target.getId(), true);
 
-		return RewardAccountResponseDTO.from(target);
+		return RewardAccountResponseDTO.from(linkedAccount);
 	}
 
 	@Override
