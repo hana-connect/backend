@@ -167,6 +167,7 @@ class AccountServiceImplTest {
 		AccountVerifyResponseDTO result = accountService.verifyMyAccount(3L, request);
 
 		assertThat(result.getAccountNumber()).isEqualTo("444-5555-6666");
+		assertThat(result.getAccountType()).isEqualTo(AccountType.SUBSCRIPTION);
 	}
 
 	@Test

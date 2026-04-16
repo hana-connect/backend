@@ -106,7 +106,8 @@ public class AccountServiceImpl implements AccountService {
 		}
 
 		return new AccountVerifyResponseDTO(
-			AccountNumberFormatter.format(account.getAccountNumber())
+			AccountNumberFormatter.format(account.getAccountNumber()),
+			account.getAccountType()
 		);
 	}
 

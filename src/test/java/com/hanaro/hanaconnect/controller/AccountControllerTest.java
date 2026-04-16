@@ -182,6 +182,7 @@ class AccountControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
 			.andExpect(jsonPath("$.data.accountNumber").value("818-1818-1818"))
+			.andExpect(jsonPath("$.data.accountType").value("SUBSCRIPTION"))
 			.andExpect(jsonPath("$.message").value("계좌 확인이 완료되었습니다."))
 			.andDo(print());
 	}
