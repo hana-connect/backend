@@ -454,7 +454,7 @@ class AccountServiceImplTest {
 		given(memberRepository.findById(1L)).willReturn(Optional.of(kid));
 		given(relationRepository.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(3L, 1L, MemberRole.KID))
 			.willReturn(true);
-		given(linkedAccountRepository.findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(3L, 1L))
+		given(linkedAccountRepository.findKidLinkedAccounts(3L, 1L))
 			.willReturn(List.of(linkedAccount));
 
 		KidWalletDetailResponseDTO result = accountService.getKidLinkedAccounts(3L, 1L);

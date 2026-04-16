@@ -313,8 +313,8 @@ public class AccountServiceImpl implements AccountService {
 		Member kid = memberRepository.findById(kidId)
 			.orElseThrow(() -> new IllegalArgumentException("아이 회원이 존재하지 않습니다."));
 
-		List<LinkedAccount> linkedAccounts = linkedAccountRepository
-			.findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(parentId, kidId);
+		List<LinkedAccount> linkedAccounts =
+			linkedAccountRepository.findKidLinkedAccounts(parentId, kidId);
 
 		List<KidLinkedAccountResponseDTO> accountDTOs = linkedAccounts.stream()
 			.map(linkedAccount -> KidLinkedAccountResponseDTO.builder()
