@@ -31,7 +31,6 @@ public class AssetAIService {
 		String randomStyle = investmentStyles.get(new Random().nextInt(investmentStyles.size()));
 
 		// 2. 프롬프트 생성
-		// 2. 프롬프트 생성 (인자 개수 10개로 수정)
 		String prompt = String.format("""
           사용자 현재 자산: 총 %s원 (예적금: %s, 입출금: %s, 투자: %s, 연금: %s).
           [미션]
