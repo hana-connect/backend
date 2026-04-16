@@ -64,7 +64,11 @@ class SubscriptionControllerTest {
 			subscriptionId,
 			"999900001111",
 			true,
-			new BigDecimal("200000")
+			new BigDecimal("200000"),
+			"김청약(김청*)",
+			"청약통장",
+			new BigDecimal("500000"),
+			"리워드 계좌"
 		);
 
 		given(subscriptionService.getSubscriptionPaymentInfo(eq(memberId), eq(subscriptionId)))
@@ -78,7 +82,11 @@ class SubscriptionControllerTest {
 			.andExpect(jsonPath("$.data.subscriptionId").value(10))
 			.andExpect(jsonPath("$.data.accountNumber").value("999900001111"))
 			.andExpect(jsonPath("$.data.hasPaidThisMonth").value(true))
-			.andExpect(jsonPath("$.data.alreadyPaidAmount").value(200000));
+			.andExpect(jsonPath("$.data.alreadyPaidAmount").value(200000))
+			.andExpect(jsonPath("$.data.displayName").value("김청약(김청*)"))
+			.andExpect(jsonPath("$.data.accountNickname").value("청약통장"))
+			.andExpect(jsonPath("$.data.balance").value(500000))
+			.andExpect(jsonPath("$.data.rewardAccountName").value("리워드 계좌"));
 	}
 
 	@Test
@@ -93,7 +101,11 @@ class SubscriptionControllerTest {
 			subscriptionId,
 			"77788889999",
 			false,
-			BigDecimal.ZERO
+			BigDecimal.ZERO,
+			"홍길동(홍길*)",
+			"청약통장",
+			new BigDecimal("300000"),
+			"리워드 계좌"
 		);
 
 		given(subscriptionService.getSubscriptionPaymentInfo(eq(memberId), eq(subscriptionId)))
@@ -107,7 +119,11 @@ class SubscriptionControllerTest {
 			.andExpect(jsonPath("$.data.subscriptionId").value(20))
 			.andExpect(jsonPath("$.data.accountNumber").value("77788889999"))
 			.andExpect(jsonPath("$.data.hasPaidThisMonth").value(false))
-			.andExpect(jsonPath("$.data.alreadyPaidAmount").value(0));
+			.andExpect(jsonPath("$.data.alreadyPaidAmount").value(0))
+			.andExpect(jsonPath("$.data.displayName").value("홍길동(홍길*)"))
+			.andExpect(jsonPath("$.data.accountNickname").value("청약통장"))
+			.andExpect(jsonPath("$.data.balance").value(300000))
+			.andExpect(jsonPath("$.data.rewardAccountName").value("리워드 계좌"));
 	}
 
 	@Test

@@ -129,17 +129,40 @@ class SubscriptionServiceTest {
 	@Test
 	@DisplayName("청약 납입 정보 조회 성공 - 이번 달 납입 이력 있음")
 	void getSubscriptionPaymentInfoSuccessHasPaidThisMonthTest() {
+		Member parent3 = findParent3();
 		Member kid2 = findKid2();
 		Account subscriptionAccount = findSubscriptionAccount(kid2.getId());
 
 		SubscriptionInfoResponseDto result =
-			subscriptionService.getSubscriptionPaymentInfo(kid2.getId(), subscriptionAccount.getId());
+			subscriptionService.getSubscriptionPaymentInfo(parent3.getId(), subscriptionAccount.getId());
 
 		assertThat(result).isNotNull();
 		assertThat(result.getSubscriptionId()).isEqualTo(subscriptionAccount.getId());
 		assertThat(result.getAccountNumber()).isEqualTo(subscriptionAccount.getAccountNumber());
 		assertThat(result.isHasPaidThisMonth()).isTrue();
 		assertThat(result.getAlreadyPaidAmount()).isGreaterThan(BigDecimal.ZERO);
+	}
+
+	@Test
+	@DisplayName("청약 진입 정보 조회 성공 - 표시 정보 포함")
+	void getSubscriptionPaymentInfoSuccessWithDisplayFieldsTest() {
+		Member parent3 = findParent3();
+		Member kid2 = findKid2();
+		Account subscriptionAccount = findSubscriptionAccount(kid2.getId());
+		Account rewardAccount = findRewardAccount(parent3.getId());
+
+		SubscriptionInfoResponseDto result =
+			subscriptionService.getSubscriptionPaymentInfo(parent3.getId(), subscriptionAccount.getId());
+
+		assertThat(result).isNotNull();
+		assertThat(result.getSubscriptionId()).isEqualTo(subscriptionAccount.getId());
+		assertThat(result.getAccountNumber()).isEqualTo(subscriptionAccount.getAccountNumber());
+		assertThat(result.getAlreadyPaidAmount()).isNotNull();
+
+		// develop 쪽에서 추가된 검증
+		assertThat(result.getDisplayName()).contains("김청약");
+		assertThat(result.getAccountNickname()).isEqualTo(subscriptionAccount.getName());
+		assertThat(result.getRewardAccountName()).isEqualTo(rewardAccount.getName());
 	}
 
 	@Test
@@ -416,5 +439,31 @@ class SubscriptionServiceTest {
 			subscriptionService.paySubscription(parent1.getId(), subscriptionAccount.getId(), request))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("잔액이 부족합니다.");
+	}
+
+	@Test
+	@DisplayName("최근 청약 납입 결과 조회 성공")
+	void getSubscriptionPaymentResult_success() {
+		Member parent3 = findParent3();
+		Member kid2 = findKid2();
+		Account subscriptionAccount = findSubscriptionAccount(kid2.getId());
+
+		SubscriptionRequestDto request = createRequest(
+			new BigDecimal("300000"),
+			1,
+			"123456",
+			null
+		);
+
+		subscriptionService.paySubscription(parent3.getId(), subscriptionAccount.getId(), request);
+
+		SubscriptionResponseDto result =
+			subscriptionService.getSubscriptionPaymentResult(parent3.getId(), subscriptionAccount.getId());
+
+		assertThat(result).isNotNull();
+		assertThat(result.getSubscriptionId()).isEqualTo(subscriptionAccount.getId());
+		assertThat(result.getSubscriptionAccountNumber()).isEqualTo(subscriptionAccount.getAccountNumber());
+		assertThat(result.getSubscriptionAmount()).isEqualByComparingTo("300000");
+		assertThat(result.getPaidAt()).isNotNull();
 	}
 }

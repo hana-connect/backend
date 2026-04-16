@@ -15,4 +15,9 @@ public class SubscriptionInfoResponseDto {
 	private String accountNumber;
 	private boolean hasPaidThisMonth; // 이번 달 납입 여부
 	private BigDecimal alreadyPaidAmount; // 이번 달 이미 납입한 금액
+
+	private String displayName;       // 김채현(김*현)
+	private String accountNickname;    // 계좌별명
+	private BigDecimal balance;
+	private String rewardAccountName; // 리워드 계좌 이름
 }

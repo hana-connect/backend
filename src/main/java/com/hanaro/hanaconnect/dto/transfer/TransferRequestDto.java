@@ -14,6 +14,8 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Schema(description = "송금 요청 정보")
 public class TransferRequestDto {
 

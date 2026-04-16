@@ -1,7 +1,7 @@
 package com.hanaro.hanaconnect.dto.transfer;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,8 +12,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public class TransferResponseDto {
 
-	private String accountNumber;   // 입금 계좌번호
-	private BigDecimal amount;      // 송금 금액
-	private LocalDate transferDate; // 송금일
-
+	private Long transferId;            // 송금 거래 ID
+	private Long toAccountId;           // 수신 계좌 ID
+	private String toAccountNumber;     // 수신 계좌번호
+	private BigDecimal amount;          // 송금 금액
+	private LocalDateTime transferredAt; // 송금 완료 시각
 }

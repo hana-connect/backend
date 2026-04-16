@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.PrepaymentDetailRepository;
 import com.hanaro.hanaconnect.repository.PrepaymentRepository;
 import com.hanaro.hanaconnect.repository.TransactionRepository;
@@ -47,6 +49,7 @@ public class SubscriptionService {
 	private final PrepaymentDetailRepository prepaymentDetailRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final MemberRepository memberRepository;
+	private final PhoneNameRepository phoneNameRepository;
 
 	// 청약 진입
 	public SubscriptionInfoResponseDto getSubscriptionPaymentInfo(Long memberId, Long subscriptionId) {
@@ -62,6 +65,19 @@ public class SubscriptionService {
 			throw new IllegalArgumentException("접근할 수 없는 청약 계좌입니다.");
 		}
 
+		Member kid = subscriptionAccount.getMember();
+		Long kidId = kid.getId();
+
+		String phoneSavedName = phoneNameRepository
+			.findNameByOwnerIdAndTargetId(memberId, kidId)
+			.orElse(null);
+
+		boolean hasPhoneSavedName = phoneSavedName != null && !phoneSavedName.isBlank();
+
+		String displayName = hasPhoneSavedName
+			? kid.getName() + "(" + phoneSavedName + ")"
+			: kid.getName();
+
 		LocalDateTime startOfMonth = YearMonth.now().atDay(1).atStartOfDay();
 		LocalDateTime endOfMonth = YearMonth.now().atEndOfMonth().atTime(LocalTime.MAX);
 
@@ -74,11 +90,23 @@ public class SubscriptionService {
 
 		boolean hasPaidThisMonth = alreadyPaidAmount.compareTo(BigDecimal.ZERO) > 0;
 
+		Account freeAccount = accountRepository
+			.findByMemberIdAndAccountTypeAndIsRewardFalse(memberId, AccountType.FREE)
+			.orElseThrow(() -> new IllegalArgumentException("출금 계좌를 찾을 수 없습니다."));
+
+		Account rewardAccount = accountRepository
+			.findByMemberIdAndIsRewardTrue(memberId)
+			.orElse(null);
+
 		return new SubscriptionInfoResponseDto(
 			subscriptionAccount.getId(),
 			subscriptionAccount.getAccountNumber(),
 			hasPaidThisMonth,
-			alreadyPaidAmount
+			alreadyPaidAmount,
+			displayName,
+			subscriptionAccount.getName(),
+			freeAccount.getBalance(),
+			rewardAccount != null ? rewardAccount.getName() : null
 		);
 	}
 
@@ -419,5 +447,59 @@ public class SubscriptionService {
 		}
 
 		return "청약 납입이 완료되었습니다.";
+	}
+
+	@Transactional(readOnly = true)
+	public SubscriptionResponseDto getSubscriptionPaymentResult(Long memberId, Long subscriptionId) {
+		Account subscriptionAccount = getSubscriptionAccount(subscriptionId);
+
+		boolean isLinked = linkedAccountRepository.existsByAccountIdAndMemberId(subscriptionId, memberId);
+		if (!isLinked) {
+			throw new IllegalArgumentException("접근할 수 없는 청약 계좌입니다.");
+		}
+
+		Transaction latestSubscriptionTx = transactionRepository
+			.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
+				subscriptionId,
+				TransactionType.SUBSCRIPTION
+			)
+			.orElseThrow(() -> new IllegalArgumentException("최근 청약 납입 내역이 없습니다."));
+
+		BigDecimal rewardAmount = BigDecimal.ZERO;
+		String rewardAccountNumber = null;
+
+		Optional<Account> rewardAccountOpt = accountRepository.findByMemberIdAndIsRewardTrue(memberId);
+
+		if (rewardAccountOpt.isPresent()) {
+			Account rewardAccount = rewardAccountOpt.get();
+
+			LocalDateTime paidAt = latestSubscriptionTx.getCreatedAt();
+			LocalDateTime start = paidAt.minusSeconds(3);
+			LocalDateTime end = paidAt.plusSeconds(3);
+
+			Optional<Transaction> rewardTxOpt = transactionRepository
+				.findTopByReceiverAccountIdAndTransactionTypeAndCreatedAtBetweenOrderByCreatedAtDesc(
+					rewardAccount.getId(),
+					TransactionType.DEPOSIT,
+					start,
+					end
+				);
+
+			if (rewardTxOpt.isPresent()) {
+				Transaction rewardTx = rewardTxOpt.get();
+				rewardAmount = rewardTx.getTransactionMoney();
+				rewardAccountNumber = rewardAccount.getAccountNumber();
+			}
+		}
+
+		return SubscriptionResponseDto.builder()
+			.subscriptionId(subscriptionAccount.getId())
+			.subscriptionAccountNumber(subscriptionAccount.getAccountNumber())
+			.subscriptionAmount(latestSubscriptionTx.getTransactionMoney())
+			.rewardAccountNumber(rewardAccountNumber)
+			.rewardAmount(rewardAmount)
+			.prepaymentCount(null)
+			.paidAt(latestSubscriptionTx.getCreatedAt().toLocalDate())
+			.build();
 	}
 }

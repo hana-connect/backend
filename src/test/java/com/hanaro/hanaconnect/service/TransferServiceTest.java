@@ -236,10 +236,14 @@ class TransferServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getAmount()).isEqualByComparingTo("5000");
-		assertThat(result.getTransferDate()).isEqualTo(LocalDate.now());
+		assertThat(result.getTransferredAt()).isNotNull();
 
-		String rawAccountNumber = accountCryptoService.decrypt(targetKidAccount.getAccountNumber()).replaceAll("-", "");
-		String resultAccountNumber = result.getAccountNumber().replaceAll("-", "");
+		String rawAccountNumber =
+			accountCryptoService.decrypt(targetKidAccount.getAccountNumber()).replaceAll("-", "");
+		String resultAccountNumber =
+			result.getToAccountNumber().replaceAll("-", "");
+
+		assertThat(resultAccountNumber).isEqualTo(rawAccountNumber);
 
 		assertThat(resultAccountNumber).isEqualTo(rawAccountNumber);
 
