@@ -11,7 +11,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -21,14 +22,21 @@ public class AssetAIService {
 	private final AssetAiClient assetAiClient;
 	private final ObjectMapper objectMapper;
 
+	private final Map<Long, AssetAIRecommendationResponseDTO> recommendationCache = new ConcurrentHashMap<>();
+
 	private final List<String> investmentStyles = List.of("공격형", "중립형", "안정형");
 
 	public AssetAIRecommendationResponseDTO getAssetRecommendation(Long memberId) {
+		// 캐시에 값이 있으면 즉시 반환 (AI 호출 안 함)
+		if (recommendationCache.containsKey(memberId)) {
+			return recommendationCache.get(memberId);
+		}
+
 		AssetSummaryResponseDTO summary = assetService.getMemberAssetSummary(memberId);
 		BigDecimal realTotal = summary.getTotalAssets();
 
-		// 1. 투자 성향 랜덤 선택
-		String randomStyle = investmentStyles.get(new Random().nextInt(investmentStyles.size()));
+		// 1. memberId 기반 고정 투자 성향 선택 (사용자마다 고정된 프롬프트 생성)
+		String fixedStyle = investmentStyles.get((int) (memberId % investmentStyles.size()));
 
 		// 2. 프롬프트 생성
 		String prompt = String.format("""
@@ -56,7 +64,7 @@ public class AssetAIService {
           """,
 			realTotal, summary.getDepositSavings(), summary.getDepositWithdrawal(),
 			summary.getInvestment(), summary.getPension(),
-			randomStyle, realTotal, realTotal, realTotal, randomStyle);
+			fixedStyle, realTotal, realTotal, realTotal, fixedStyle);
 
 		try {
 			// AI 서버 호출
@@ -82,7 +90,7 @@ public class AssetAIService {
 			List<BigDecimal> assetHistory = calculateAssetHistory(realTotal, aiIncreaseRate);
 
 			// 5. 최종 DTO 빌드 및 반환
-			return AssetAIRecommendationResponseDTO.builder()
+			AssetAIRecommendationResponseDTO response = AssetAIRecommendationResponseDTO.builder()
 				.aiComment(aiComment)
 				.recommendRatio(aiRatio)
 				.assetHistory(assetHistory)
@@ -94,6 +102,10 @@ public class AssetAIService {
 				.recommendedPension(recPension)
 				.totalAssets(realTotal)
 				.build();
+
+			// 결과를 캐시에 저장
+			recommendationCache.put(memberId, response);
+			return response;
 
 		} catch (Exception e) {
 			return getFallback(realTotal);
