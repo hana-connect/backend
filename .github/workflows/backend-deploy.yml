@@ -59,11 +59,13 @@ jobs:
             nohup bash -c "java -jar build/libs/hanaconnect-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod" > app.log 2>&1 < /dev/null &
             echo $! > app.pid
 
-            sleep 15
+            for i in {1..12}; do
+              if grep -q "Started HanaconnectApplication" app.log; then
+                tail -n 30 app.log
+                exit 0
+              fi
+              sleep 5
+            done
 
-            if ! grep -q "Started HanaconnectApplication" app.log; then
-              tail -n 100 app.log
-              exit 1
-            fi
-
-            tail -n 30 app.log
+            tail -n 100 app.log
+            exit 1
