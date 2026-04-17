@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionInfoResponseDto;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionRequestDto;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionResponseDto;
@@ -38,6 +39,9 @@ class SubscriptionServiceTest {
 
 	@Autowired
 	private PrepaymentDetailRepository prepaymentDetailRepository;
+
+	@Autowired
+	private AccountCryptoService accountCryptoService;
 
 	private Member findKid1() {
 		return memberRepository.findAll().stream()
