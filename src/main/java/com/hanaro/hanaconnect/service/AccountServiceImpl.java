@@ -350,6 +350,10 @@ public class AccountServiceImpl implements AccountService {
 		Member kid = memberRepository.findById(kidId)
 			.orElseThrow(() -> new IllegalArgumentException("아이 회원이 존재하지 않습니다."));
 
+		Account kidWalletAccount = accountRepository
+			.findByMemberIdAndAccountType(kidId, AccountType.WALLET)
+			.orElseThrow(() -> new IllegalArgumentException("아이 지갑 계좌가 없습니다."));
+
 		List<LinkedAccount> linkedAccounts =
 			linkedAccountRepository.findKidLinkedAccounts(parentId, kidId);
 
@@ -373,7 +377,7 @@ public class AccountServiceImpl implements AccountService {
 		return KidWalletDetailResponseDTO.builder()
 			.kidId(kid.getId())
 			.kidName(kid.getName())
-			.walletMoney(kid.getWalletMoney())
+			.walletMoney(kidWalletAccount.getBalance())
 			.accounts(accountDTOs)
 			.build();
 	}

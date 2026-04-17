@@ -4,24 +4,28 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
+import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
 import com.hanaro.hanaconnect.common.util.AccountCryptoService;
-import com.hanaro.hanaconnect.dto.transfer.RecentTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.saving.RelayResponseDTO;
 import com.hanaro.hanaconnect.dto.saving.SavingsDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.saving.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.saving.SavingsTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.transfer.RecentTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.transfer.TransferPrepareResponseDto;
 import com.hanaro.hanaconnect.dto.transfer.TransferRequestDto;
 import com.hanaro.hanaconnect.dto.transfer.TransferResponseDto;
@@ -29,6 +33,7 @@ import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Letter;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
+import com.hanaro.hanaconnect.entity.Relation;
 import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LetterRepository;
@@ -61,52 +66,114 @@ class TransferServiceTest {
 	private LetterRepository letterRepository;
 
 	@Autowired
+	private RelationRepository relationRepository;
+
+	@Autowired
 	private AccountCryptoService accountCryptoService;
 
 	@Autowired
-	private RelationRepository relationRepository;
+	private PasswordEncoder passwordEncoder;
 
-	private Member findParent() {
-		return memberRepository.findAll().stream()
-			.filter(member -> "김엄마".equals(member.getName()))
-			.filter(member -> member.getMemberRole() == MemberRole.PARENT)
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 부모 회원(김엄마)을 찾을 수 없습니다."));
-	}
+	@Autowired
+	private AccountHashService accountHashService;
 
-	private Account findParentFreeAccount(Long parentId) {
-		return accountRepository.findAll().stream()
-			.filter(account -> account.getMember().getId().equals(parentId))
-			.filter(account -> account.getAccountType() == AccountType.FREE)
-			.filter(account -> !Boolean.TRUE.equals(account.getIsReward()))
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 부모 FREE 계좌를 찾을 수 없습니다."));
-	}
+	private static long accountSeq = 88000000000L;
 
-	private Account findLinkedKidSavingsAccount(Long parentId) {
-		return accountRepository.findAll().stream()
-			.filter(account -> account.getAccountType() == AccountType.SAVINGS)
-			.filter(account -> linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), parentId))
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 연결된 아이 적금 계좌를 찾을 수 없습니다."));
-	}
+	private Member parent;
+	private Member kid;
+	private Member stranger;
 
-	private Account findLinkedKidCheckingAccount(Long memberId) {
-		return linkedAccountRepository.findAllByMemberId(memberId).stream()
-			.map(LinkedAccount::getAccount)
-			.filter(a -> a.getAccountType() == AccountType.FREE)
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 연결된 일반 계좌를 찾을 수 없습니다."));
+	private Account parentWalletAccount;
+	private Account kidSavingsAccount;
+	private Account kidCheckingAccount;
+	private Account strangerFreeAccount;
+
+	private Account expiredSavingsAccount;
+
+	@BeforeEach
+	void setUp() {
+		parent = createMember("김엄마", LocalDate.of(1980, 5, 19), MemberRole.PARENT);
+		kid = createMember("홍길동", LocalDate.of(2010, 1, 2), MemberRole.KID);
+		stranger = createMember("모르는사람", LocalDate.of(1985, 3, 1), MemberRole.PARENT);
+
+		saveRelation(parent, kid);
+		saveRelation(kid, parent);
+
+		parentWalletAccount = createAccount(
+			"김엄마 지갑",
+			"123456",
+			AccountType.WALLET,
+			new BigDecimal("800000"),
+			parent,
+			BigDecimal.ZERO,
+			false,
+			false
+		);
+
+		kidSavingsAccount = createAccount(
+			"홍길동 적금",
+			"1234",
+			AccountType.SAVINGS,
+			new BigDecimal("250000"),
+			kid,
+			new BigDecimal("300000"),
+			false,
+			false
+		);
+
+		kidCheckingAccount = createAccount(
+			"홍길동 입출금",
+			"1234",
+			AccountType.FREE,
+			new BigDecimal("50000"),
+			kid,
+			BigDecimal.ZERO,
+			false,
+			false
+		);
+
+		strangerFreeAccount = createAccount(
+			"모르는사람 통장",
+			"9999",
+			AccountType.FREE,
+			new BigDecimal("100000"),
+			stranger,
+			BigDecimal.ZERO,
+			false,
+			false
+		);
+
+		expiredSavingsAccount = createAccount(
+			"만기 적금",
+			"1234",
+			AccountType.SAVINGS,
+			new BigDecimal("2000000"),
+			kid,
+			new BigDecimal("300000"),
+			false,
+			true
+		);
+
+		link(parent, kidSavingsAccount);
+		link(parent, kidCheckingAccount);
+		link(kid, kidSavingsAccount);
+		link(kid, kidCheckingAccount);
+		link(kid, expiredSavingsAccount);
+
+		createSavingsDepositTransaction(
+			parentWalletAccount,
+			expiredSavingsAccount,
+			new BigDecimal("10000"),
+			new BigDecimal("2010000"),
+			LocalDateTime.of(2026, 4, 1, 12, 0),
+			"만기 전에 보낸 편지"
+		);
 	}
 
 	@Test
 	@DisplayName("적금 송금 성공")
 	void transferToChildSavingsSuccessTest() {
-		Member parent = findParent();
-		Account parentFreeAccount = findParentFreeAccount(parent.getId());
-		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
-
-		BigDecimal senderBefore = parentFreeAccount.getBalance();
+		BigDecimal senderBefore = parentWalletAccount.getBalance();
 		BigDecimal receiverBefore = kidSavingsAccount.getBalance();
 
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
@@ -122,10 +189,8 @@ class TransferServiceTest {
 		assertThat(result.getTransactionMoney()).isEqualByComparingTo("10000");
 		assertThat(result.getMessage()).isEqualTo("적금 응원 편지");
 
-		Account updatedSender = accountRepository.findById(parentFreeAccount.getId())
-			.orElseThrow(() -> new IllegalArgumentException("부모 계좌를 다시 찾을 수 없습니다."));
-		Account updatedReceiver = accountRepository.findById(kidSavingsAccount.getId())
-			.orElseThrow(() -> new IllegalArgumentException("아이 적금 계좌를 다시 찾을 수 없습니다."));
+		Account updatedSender = accountRepository.findById(parentWalletAccount.getId()).orElseThrow();
+		Account updatedReceiver = accountRepository.findById(kidSavingsAccount.getId()).orElseThrow();
 
 		assertThat(updatedSender.getBalance())
 			.isEqualByComparingTo(senderBefore.subtract(new BigDecimal("10000")));
@@ -139,9 +204,8 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("적금 송금 성공 - 메시지가 공백이면 편지를 저장하지 않는다")
 	void transferToChildSavingsSuccessWithoutLetter() {
-		Member parent = findParent();
-		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
-
+		BigDecimal senderBefore = parentWalletAccount.getBalance();
+		BigDecimal receiverBefore = kidSavingsAccount.getBalance();
 		long beforeLetterCount = letterRepository.count();
 
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
@@ -157,14 +221,21 @@ class TransferServiceTest {
 		assertThat(result.getTransactionMoney()).isEqualByComparingTo("10000");
 		assertThat(result.getMessage()).isBlank();
 		assertThat(letterRepository.count()).isEqualTo(beforeLetterCount);
+
+		Account updatedSender = accountRepository.findById(parentWalletAccount.getId()).orElseThrow();
+		Account updatedReceiver = accountRepository.findById(kidSavingsAccount.getId()).orElseThrow();
+
+		assertThat(updatedSender.getBalance())
+			.isEqualByComparingTo(senderBefore.subtract(new BigDecimal("10000")));
+		assertThat(updatedReceiver.getBalance())
+			.isEqualByComparingTo(receiverBefore.add(new BigDecimal("10000")));
 	}
 
 	@Test
 	@DisplayName("적금 송금 성공 - 메시지가 null이면 편지를 저장하지 않는다")
 	void transferToChildSavingsSuccessWithNullContent() {
-		Member parent = findParent();
-		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
-
+		BigDecimal senderBefore = parentWalletAccount.getBalance();
+		BigDecimal receiverBefore = kidSavingsAccount.getBalance();
 		long beforeLetterCount = letterRepository.count();
 
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
@@ -180,14 +251,19 @@ class TransferServiceTest {
 		assertThat(result.getTransactionMoney()).isEqualByComparingTo("7000");
 		assertThat(result.getMessage()).isNull();
 		assertThat(letterRepository.count()).isEqualTo(beforeLetterCount);
+
+		Account updatedSender = accountRepository.findById(parentWalletAccount.getId()).orElseThrow();
+		Account updatedReceiver = accountRepository.findById(kidSavingsAccount.getId()).orElseThrow();
+
+		assertThat(updatedSender.getBalance())
+			.isEqualByComparingTo(senderBefore.subtract(new BigDecimal("7000")));
+		assertThat(updatedReceiver.getBalance())
+			.isEqualByComparingTo(receiverBefore.add(new BigDecimal("7000")));
 	}
 
 	@Test
 	@DisplayName("적금 송금 실패 - 비밀번호 불일치")
 	void transferToChildSavingsFailWrongPasswordTest() {
-		Member parent = findParent();
-		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
-
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("10000"));
@@ -202,11 +278,8 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("적금 송금 실패 - 연결되지 않은 손주 계좌")
 	void transferToChildSavingsFailUnlinkedAccountTest() {
-		Member parent = findParent();
-		Long unlinkedId = findUnlinkedAccountId(parent.getId());
-
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
-		request.setTargetAccountId(unlinkedId);
+		request.setTargetAccountId(strangerFreeAccount.getId());
 		request.setAmount(new BigDecimal("10000"));
 		request.setPassword("123456");
 		request.setContent("편지");
@@ -219,16 +292,11 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("일반 송금 성공")
 	void transferSuccess() {
-		Member parent = findParent();
-
-		Account parentFree = findParentFreeAccount(parent.getId());
-		Account targetKidAccount = findLinkedKidCheckingAccount(parent.getId());
-
-		BigDecimal parentBefore = parentFree.getBalance();
-		BigDecimal kidBefore = targetKidAccount.getBalance();
+		BigDecimal parentBefore = parentWalletAccount.getBalance();
+		BigDecimal kidBefore = kidCheckingAccount.getBalance();
 
 		TransferRequestDto request = new TransferRequestDto();
-		request.setAccountId(targetKidAccount.getId());
+		request.setAccountId(kidCheckingAccount.getId());
 		request.setAmount(new BigDecimal("5000"));
 		request.setPassword("123456");
 
@@ -239,14 +307,14 @@ class TransferServiceTest {
 		assertThat(result.getTransferredAt()).isNotNull();
 
 		String rawAccountNumber =
-			accountCryptoService.decrypt(targetKidAccount.getAccountNumber()).replaceAll("-", "");
+			accountCryptoService.decrypt(kidCheckingAccount.getAccountNumber()).replaceAll("-", "");
 		String resultAccountNumber =
 			result.getToAccountNumber().replaceAll("-", "");
 
 		assertThat(resultAccountNumber).isEqualTo(rawAccountNumber);
 
-		Account updatedParent = accountRepository.findById(parentFree.getId()).orElseThrow();
-		Account updatedKid = accountRepository.findById(targetKidAccount.getId()).orElseThrow();
+		Account updatedParent = accountRepository.findById(parentWalletAccount.getId()).orElseThrow();
+		Account updatedKid = accountRepository.findById(kidCheckingAccount.getId()).orElseThrow();
 
 		assertThat(updatedParent.getBalance()).isEqualByComparingTo(parentBefore.subtract(new BigDecimal("5000")));
 		assertThat(updatedKid.getBalance()).isEqualByComparingTo(kidBefore.add(new BigDecimal("5000")));
@@ -255,11 +323,8 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("일반 송금 실패 - 비밀번호 불일치")
 	void transferFailWrongPassword() {
-		Member parent = findParent();
-		Account targetKidAccount = findLinkedKidCheckingAccount(parent.getId());
-
 		TransferRequestDto request = new TransferRequestDto();
-		request.setAccountId(targetKidAccount.getId());
+		request.setAccountId(kidCheckingAccount.getId());
 		request.setAmount(new BigDecimal("5000"));
 		request.setPassword("000000");
 
@@ -271,11 +336,8 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("일반 송금 실패 - 관계 없는 계좌")
 	void transferFailNoRelation() {
-		Member parent = findParent();
-		Account unrelatedAccount = findAccountOfUnrelatedMember(parent.getId());
-
 		TransferRequestDto request = new TransferRequestDto();
-		request.setAccountId(unrelatedAccount.getId());
+		request.setAccountId(strangerFreeAccount.getId());
 		request.setAmount(new BigDecimal("5000"));
 		request.setPassword("123456");
 
@@ -287,31 +349,27 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("송금 사전 정보 조회 성공 - 적금 계좌")
 	void getTransferPrepareInfoSavingsSuccess() {
-		Member parent = findParent();
-		Account kidSavings = findLinkedKidSavingsAccount(parent.getId());
-
 		TransferPrepareResponseDto result =
-			transferService.getTransferPrepareInfo(parent.getId(), kidSavings.getId());
+			transferService.getTransferPrepareInfo(parent.getId(), kidSavingsAccount.getId());
 
 		assertThat(result).isNotNull();
-		assertThat(result.getAccountId()).isEqualTo(kidSavings.getId());
-		assertThat(result.getTargetMemberName()).isEqualTo(kidSavings.getMember().getName());
-		assertThat(result.getAccountAlias()).isEqualTo(kidSavings.getName());
-		assertThat(result.getCurrentSaving()).isEqualByComparingTo(kidSavings.getBalance());
-		assertThat(result.getSavingLimit()).isEqualByComparingTo(kidSavings.getTotalLimit());
+		assertThat(result.getAccountId()).isEqualTo(kidSavingsAccount.getId());
+		assertThat(result.getTargetMemberName()).isEqualTo(kid.getName());
+		assertThat(result.getAccountAlias()).isEqualTo(kidSavingsAccount.getName());
+		assertThat(result.getBalance()).isEqualByComparingTo(parentWalletAccount.getBalance());
+		assertThat(result.getCurrentSaving()).isEqualByComparingTo(kidSavingsAccount.getBalance());
+		assertThat(result.getSavingLimit()).isEqualByComparingTo(kidSavingsAccount.getTotalLimit());
 	}
 
 	@Test
 	@DisplayName("송금 사전 정보 조회 성공 - 일반 계좌")
 	void getTransferPrepareInfoNonSavingsSuccess() {
-		Member parent = findParent();
-		Account kidAccount = findLinkedKidCheckingAccount(parent.getId());
-
 		TransferPrepareResponseDto result =
-			transferService.getTransferPrepareInfo(parent.getId(), kidAccount.getId());
+			transferService.getTransferPrepareInfo(parent.getId(), kidCheckingAccount.getId());
 
 		assertThat(result).isNotNull();
-		assertThat(result.getAccountId()).isEqualTo(kidAccount.getId());
+		assertThat(result.getAccountId()).isEqualTo(kidCheckingAccount.getId());
+		assertThat(result.getBalance()).isEqualByComparingTo(parentWalletAccount.getBalance());
 		assertThat(result.getCurrentSaving()).isEqualByComparingTo(BigDecimal.ZERO);
 		assertThat(result.getSavingLimit()).isNotNull();
 	}
@@ -319,8 +377,6 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("송금 사전 정보 조회 실패 - 존재하지 않는 계좌")
 	void getTransferPrepareInfoFailNoAccount() {
-		Member parent = findParent();
-
 		assertThatThrownBy(() -> transferService.getTransferPrepareInfo(parent.getId(), 999999L))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("존재하지 않는 계좌입니다.");
@@ -329,10 +385,7 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("송금 사전 정보 조회 실패 - 관계 없는 계좌")
 	void getTransferPrepareInfoFailNoRelation() {
-		Member parent = findParent();
-		Account unrelatedAccount = findAccountOfUnrelatedMember(parent.getId());
-
-		assertThatThrownBy(() -> transferService.getTransferPrepareInfo(parent.getId(), unrelatedAccount.getId()))
+		assertThatThrownBy(() -> transferService.getTransferPrepareInfo(parent.getId(), strangerFreeAccount.getId()))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("해당 계좌에 접근 권한이 없습니다.");
 	}
@@ -340,9 +393,6 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("최근 적금 송금 내역 조회 성공")
 	void getRecentTransferAmountSuccess() {
-		Member parent = findParent();
-		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
-
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("12000"));
@@ -362,10 +412,7 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("최근 적금 송금 내역 조회 실패 - 관계 없는 계좌")
 	void getRecentTransferAmountFailNoRelation() {
-		Member parent = findParent();
-		Long unlinkedId = findUnlinkedAccountId(parent.getId());
-
-		assertThatThrownBy(() -> transferService.getRecentTransferAmount(parent.getId(), unlinkedId))
+		assertThatThrownBy(() -> transferService.getRecentTransferAmount(parent.getId(), strangerFreeAccount.getId()))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("해당 계좌에 접근 권한이 없습니다.");
 	}
@@ -373,9 +420,6 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("적금 릴레이 내역 조회 성공")
 	void getRelayHistorySuccessTest() {
-		Member parent = findParent();
-		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
-
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("50000"));
@@ -402,19 +446,15 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("적금 릴레이 내역 조회 실패 케이스 모음")
 	void getRelayHistoryFailTest() {
-		Member parent = findParent();
-
 		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), 999L, 0))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("해당 계좌에 접근 권한이 없습니다.");
 
-		Long unlinkedId = findUnlinkedAccountId(parent.getId());
-		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), unlinkedId, 0))
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), strangerFreeAccount.getId(), 0))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("해당 계좌에 접근 권한이 없습니다.");
 
-		Account checkingAccount = findLinkedKidCheckingAccount(parent.getId());
-		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), checkingAccount.getId(), 0))
+		assertThatThrownBy(() -> transferService.getRelayHistory(parent.getId(), kidCheckingAccount.getId(), 0))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("적금 계좌만 조회할 수 있습니다.");
 	}
@@ -422,9 +462,6 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("최근 적금 릴레이 내역 조회 성공")
 	void getRecentRelayHistorySuccess() {
-		Member parent = findParent();
-		Account kidSavingsAccount = findLinkedKidSavingsAccount(parent.getId());
-
 		SavingsTransferRequestDTO request1 = new SavingsTransferRequestDTO();
 		request1.setTargetAccountId(kidSavingsAccount.getId());
 		request1.setAmount(new BigDecimal("1000"));
@@ -458,10 +495,7 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("최근 적금 릴레이 내역 조회 실패 - 적금 계좌 아님")
 	void getRecentRelayHistoryFailNotSavings() {
-		Member parent = findParent();
-		Account checkingAccount = findLinkedKidCheckingAccount(parent.getId());
-
-		assertThatThrownBy(() -> transferService.getRecentRelayHistory(parent.getId(), checkingAccount.getId()))
+		assertThatThrownBy(() -> transferService.getRecentRelayHistory(parent.getId(), kidCheckingAccount.getId()))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("적금 계좌만 조회할 수 있습니다.");
 	}
@@ -469,70 +503,36 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("만기 적금 상세 내역 조회 성공 - 전체 조회")
 	void getExpiredSavingsDetail_Success() {
-		Account expiredSavings = accountRepository.findAll().stream()
-			.filter(a -> Boolean.TRUE.equals(a.getIsEnd()))
-			.filter(a -> a.getAccountType() == AccountType.SAVINGS)
-			.findFirst()
-			.orElseThrow(() -> new IllegalStateException("테스트를 위한 만기된 적금 계좌가 DB에 없습니다."));
-
-		Long ownerId = expiredSavings.getMember().getId();
+		Long ownerId = kid.getId();
 
 		SavingsDetailResponseDTO result =
-			transferService.getExpiredSavingsDetail(ownerId, expiredSavings.getId(), 0, null);
+			transferService.getExpiredSavingsDetail(ownerId, expiredSavingsAccount.getId(), 0, null);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getSenders()).isNotNull();
 		assertThat(result.getProductName()).isNotBlank();
 
 		String rawAccountNumber =
-			accountCryptoService.decrypt(expiredSavings.getAccountNumber()).replaceAll("-", "");
+			accountCryptoService.decrypt(expiredSavingsAccount.getAccountNumber()).replaceAll("-", "");
 		String resultAccountNumber =
 			result.getAccountNumber().replaceAll("-", "");
-		assertThat(resultAccountNumber).isEqualTo(rawAccountNumber);
 
+		assertThat(resultAccountNumber).isEqualTo(rawAccountNumber);
 		assertThat(result.getTransactions()).isNotNull();
 	}
 
 	@Test
 	@DisplayName("만기 적금 상세 내역 조회 성공 - 특정 발신인 필터링")
 	void getExpiredSavingsDetail_Filter_Success() {
-		Account expiredSavings = accountRepository.findAll().stream()
-			.filter(a -> Boolean.TRUE.equals(a.getIsEnd()))
-			.filter(a -> a.getAccountType() == AccountType.SAVINGS)
-			.findFirst()
-			.orElseThrow(() -> new IllegalStateException("테스트용 만기 적금 계좌가 없습니다."));
-
-		Account senderAcc = accountRepository.findAll().stream()
-			.filter(a -> !a.getId().equals(expiredSavings.getId()))
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 송금 계좌가 없습니다."));
-
-		Transaction tx = Transaction.builder()
-			.senderAccount(senderAcc)
-			.receiverAccount(expiredSavings)
-			.transactionMoney(new BigDecimal("1000"))
-			.transactionBalance(new BigDecimal("100000"))
-			.transactionType(TransactionType.SAVINGS_DEPOSIT)
-			.build();
-		transactionRepository.save(tx);
-
-		Letter letter = Letter.builder()
-			.content("테스트 편지")
-			.transaction(tx)
-			.build();
-		letterRepository.save(letter);
-
-		Long ownerId = expiredSavings.getMember().getId();
-
 		SavingsDetailResponseDTO unfiltered =
-			transferService.getExpiredSavingsDetail(ownerId, expiredSavings.getId(), 0, null);
+			transferService.getExpiredSavingsDetail(kid.getId(), expiredSavingsAccount.getId(), 0, null);
 
 		assertThat(unfiltered.getSenders()).isNotEmpty();
 
 		Long specificSenderId = unfiltered.getSenders().get(0).getSenderId();
 
 		SavingsDetailResponseDTO result =
-			transferService.getExpiredSavingsDetail(ownerId, expiredSavings.getId(), 0, specificSenderId);
+			transferService.getExpiredSavingsDetail(kid.getId(), expiredSavingsAccount.getId(), 0, specificSenderId);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getTransactions()).isNotEmpty();
@@ -545,14 +545,7 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("만기 적금 상세 내역 조회 실패 - 권한 없음")
 	void getExpiredSavingsDetail_Fail_NotOwner() {
-		Account expiredSavings = accountRepository.findAll().stream()
-			.filter(a -> Boolean.TRUE.equals(a.getIsEnd()))
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 만기 계좌가 없습니다."));
-
-		Long strangerId = expiredSavings.getMember().getId() + 100;
-
-		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(strangerId, expiredSavings.getId(), 0, null))
+		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(parent.getId(), expiredSavingsAccount.getId(), 0, null))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("본인의 계좌만 조회할 수 있습니다.");
 	}
@@ -560,15 +553,7 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("만기 적금 상세 내역 조회 실패 - 만기되지 않은 계좌")
 	void getExpiredSavingsDetail_Fail_NotExpired() {
-		Account activeAccount = accountRepository.findAll().stream()
-			.filter(a -> !Boolean.TRUE.equals(a.getIsEnd()))
-			.filter(a -> a.getAccountType() == AccountType.SAVINGS)
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 활성 적금 계좌가 없습니다."));
-
-		Long ownerId = activeAccount.getMember().getId();
-
-		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(ownerId, activeAccount.getId(), 0, null))
+		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(kid.getId(), kidSavingsAccount.getId(), 0, null))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("만기된 계좌만 상세 조회가 가능합니다.");
 	}
@@ -576,27 +561,105 @@ class TransferServiceTest {
 	@Test
 	@DisplayName("만기 적금 상세 내역 조회 실패 - 계좌 없음")
 	void getExpiredSavingsDetail_Fail_NoAccount() {
-		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(1L, 999999L, 0, null))
+		assertThatThrownBy(() -> transferService.getExpiredSavingsDetail(kid.getId(), 999999L, 0, null))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("계좌를 찾을 수 없습니다.");
 	}
 
-	private Account findAccountOfUnrelatedMember(Long parentId) {
-		return accountRepository.findAll().stream()
-			.filter(account -> !account.getMember().getId().equals(parentId))
-			.filter(account -> !relationRepository.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(
-				parentId,
-				account.getMember().getId(),
-				MemberRole.KID
-			))
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("테스트용 관계 없는 회원의 계좌를 찾을 수 없습니다."));
+	private Member createMember(String name, LocalDate birthday, MemberRole memberRole) {
+		String rawVirtualAccount = generateAccountNumber();
+
+		return memberRepository.save(
+			Member.builder()
+				.name(name)
+				.password(passwordEncoder.encode("123456"))
+				.birthday(birthday)
+				.virtualAccount(accountCryptoService.encrypt(rawVirtualAccount))
+				.walletMoney(BigDecimal.ZERO)
+				.memberRole(memberRole)
+				.role(Role.USER)
+				.build()
+		);
 	}
 
-	private Long findUnlinkedAccountId(Long memberId) {
-		return accountRepository.findAll().stream()
-			.filter(a -> linkedAccountRepository.findByMemberIdAndAccountId(memberId, a.getId()).isEmpty())
-			.map(Account::getId)
-			.findFirst().orElseThrow();
+	private void saveRelation(Member member, Member connectMember) {
+		Relation relation = Relation.builder()
+			.member(member)
+			.connectMember(connectMember)
+			.connectMemberRole(connectMember.getMemberRole())
+			.build();
+
+		relationRepository.save(relation);
+	}
+
+	private Account createAccount(
+		String name,
+		String rawPassword,
+		AccountType accountType,
+		BigDecimal balance,
+		Member member,
+		BigDecimal totalLimit,
+		boolean isReward,
+		boolean isEnd
+	) {
+		String rawAccountNumber = generateAccountNumber();
+
+		return accountRepository.save(
+			Account.builder()
+				.name(name)
+				.accountNumber(accountCryptoService.encrypt(rawAccountNumber))
+				.accountNumberHash(accountHashService.hash(rawAccountNumber))
+				.password(passwordEncoder.encode(rawPassword))
+				.accountType(accountType)
+				.balance(balance)
+				.member(member)
+				.totalLimit(totalLimit)
+				.isReward(isReward)
+				.isEnd(isEnd)
+				.build()
+		);
+	}
+
+	private void link(Member member, Account account) {
+		LinkedAccount linkedAccount = LinkedAccount.builder()
+			.member(member)
+			.account(account)
+			.build();
+
+		linkedAccount.setCreatedAtForInit(LocalDateTime.of(2026, 4, 10, 12, 0));
+		linkedAccountRepository.save(linkedAccount);
+	}
+
+	private void createSavingsDepositTransaction(
+		Account sender,
+		Account receiver,
+		BigDecimal amount,
+		BigDecimal balanceAfter,
+		LocalDateTime createdAt,
+		String message
+	) {
+		Transaction tx = Transaction.builder()
+			.senderAccount(sender)
+			.receiverAccount(receiver)
+			.transactionMoney(amount)
+			.transactionBalance(balanceAfter)
+			.transactionType(TransactionType.SAVINGS_DEPOSIT)
+			.build();
+
+		tx.setCreatedAtForInit(createdAt);
+		transactionRepository.save(tx);
+
+		if (message != null && !message.isBlank()) {
+			letterRepository.save(
+				Letter.builder()
+					.content(message)
+					.transaction(tx)
+					.build()
+			);
+		}
+	}
+
+	private String generateAccountNumber() {
+		return String.valueOf(accountSeq++);
 	}
 }

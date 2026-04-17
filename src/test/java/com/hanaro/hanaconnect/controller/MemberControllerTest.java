@@ -18,18 +18,23 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.common.security.JwtTokenProvider;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Relation;
+import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
+import com.hanaro.hanaconnect.service.AccountHashService;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootTest
@@ -54,10 +59,16 @@ class MemberControllerTest {
 	MissionRepository missionRepository;
 
 	@Autowired
+	AccountRepository accountRepository;
+
+	@Autowired
 	PasswordEncoder passwordEncoder;
 
 	@Autowired
 	AccountCryptoService accountCryptoService;
+
+	@Autowired
+	AccountHashService accountHashService;
 
 	@Autowired
 	JwtTokenProvider jwtTokenProvider;
@@ -211,6 +222,11 @@ class MemberControllerTest {
 		kidAccessToken = jwtTokenProvider.createAccessToken(kidPrincipal);
 		parentAccessToken = jwtTokenProvider.createAccessToken(parentPrincipal);
 		kidFriendAccessToken = jwtTokenProvider.createAccessToken(kidFriendPrincipal);
+
+		createWalletAccount(me, new BigDecimal("50000"));
+		createWalletAccount(parent1, new BigDecimal("100000"));
+		createWalletAccount(parent2, new BigDecimal("90000"));
+		createWalletAccount(kidFriend, new BigDecimal("30000"));
 	}
 
 	@Test
@@ -278,5 +294,21 @@ class MemberControllerTest {
 
 	private String generateAccount() {
 		return String.valueOf(accountSeq++);
+	}
+
+	private void createWalletAccount(Member member, BigDecimal balance) {
+		String accountNumber = generateAccount();
+		accountRepository.save(
+			Account.builder()
+				.name(member.getName() + " 지갑")
+				.accountNumber(accountCryptoService.encrypt(accountNumber))
+				.accountNumberHash(accountHashService.hash(accountNumber))
+				.password(passwordEncoder.encode("1234"))
+				.accountType(AccountType.WALLET)
+				.balance(balance)
+				.member(member)
+				.isReward(false)
+				.build()
+		);
 	}
 }

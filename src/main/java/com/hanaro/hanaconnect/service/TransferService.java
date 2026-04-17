@@ -1,7 +1,6 @@
 package com.hanaro.hanaconnect.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,7 +53,7 @@ public class TransferService {
 	private final LetterRepository letterRepository;
 	private final AccountCryptoService accountCryptoService;
 
-	// 적금
+	// 적금 송금
 	@Transactional
 	public SavingsTransferResponseDTO transferToChildSavings(Long memberId, SavingsTransferRequestDTO request) {
 
@@ -63,8 +62,7 @@ public class TransferService {
 
 		BigDecimal amount = request.getAmount();
 
-		Account sender = accountRepository.findByMemberIdAndAccountTypeAndIsRewardFalseWithLock(memberId, AccountType.FREE)
-			.orElseThrow(() -> new IllegalArgumentException("지갑 계좌를 찾을 수 없습니다."));
+		Account sender = getWalletAccountWithLock(memberId);
 
 		Account receiver = accountRepository.findByIdWithLock(request.getTargetAccountId())
 			.orElseThrow(() -> new IllegalArgumentException("대상 적금 계좌를 찾을 수 없습니다."));
@@ -72,6 +70,10 @@ public class TransferService {
 		boolean isLinked = linkedAccountRepository.existsByAccountIdAndMemberId(request.getTargetAccountId(), memberId);
 		if (!isLinked) {
 			throw new IllegalArgumentException("연결된 손주 계좌가 아닙니다.");
+		}
+
+		if (receiver.getAccountType() != AccountType.SAVINGS) {
+			throw new IllegalArgumentException("적금 계좌만 송금할 수 있습니다.");
 		}
 
 		validatePassword(request.getPassword(), parent.getPassword());
@@ -112,16 +114,14 @@ public class TransferService {
 			.build();
 	}
 
-	// 송금
+	// 일반 송금
 	@Transactional
 	public TransferResponseDto transfer(Long loginMemberId, TransferRequestDto request) {
 
 		Member parent = memberRepository.findById(loginMemberId)
 			.orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
 
-		Account parentAccount = accountRepository
-			.findByMemberIdAndAccountTypeAndIsRewardFalseWithLock(loginMemberId, AccountType.FREE)
-			.orElseThrow(() -> new IllegalArgumentException("출금 계좌가 없습니다."));
+		Account parentWalletAccount = getWalletAccountWithLock(loginMemberId);
 
 		Account kidAccount = accountRepository.findByIdWithLock(request.getAccountId())
 			.orElseThrow(() -> new IllegalArgumentException("대상 계좌가 존재하지 않습니다."));
@@ -133,14 +133,14 @@ public class TransferService {
 
 		BigDecimal amount = request.getAmount();
 
-		parentAccount.withdraw(amount);
+		parentWalletAccount.withdraw(amount);
 		kidAccount.deposit(amount);
 
 		Transaction withdrawTransaction =
-			createTransaction(parentAccount, kidAccount, amount, parentAccount.getBalance(), TransactionType.WITHDRAW);
+			createTransaction(parentWalletAccount, kidAccount, amount, parentWalletAccount.getBalance(), TransactionType.WITHDRAW);
 
 		Transaction depositTransaction =
-			createTransaction(parentAccount, kidAccount, amount, kidAccount.getBalance(), TransactionType.DEPOSIT);
+			createTransaction(parentWalletAccount, kidAccount, amount, kidAccount.getBalance(), TransactionType.DEPOSIT);
 
 		transactionRepository.save(withdrawTransaction);
 		Transaction savedDepositTransaction = transactionRepository.save(depositTransaction);
@@ -176,9 +176,9 @@ public class TransferService {
 			? kid.getName() + "(" + phoneSavedName + ")"
 			: kid.getName();
 
-		Account parentAccount = accountRepository
-			.findByMemberIdAndAccountType(loginMemberId, AccountType.FREE)
-			.orElseThrow(() -> new IllegalArgumentException("출금 계좌가 없습니다."));
+		Account parentWalletAccount = accountRepository
+			.findByMemberIdAndAccountType(loginMemberId, AccountType.WALLET)
+			.orElseThrow(() -> new IllegalArgumentException("지갑 계좌가 없습니다."));
 
 		var builder = TransferPrepareResponseDto.builder()
 			.accountId(accountId)
@@ -186,7 +186,7 @@ public class TransferService {
 			.phoneSavedName(phoneSavedName)
 			.displayName(displayName)
 			.accountAlias(kidAccount.getName())
-			.balance(parentAccount.getBalance());
+			.balance(parentWalletAccount.getBalance());
 
 		if (kidAccount.getAccountType() == AccountType.SAVINGS) {
 			builder.currentSaving(kidAccount.getBalance())
@@ -197,6 +197,11 @@ public class TransferService {
 		}
 
 		return builder.build();
+	}
+
+	private Account getWalletAccountWithLock(Long memberId) {
+		return accountRepository.findByMemberIdAndAccountTypeAndIsRewardFalseWithLock(memberId, AccountType.WALLET)
+			.orElseThrow(() -> new IllegalArgumentException("지갑 계좌를 찾을 수 없습니다."));
 	}
 
 	private void validatePassword(String rawPassword, String encodedPassword) {

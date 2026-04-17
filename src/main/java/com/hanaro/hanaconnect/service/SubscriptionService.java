@@ -92,9 +92,9 @@ public class SubscriptionService {
 
 		boolean hasPaidThisMonth = alreadyPaidAmount.compareTo(BigDecimal.ZERO) > 0;
 
-		Account freeAccount = accountRepository
-			.findByMemberIdAndAccountTypeAndIsRewardFalse(memberId, AccountType.FREE)
-			.orElseThrow(() -> new IllegalArgumentException("출금 계좌를 찾을 수 없습니다."));
+		Account walletAccount = accountRepository
+			.findByMemberIdAndAccountTypeAndIsRewardFalse(memberId, AccountType.WALLET)
+			.orElseThrow(() -> new IllegalArgumentException("지갑 계좌를 찾을 수 없습니다."));
 
 		Account rewardAccount = accountRepository
 			.findByMemberIdAndIsRewardTrue(memberId)
@@ -107,7 +107,7 @@ public class SubscriptionService {
 			alreadyPaidAmount,
 			displayName,
 			subscriptionAccount.getName(),
-			freeAccount.getBalance(),
+			walletAccount.getBalance(),
 			rewardAccount != null ? rewardAccount.getName() : null
 		);
 	}
@@ -126,7 +126,7 @@ public class SubscriptionService {
 			throw new IllegalArgumentException("접근할 수 없는 청약 계좌입니다.");
 		}
 
-		Account freeAccount = getFreeAccount(memberId);
+		Account walletAccount = getWalletAccount(memberId);
 
 		validatePassword(memberId, request.getPassword());
 
@@ -134,11 +134,11 @@ public class SubscriptionService {
 		int lastRoundNo = getLastRoundNo(subscriptionId);
 
 		if (!hasPaidThisMonth && request.getPrepaymentCount() == null) {
-			return handleFirstPayment(memberId, subscriptionAccount, freeAccount, lastRoundNo, request);
+			return handleFirstPayment(memberId, subscriptionAccount, walletAccount, lastRoundNo, request);
 		}
 
 		if (hasPaidThisMonth && request.getPrepaymentCount() != null) {
-			return handlePrepayment(subscriptionAccount, freeAccount, lastRoundNo, request);
+			return handlePrepayment(subscriptionAccount, walletAccount, lastRoundNo, request);
 		}
 
 		throw new IllegalArgumentException("잘못된 청약 납입 요청입니다.");
@@ -155,9 +155,9 @@ public class SubscriptionService {
 		return account;
 	}
 
-	private Account getFreeAccount(Long memberId) {
-		return accountRepository.findByMemberIdAndAccountTypeAndIsRewardFalse(memberId, AccountType.FREE)
-			.orElseThrow(() -> new IllegalArgumentException("출금 계좌를 찾을 수 없습니다."));
+	private Account getWalletAccount(Long memberId) {
+		return accountRepository.findByMemberIdAndAccountTypeAndIsRewardFalse(memberId, AccountType.WALLET)
+			.orElseThrow(() -> new IllegalArgumentException("지갑 계좌를 찾을 수 없습니다."));
 	}
 
 	private void validatePassword(Long memberId, String rawPassword) {
@@ -192,7 +192,7 @@ public class SubscriptionService {
 	private SubscriptionResponseDto handleFirstPayment(
 		Long memberId,
 		Account subscriptionAccount,
-		Account freeAccount,
+		Account walletAccount,
 		int lastRoundNo,
 		SubscriptionRequestDto request
 	) {
@@ -208,7 +208,6 @@ public class SubscriptionService {
 			throw new IllegalArgumentException("25만 원 초과 시 리워드 계좌 입금 여부를 선택해주세요.");
 		}
 
-		// 리워드 계좌 입금 여부
 		if (isOverMax) {
 			if (Boolean.TRUE.equals(request.getTransferExcessToReward())) {
 				subscriptionAmount = MAX_FIRST_PAYMENT_AMOUNT;
@@ -220,21 +219,19 @@ public class SubscriptionService {
 			subscriptionAmount = totalAmount;
 		}
 
-		freeAccount.withdraw(totalAmount);
+		walletAccount.withdraw(totalAmount);
 		subscriptionAccount.deposit(subscriptionAmount);
 
-		// 출금 거래
 		saveTransaction(
-			freeAccount,
+			walletAccount,
 			subscriptionAccount,
 			totalAmount,
-			freeAccount.getBalance(),
+			walletAccount.getBalance(),
 			TransactionType.WITHDRAW
 		);
 
-		// 청약 납입 거래
 		saveTransaction(
-			freeAccount,
+			walletAccount,
 			subscriptionAccount,
 			subscriptionAmount,
 			subscriptionAccount.getBalance(),
@@ -248,14 +245,14 @@ public class SubscriptionService {
 			rewardAccount.deposit(rewardAmount);
 
 			saveTransaction(
-				freeAccount,
+				walletAccount,
 				rewardAccount,
 				rewardAmount,
 				rewardAccount.getBalance(),
 				TransactionType.DEPOSIT
 			);
 
-			rewardAccountNumber = rewardAccount.getAccountNumber();
+			rewardAccountNumber = accountCryptoService.decrypt(rewardAccount.getAccountNumber());
 		}
 
 		int currentRound = lastRoundNo + 1;
@@ -281,7 +278,7 @@ public class SubscriptionService {
 
 		return SubscriptionResponseDto.builder()
 			.subscriptionId(subscriptionAccount.getId())
-			.subscriptionAccountNumber(subscriptionAccount.getAccountNumber())
+			.subscriptionAccountNumber(accountCryptoService.decrypt(subscriptionAccount.getAccountNumber()))
 			.subscriptionAmount(subscriptionAmount)
 			.rewardAccountNumber(rewardAccountNumber)
 			.rewardAmount(rewardAmount)
@@ -293,7 +290,7 @@ public class SubscriptionService {
 	// 선납
 	private SubscriptionResponseDto handlePrepayment(
 		Account subscriptionAccount,
-		Account freeAccount,
+		Account walletAccount,
 		int lastRoundNo,
 		SubscriptionRequestDto request
 	) {
@@ -311,19 +308,19 @@ public class SubscriptionService {
 
 		BigDecimal installmentAmount = amount.divide(divisor, 2, RoundingMode.HALF_UP);
 
-		freeAccount.withdraw(amount);
+		walletAccount.withdraw(amount);
 		subscriptionAccount.deposit(amount);
 
 		saveTransaction(
-			freeAccount,
+			walletAccount,
 			subscriptionAccount,
 			amount,
-			freeAccount.getBalance(),
+			walletAccount.getBalance(),
 			TransactionType.WITHDRAW
 		);
 
 		saveTransaction(
-			freeAccount,
+			walletAccount,
 			subscriptionAccount,
 			amount,
 			subscriptionAccount.getBalance(),
@@ -362,7 +359,7 @@ public class SubscriptionService {
 
 		return SubscriptionResponseDto.builder()
 			.subscriptionId(subscriptionAccount.getId())
-			.subscriptionAccountNumber(subscriptionAccount.getAccountNumber())
+			.subscriptionAccountNumber(accountCryptoService.decrypt(subscriptionAccount.getAccountNumber()))
 			.subscriptionAmount(amount)
 			.rewardAccountNumber(null)
 			.rewardAmount(BigDecimal.ZERO)

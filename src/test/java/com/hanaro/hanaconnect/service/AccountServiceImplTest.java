@@ -235,7 +235,16 @@ class AccountServiceImplTest {
 	@DisplayName("아이 지갑 조회 성공")
 	void getKidLinkedAccounts_success() {
 		Member parent = createMember(3L, "김엄마", MemberRole.PARENT);
-		Member kid = createMember(1L, "홍길동", MemberRole.KID, new BigDecimal("7000"));
+		Member kid = createMember(1L, "홍길동", MemberRole.KID);
+
+		Account kidWalletAccount = createAccount(
+			99L,
+			"아이 지갑",
+			"encrypted-11122220000",
+			"encoded",
+			AccountType.WALLET,
+			kid
+		);
 
 		Account account = createAccount(
 			30L,
@@ -259,6 +268,9 @@ class AccountServiceImplTest {
 		given(relationRepository.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(3L, 1L, MemberRole.KID))
 			.willReturn(true);
 
+		given(accountRepository.findByMemberIdAndAccountType(1L, AccountType.WALLET))
+			.willReturn(Optional.of(kidWalletAccount));
+
 		given(linkedAccountRepository.findKidLinkedAccounts(3L, 1L))
 			.willReturn(List.of(linked));
 
@@ -269,6 +281,7 @@ class AccountServiceImplTest {
 
 		assertThat(result.getAccounts().get(0).getAccountNumber())
 			.isEqualTo("777-8888-9999");
+		assertThat(result.getWalletMoney()).isEqualByComparingTo("100000");
 	}
 
 	@Test
