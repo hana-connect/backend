@@ -61,7 +61,7 @@ public class Account extends BaseEntity {
 	@Column(length = 50)
 	private String nickname;
 
-	@Column(name = "is_reward")
+	@Column(name = "is_reward", nullable = false)
 	@Builder.Default
 	private Boolean isReward = false;
 
