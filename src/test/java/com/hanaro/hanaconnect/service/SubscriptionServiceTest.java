@@ -462,7 +462,8 @@ class SubscriptionServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getSubscriptionId()).isEqualTo(subscriptionAccount.getId());
-		assertThat(result.getSubscriptionAccountNumber()).isEqualTo(subscriptionAccount.getAccountNumber());
+		assertThat(result.getSubscriptionAccountNumber())
+			.isEqualTo(accountCryptoService.decrypt(subscriptionAccount.getAccountNumber()));
 		assertThat(result.getSubscriptionAmount()).isEqualByComparingTo("300000");
 		assertThat(result.getPaidAt()).isNotNull();
 	}
