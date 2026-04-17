@@ -108,6 +108,7 @@ public class TransferService {
 			.transactionMoney(savedTransaction.getTransactionMoney())
 			.transactionBalance(savedTransaction.getTransactionBalance())
 			.message(normalizedContent)
+			.toAccountNumber(accountCryptoService.decrypt(receiver.getAccountNumber()))
 			.build();
 	}
 
