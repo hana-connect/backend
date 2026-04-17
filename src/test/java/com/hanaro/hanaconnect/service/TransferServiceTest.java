@@ -245,8 +245,6 @@ class TransferServiceTest {
 
 		assertThat(resultAccountNumber).isEqualTo(rawAccountNumber);
 
-		assertThat(resultAccountNumber).isEqualTo(rawAccountNumber);
-
 		Account updatedParent = accountRepository.findById(parentFree.getId()).orElseThrow();
 		Account updatedKid = accountRepository.findById(targetKidAccount.getId()).orElseThrow();
 

@@ -25,12 +25,13 @@ import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Prepayment;
 import com.hanaro.hanaconnect.entity.PrepaymentDetail;
+import com.hanaro.hanaconnect.service.AccountHashService;
 
 import jakarta.persistence.EntityManager;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(AccountCryptoService.class)
+@Import({AccountCryptoService.class, AccountHashService.class})
 @ActiveProfiles("test")
 class PrepaymentDetailRepositoryTest {
 
@@ -39,6 +40,9 @@ class PrepaymentDetailRepositoryTest {
 
 	@Autowired
 	private AccountCryptoService accountCryptoService;
+
+	@Autowired
+	private AccountHashService accountHashService;
 
 	@Autowired
 	private EntityManager entityManager;
@@ -128,7 +132,7 @@ class PrepaymentDetailRepositoryTest {
 		Account account = Account.builder()
 			.name("청약 계좌")
 			.accountNumber(rawAccountNumber)
-			.accountNumberHash(accountCryptoService.encrypt(rawAccountNumber))
+			.accountNumberHash(accountHashService.hash(rawAccountNumber))
 			.password(passwordEncoder.encode("1111"))
 			.accountType(accountType)
 			.balance(balance)
