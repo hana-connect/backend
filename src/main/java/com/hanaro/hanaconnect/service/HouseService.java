@@ -54,6 +54,7 @@ public class HouseService {
 		if (houseOpt.isEmpty()) {
 			return HouseStatusResponseDTO.builder()
 				.memberId(kid.getId())
+				.kidName(kid.getName())
 				.level(0)
 				.gauge(0)
 				.totalCount(null)
@@ -69,6 +70,7 @@ public class HouseService {
 		if (totalCount <= 0) {
 			return HouseStatusResponseDTO.builder()
 				.memberId(kid.getId())
+				.kidName(kid.getName())
 				.level(0)
 				.gauge(0)
 				.totalCount(0)
@@ -86,6 +88,7 @@ public class HouseService {
 
 		return HouseStatusResponseDTO.builder()
 			.memberId(kid.getId())
+			.kidName(kid.getName())
 			.level(level)
 			.gauge(gauge)
 			.totalCount(totalCount)
