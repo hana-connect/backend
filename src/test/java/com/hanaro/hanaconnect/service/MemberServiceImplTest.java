@@ -15,13 +15,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.dto.account.ConnectMemberResponseDTO;
 import com.hanaro.hanaconnect.dto.account.WalletResponseDTO;
+import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Relation;
+import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 
@@ -44,6 +47,12 @@ class MemberServiceImplTest {
 
 	@Autowired
 	private AccountCryptoService accountCryptoService;
+
+	@Autowired
+	private AccountRepository accountRepository;
+
+	@Autowired
+	private AccountHashService accountHashService;
 
 	private Member kid;
 	private Member parent1;
@@ -76,6 +85,10 @@ class MemberServiceImplTest {
 		relationRepository.save(createRelation(kid, parent2));
 		relationRepository.save(createRelation(parent1, kid));
 		relationRepository.save(createRelation(parent2, kid));
+
+		createWalletAccount(kid, new BigDecimal("0"));
+		createWalletAccount(parent1, new BigDecimal("0"));
+		createWalletAccount(parent2, new BigDecimal("0"));
 	}
 
 	private Member createMember(
@@ -190,5 +203,20 @@ class MemberServiceImplTest {
 		assertThatThrownBy(() -> memberService.getOtherParents(unrelatedParent.getId(), kid.getId()))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("해당 아이와 연결된 부모만 조회할 수 있습니다");
+	}
+
+	private void createWalletAccount(Member member, BigDecimal balance) {
+		accountRepository.save(
+			Account.builder()
+				.name(member.getName() + " 지갑")
+				.accountNumber(accountCryptoService.encrypt(generateVirtualAccount()))
+				.accountNumberHash(accountHashService.hash(generateVirtualAccount()))
+				.password(passwordEncoder.encode("1234"))
+				.accountType(AccountType.WALLET)
+				.balance(balance)
+				.member(member)
+				.isReward(false)
+				.build()
+		);
 	}
 }

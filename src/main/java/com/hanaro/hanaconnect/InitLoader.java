@@ -104,7 +104,18 @@ public class InitLoader implements ApplicationRunner {
 		parent2 = memberRepository.save(parent2);
 		parent3 = memberRepository.save(parent3);
 
-		Account kidAccount = accountRepository.save(createAccount(
+		// kid1
+		Account kid1WalletAccount = accountRepository.save(createAccount(
+			"홍길동 지갑",
+			"11122220000",
+			"1234",
+			AccountType.WALLET,
+			new BigDecimal("30000"),
+			kid1,
+			null
+		));
+
+		Account kid1FreeAccount = accountRepository.save(createAccount(
 			"아이 입출금 통장",
 			"11122223333",
 			"1234",
@@ -134,7 +145,49 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		Account parentFreeAccount = accountRepository.save(createAccount(
+		Account kid1GiftSavingsAccount = accountRepository.save(createAccount(
+			"채현이 적금 (용돈)",
+			"11133334444",
+			"1234",
+			AccountType.SAVINGS,
+			new BigDecimal("250000"),
+			kid1,
+			new BigDecimal("300000")
+		));
+
+		// kid2
+		Account kid2WalletAccount = accountRepository.save(createAccount(
+			"김청약 지갑",
+			"99900000000",
+			"4321",
+			AccountType.WALLET,
+			new BigDecimal("20000"),
+			kid2,
+			null
+		));
+
+		Account kid2HousingAccount = accountRepository.save(createAccount(
+			"김청약 주택청약",
+			"99900001111",
+			"4321",
+			AccountType.SUBSCRIPTION,
+			new BigDecimal("5600000"),
+			kid2,
+			null
+		));
+
+		// parent1
+		Account parent1WalletAccount = accountRepository.save(createAccount(
+			"김엄마 지갑",
+			"22233330000",
+			"5678",
+			AccountType.WALLET,
+			new BigDecimal("800000"),
+			parent1,
+			null
+		));
+
+		Account parent1FreeAccount = accountRepository.save(createAccount(
 			"부모 입출금 통장",
 			"22233335555",
 			"5678",
@@ -155,7 +208,7 @@ public class InitLoader implements ApplicationRunner {
 			.isReward(true)
 			.build());
 
-		Account parentDepositAccount = accountRepository.save(createAccount(
+		Account parent1DepositAccount = accountRepository.save(createAccount(
 			"부모 저축 예금",
 			"22233334444",
 			"5678",
@@ -165,18 +218,39 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		Account kidSavingsAccount = accountRepository.save(createAccount(
-			"채현이 적금 (용돈)",
-			"11133334444",
-			"1234",
-			AccountType.SAVINGS,
-			new BigDecimal("250000"),
-			kid1,
-			new BigDecimal("300000")
+		Account parent1SubscriptionAccount = accountRepository.save(createAccount(
+			"부모 청약 통장",
+			"44455556666",
+			"5678",
+			AccountType.SUBSCRIPTION,
+			new BigDecimal("150000"),
+			parent1,
+			null
 		));
 
-		Account grandmaFreeAccount = accountRepository.save(createAccount(
-			"할머니 지갑",
+		Account parent1PensionAccount = accountRepository.save(createAccount(
+			"부모 연금 통장",
+			"55566667777",
+			"5678",
+			AccountType.PENSION,
+			new BigDecimal("300000"),
+			parent1,
+			null
+		));
+
+		// parent2
+		Account parent2WalletAccount = accountRepository.save(createAccount(
+			"이할머니 지갑",
+			"33344450000",
+			"1234",
+			AccountType.WALLET,
+			new BigDecimal("750000"),
+			parent2,
+			null
+		));
+
+		Account parent2FreeAccount = accountRepository.save(createAccount(
+			"할머니 입출금 통장",
 			"33344455566",
 			"1234",
 			AccountType.FREE,
@@ -185,13 +259,14 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		accountRepository.save(createAccount(
-			"부모 청약 통장",
-			"44455556666",
-			"5678",
-			AccountType.SUBSCRIPTION,
-			new BigDecimal("150000"),
-			parent1,
+		// parent3
+		Account parent3WalletAccount = accountRepository.save(createAccount(
+			"청약할머니 지갑",
+			"77788880001",
+			"1234",
+			AccountType.WALLET,
+			new BigDecimal("990000"),
+			parent3,
 			null
 		));
 
@@ -210,33 +285,14 @@ public class InitLoader implements ApplicationRunner {
 			.accountNumber(accountCryptoService.encrypt("77788880000"))
 			.accountNumberHash(accountHashService.hash("77788880000"))
 			.password(passwordEncoder.encode("1234"))
-			.accountType(AccountType.FREE)
+			.accountType(AccountType.PENSION)
 			.balance(BigDecimal.ZERO)
 			.member(parent3)
 			.isReward(true)
 			.build());
 
-		Account kid2HousingAccount = accountRepository.save(createAccount(
-			"김청약 주택청약",
-			"99900001111",
-			"4321",
-			AccountType.SUBSCRIPTION,
-			new BigDecimal("5600000"),
-			kid2,
-			null
-		));
-
-		accountRepository.save(createAccount(
-			"부모 연금 통장",
-			"55566667777",
-			"5678",
-			AccountType.PENSION,
-			new BigDecimal("300000"),
-			parent1,
-			null
-		));
-
-		accountRepository.save(Account.builder()
+		// 만기 적금 샘플
+		Account kid1MaturedSavings1 = accountRepository.save(Account.builder()
 			.name("청춘 적금(만기)")
 			.accountNumber(accountCryptoService.encrypt("12345678901"))
 			.accountNumberHash(accountHashService.hash("12345678901"))
@@ -247,7 +303,7 @@ public class InitLoader implements ApplicationRunner {
 			.isEnd(true)
 			.build());
 
-		accountRepository.save(Account.builder()
+		Account kid1MaturedSavings2 = accountRepository.save(Account.builder()
 			.name("하나 새희망 적금")
 			.accountNumber(accountCryptoService.encrypt("12121212121"))
 			.accountNumberHash(accountHashService.hash("12121212121"))
@@ -258,102 +314,48 @@ public class InitLoader implements ApplicationRunner {
 			.isEnd(true)
 			.build());
 
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(kid1SavingsAccount)
-				.member(kid1)
-				.build()
-		);
+		// linked accounts
+		link(kid1, kid1WalletAccount);
+		link(kid1, kid1FreeAccount);
+		link(kid1, kid1SavingsAccount);
+		link(kid1, kid1GiftSavingsAccount);
+		link(kid1, kid1SubscriptionAccount);
+		link(kid1, kid1MaturedSavings1);
+		link(kid1, kid1MaturedSavings2);
 
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(kid1SavingsAccount)
-				.member(parent2)
-				.build()
-		);
+		link(parent1, parent1WalletAccount);
+		link(parent1, parent1FreeAccount);
+		link(parent1, parent1DepositAccount);
+		link(parent1, parent1RewardAccount);
+		link(parent1, parent1SubscriptionAccount);
+		link(parent1, parent1PensionAccount);
+		link(parent1, kid1FreeAccount);
+		link(parent1, kid1GiftSavingsAccount);
+		link(parent1, kid1SubscriptionAccount);
 
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(grandmaFreeAccount)
-				.member(parent2)
-				.build()
-		);
+		link(parent2, parent2WalletAccount);
+		link(parent2, parent2FreeAccount);
+		link(parent2, kid1SavingsAccount);
 
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(kidAccount)
-				.member(kid1)
-				.build()
-		);
+		link(kid2, kid2WalletAccount);
+		link(kid2, kid2HousingAccount);
 
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(kidAccount)
-				.member(parent1)
-				.build()
-		);
+		link(parent3, parent3WalletAccount);
+		link(parent3, parent3FreeAccount);
+		link(parent3, parent3RewardAccount);
+		link(parent3, kid2HousingAccount);
 
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(parentDepositAccount)
-				.member(parent1)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(parentFreeAccount)
-				.member(parent1)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(parent1RewardAccount)
-				.member(parent1)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(kidSavingsAccount)
-				.member(kid1)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(kidSavingsAccount)
-				.member(parent1)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(kid1SubscriptionAccount)
-				.member(kid1)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.account(kid1SubscriptionAccount)
-				.member(parent1)
-				.build()
-		);
-
+		// relations
 		relationRepository.save(createRelation(kid1, parent1));
 		relationRepository.save(createRelation(kid1, parent2));
-
 		relationRepository.save(createRelation(parent1, kid1));
 		relationRepository.save(createRelation(parent1, parent2));
-
 		relationRepository.save(createRelation(parent2, kid1));
 		relationRepository.save(createRelation(parent2, parent1));
-
 		relationRepository.save(createRelation(kid2, parent3));
 		relationRepository.save(createRelation(parent3, kid2));
 
+		// phone names
 		phoneNameRepository.save(createPhoneName(kid1, parent1, "우리 엄마"));
 		phoneNameRepository.save(createPhoneName(kid1, parent2, "외할머니"));
 		phoneNameRepository.save(createPhoneName(parent1, parent2, "친정 엄마"));
@@ -362,34 +364,6 @@ public class InitLoader implements ApplicationRunner {
 		phoneNameRepository.save(createPhoneName(parent2, parent1, "딸"));
 		phoneNameRepository.save(createPhoneName(kid2, parent3, "할머니"));
 		phoneNameRepository.save(createPhoneName(parent3, kid2, "김청약"));
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.member(parent3)
-				.account(parent3FreeAccount)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.member(parent3)
-				.account(parent3RewardAccount)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.member(kid2)
-				.account(kid2HousingAccount)
-				.build()
-		);
-
-		linkedAccountRepository.save(
-			LinkedAccount.builder()
-				.member(parent3)
-				.account(kid2HousingAccount)
-				.build()
-		);
 
 		houseRepository.save(
 			House.builder()
@@ -402,7 +376,8 @@ public class InitLoader implements ApplicationRunner {
 				.build()
 		);
 
-		createCheongyakTransactions(parent3FreeAccount, kid2HousingAccount);
+		// 앱 내 송금/납입 성격 거래는 WALLET에서 나가도록 맞춤
+		createCheongyakTransactions(parent3WalletAccount, kid2HousingAccount);
 
 		createSampleMissions(kid1, parent1);
 	}
@@ -421,7 +396,7 @@ public class InitLoader implements ApplicationRunner {
 			.password(encodedPassword)
 			.birthday(birthday)
 			.virtualAccount(encryptedAccount)
-			.walletMoney(BigDecimal.ZERO)
+			.walletMoney(BigDecimal.ZERO) // 더 이상 실사용 X
 			.memberRole(memberRole)
 			.role(Role.USER)
 			.build();
@@ -448,7 +423,17 @@ public class InitLoader implements ApplicationRunner {
 			.balance(balance)
 			.member(member)
 			.totalLimit(totalLimit)
+			.isReward(false)
 			.build();
+	}
+
+	private void link(Member member, Account account) {
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.member(member)
+				.account(account)
+				.build()
+		);
 	}
 
 	private Relation createRelation(Member member, Member connectMember) {
@@ -469,40 +454,11 @@ public class InitLoader implements ApplicationRunner {
 
 	private void createSampleMissions(Member kid, Member parent) {
 		missionRepository.saveAll(List.of(
-			Mission.builder()
-				.kid(kid)
-				.parent(parent)
-				.name("부모님께 인사하기")
-				.isCompleted(true)
-				.build(),
-
-			Mission.builder()
-				.kid(kid)
-				.parent(parent)
-				.name("심부름 다녀오기")
-				.isCompleted(true)
-				.build(),
-
-			Mission.builder()
-				.kid(kid)
-				.parent(parent)
-				.name("용돈 기록 작성하기")
-				.isCompleted(true)
-				.build(),
-
-			Mission.builder()
-				.kid(kid)
-				.parent(parent)
-				.name("방 정리하기")
-				.isCompleted(true)
-				.build(),
-
-			Mission.builder()
-				.kid(kid)
-				.parent(parent)
-				.name("오늘 소비 내역 확인하기")
-				.isCompleted(true)
-				.build()
+			Mission.builder().kid(kid).parent(parent).name("부모님께 인사하기").isCompleted(true).build(),
+			Mission.builder().kid(kid).parent(parent).name("심부름 다녀오기").isCompleted(true).build(),
+			Mission.builder().kid(kid).parent(parent).name("용돈 기록 작성하기").isCompleted(true).build(),
+			Mission.builder().kid(kid).parent(parent).name("방 정리하기").isCompleted(true).build(),
+			Mission.builder().kid(kid).parent(parent).name("오늘 소비 내역 확인하기").isCompleted(true).build()
 		));
 	}
 
@@ -521,7 +477,6 @@ public class InitLoader implements ApplicationRunner {
 				.build();
 
 			transaction.setCreatedAtForInit(paymentDate.atTime(12, 0));
-
 			transactionRepository.save(transaction);
 		}
 	}
