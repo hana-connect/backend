@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.Status;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionInfoResponseDto;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionRequestDto;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionResponseDto;
@@ -50,6 +51,7 @@ public class SubscriptionService {
 	private final PasswordEncoder passwordEncoder;
 	private final MemberRepository memberRepository;
 	private final PhoneNameRepository phoneNameRepository;
+	private final AccountCryptoService accountCryptoService;
 
 	// 청약 진입
 	public SubscriptionInfoResponseDto getSubscriptionPaymentInfo(Long memberId, Long subscriptionId) {
@@ -453,14 +455,16 @@ public class SubscriptionService {
 	public SubscriptionResponseDto getSubscriptionPaymentResult(Long memberId, Long subscriptionId) {
 		Account subscriptionAccount = getSubscriptionAccount(subscriptionId);
 
-		boolean isLinked = linkedAccountRepository.existsByAccountIdAndMemberId(subscriptionId, memberId);
+		boolean isLinked = linkedAccountRepository.existsByAccountIdAndMemberId(
+			subscriptionAccount.getId(), memberId
+		);
 		if (!isLinked) {
 			throw new IllegalArgumentException("접근할 수 없는 청약 계좌입니다.");
 		}
 
 		Transaction latestSubscriptionTx = transactionRepository
 			.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
-				subscriptionId,
+				subscriptionAccount.getId(),
 				TransactionType.SUBSCRIPTION
 			)
 			.orElseThrow(() -> new IllegalArgumentException("최근 청약 납입 내역이 없습니다."));
@@ -488,13 +492,15 @@ public class SubscriptionService {
 			if (rewardTxOpt.isPresent()) {
 				Transaction rewardTx = rewardTxOpt.get();
 				rewardAmount = rewardTx.getTransactionMoney();
-				rewardAccountNumber = rewardAccount.getAccountNumber();
+				rewardAccountNumber = accountCryptoService.decrypt(rewardAccount.getAccountNumber());
 			}
 		}
 
 		return SubscriptionResponseDto.builder()
 			.subscriptionId(subscriptionAccount.getId())
-			.subscriptionAccountNumber(subscriptionAccount.getAccountNumber())
+			.subscriptionAccountNumber(
+				accountCryptoService.decrypt(subscriptionAccount.getAccountNumber())
+			)
 			.subscriptionAmount(latestSubscriptionTx.getTransactionMoney())
 			.rewardAccountNumber(rewardAccountNumber)
 			.rewardAmount(rewardAmount)
