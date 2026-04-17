@@ -61,6 +61,9 @@ class AccountServiceImplTest {
 	@Mock
 	private AccountCryptoService accountCryptoService;
 
+	@Mock
+	private AssetAIService assetAIService;
+
 	@InjectMocks
 	private AccountServiceImpl accountService;
 
@@ -104,6 +107,8 @@ class AccountServiceImplTest {
 
 		assertThat(result.getAccountNumber()).isEqualTo("111-2222-3333");
 		assertThat(result.getLinkedAt()).isEqualTo("2026.04.15");
+
+		verify(assetAIService, times(1)).clearRecommendationCache(1L);
 	}
 
 	@Test
