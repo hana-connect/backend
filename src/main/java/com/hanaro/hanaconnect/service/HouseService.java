@@ -19,6 +19,7 @@ import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.HouseRepository;
+import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
@@ -40,6 +41,7 @@ public class HouseService {
 	private final RelationRepository relationRepository;
 	private final PhoneNameRepository phoneNameRepository;
 	private final TransactionRepository transactionRepository;
+	private final LinkedAccountRepository linkedAccountRepository;
 
 	public HouseStatusResponseDTO getHouseStatus(Long parentId, Long kidId) {
 		return getHouseStatus(parentId, kidId, null);
@@ -52,19 +54,22 @@ public class HouseService {
 		Optional<House> houseOpt = houseRepository.findByMemberId(kid.getId());
 
 		if (houseOpt.isEmpty()) {
-			return HouseStatusResponseDTO.builder()
-				.memberId(kid.getId())
-				.kidName(kid.getName())
-				.level(0)
-				.gauge(0)
-				.totalCount(null)
-				.monthlyPayment(null)
-				.startDate(null)
-				.message(null)
-				.build();
+			return createEmptyHouseResponse(kid);
 		}
 
 		House house = houseOpt.get();
+
+		if (requester.getMemberRole() == MemberRole.PARENT) {
+			boolean isLinked = linkedAccountRepository.existsByAccountIdAndMemberId(
+				requester.getId(),
+				house.getAccount().getId()
+			);
+
+			if (!isLinked) {
+				return createEmptyHouseResponse(kid);
+			}
+		}
+
 		int totalCount = resolveTotalCount(house, paidAt);
 
 		if (totalCount <= 0) {
@@ -95,6 +100,19 @@ public class HouseService {
 			.monthlyPayment(resolveMonthlyPayment(house, paidAt))
 			.startDate(house.getStartDate())
 			.message(message)
+			.build();
+	}
+
+	private HouseStatusResponseDTO createEmptyHouseResponse(Member kid) {
+		return HouseStatusResponseDTO.builder()
+			.memberId(kid.getId())
+			.kidName(kid.getName())
+			.level(0)
+			.gauge(0)
+			.totalCount(null)
+			.monthlyPayment(null)
+			.startDate(null)
+			.message(null)
 			.build();
 	}
 
