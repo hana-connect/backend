@@ -1,10 +1,12 @@
 package com.hanaro.hanaconnect.common.enums;
 
-// 자유입출금, 예금, 적금, 청약, 연금
+// 자유입출금, 예금, 적금, 투자, 청약, 연금, 내 지갑(가상계좌)
 public enum AccountType {
 	FREE,
 	DEPOSIT,
 	SAVINGS,
+	INVESTMENT,
 	SUBSCRIPTION,
-	PENSION
+	PENSION,
+	WALLET
 }

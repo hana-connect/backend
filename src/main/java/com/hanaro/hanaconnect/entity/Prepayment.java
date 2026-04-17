@@ -42,4 +42,18 @@ public class Prepayment extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "account_id", nullable = false, unique = true)
 	private Account account;
+
+	public void update(
+		BigDecimal totalAmount,
+		Integer installmentCount,
+		BigDecimal installmentAmount,
+		Integer startRound,
+		Integer endRound
+	) {
+		this.totalAmount = totalAmount;
+		this.installmentCount = installmentCount;
+		this.installmentAmount = installmentAmount;
+		this.startRound = startRound;
+		this.endRound = endRound;
+	}
 }

@@ -19,7 +19,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "account")
+@Table(
+	name = "account",
+	uniqueConstraints = {
+		@UniqueConstraint(columnNames = {"account_number_hash", "member_id"})
+	}
+)
 public class Account extends BaseEntity {
 
 	@Id
@@ -30,8 +35,11 @@ public class Account extends BaseEntity {
 	@Column(nullable = false, length = 31)
 	private String name;
 
-	@Column(name = "account_number", nullable = false, unique = true, length = 30)
+	@Column(name = "account_number", nullable = false, unique = true, length = 100)
 	private String accountNumber;
+
+	@Column(name = "account_number_hash", nullable = false, length = 64)
+	private String accountNumberHash;
 
 	@Column(nullable = false, length = 255)
 	private String password;
@@ -53,7 +61,7 @@ public class Account extends BaseEntity {
 	@Column(length = 50)
 	private String nickname;
 
-	@Column(name = "is_reward")
+	@Column(name = "is_reward", nullable = false)
 	@Builder.Default
 	private Boolean isReward = false;
 
@@ -69,4 +77,23 @@ public class Account extends BaseEntity {
 	@OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<LinkedAccount> linkedMembers = new ArrayList<>();
+
+	// 출금
+	public void withdraw(BigDecimal amount) {
+		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("출금 금액은 0보다 커야 합니다.");
+		}
+		if (this.balance.compareTo(amount) < 0) {
+			throw new IllegalArgumentException("잔액이 부족합니다.");
+		}
+		this.balance = this.balance.subtract(amount);
+	}
+
+	// 입금
+	public void deposit(BigDecimal amount) {
+		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("입금 금액은 0보다 커야 합니다.");
+		}
+		this.balance = this.balance.add(amount);
+	}
 }
