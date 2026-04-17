@@ -128,6 +128,7 @@ public class AccountServiceImpl implements AccountService {
 	}
 
 	@Override
+	@Transactional
 	public KidAccountAddResponseDTO addKidAccount(Long memberId, Long kidId, KidAccountAddRequestDTO request) {
 		validateParentKidRelation(memberId, kidId);
 
@@ -144,7 +145,7 @@ public class AccountServiceImpl implements AccountService {
 		}
 
 		Member parentMember = memberRepository.findById(memberId)
-			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
+			.orElseThrow(() -> new IllegalArgumentException("부모 회원이 존재하지 않습니다."));
 
 		LinkedAccount linkedAccount = LinkedAccount.builder()
 			.nickname(request.getNickname().trim())

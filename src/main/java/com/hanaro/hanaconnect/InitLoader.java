@@ -16,6 +16,7 @@ import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
 import com.hanaro.hanaconnect.common.util.AccountCryptoService;
+import com.hanaro.hanaconnect.common.util.AccountNumberFormatter;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.House;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
@@ -411,8 +412,10 @@ public class InitLoader implements ApplicationRunner {
 		Member member,
 		BigDecimal totalLimit
 	) {
-		String encryptedAccount = accountCryptoService.encrypt(rawAccountNumber);
-		String accountNumberHash = accountHashService.hash(rawAccountNumber);
+		String normalized = AccountNumberFormatter.normalize(rawAccountNumber);
+
+		String encryptedAccount = accountCryptoService.encrypt(normalized);
+		String accountNumberHash = accountHashService.hash(normalized);
 
 		return Account.builder()
 			.name(name)
