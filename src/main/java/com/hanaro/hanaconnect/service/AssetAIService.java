@@ -141,4 +141,8 @@ public class AssetAIService {
 			.recommendedPension(BigDecimal.ZERO)
 			.build();
 	}
+
+	public void clearRecommendationCache(Long memberId) {
+		recommendationCache.remove(memberId);
+	}
 }
