@@ -299,7 +299,10 @@ public class AccountServiceImpl implements AccountService {
 			.findByMemberIdAndAccount_IsRewardTrue(memberId)
 			.orElseThrow(() -> new EntityNotFoundException("리워드 계좌를 찾을 수 없습니다."));
 
-		return RewardAccountResponseDTO.from(linkedAccount);
+		String decryptedAccountNumber =
+			accountCryptoService.decrypt(linkedAccount.getAccount().getAccountNumber());
+
+		return RewardAccountResponseDTO.from(linkedAccount, decryptedAccountNumber);
 	}
 
 	@Override
@@ -327,7 +330,10 @@ public class AccountServiceImpl implements AccountService {
 
 		accountRepository.updateIsReward(target.getId(), true);
 
-		return RewardAccountResponseDTO.from(linkedAccount);
+		String decryptedAccountNumber =
+			accountCryptoService.decrypt(linkedAccount.getAccount().getAccountNumber());
+
+		return RewardAccountResponseDTO.from(linkedAccount, decryptedAccountNumber);
 	}
 
 	@Override

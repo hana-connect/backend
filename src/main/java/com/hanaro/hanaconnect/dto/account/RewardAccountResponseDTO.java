@@ -15,13 +15,13 @@ public class RewardAccountResponseDTO {
 	private String name;
 	private String accountNumber;
 
-	public static RewardAccountResponseDTO from(LinkedAccount linkedAccount) {
+	public static RewardAccountResponseDTO from(LinkedAccount linkedAccount, String decryptedAccountNumber) {
 		Account account = linkedAccount.getAccount();
 
 		return RewardAccountResponseDTO.builder()
 			.accountId(linkedAccount.getId())
 			.name(account.getName())
-			.accountNumber(AccountNumberFormatter.format(account.getAccountNumber()))
+			.accountNumber(AccountNumberFormatter.format(decryptedAccountNumber))
 			.build();
 	}
 }
