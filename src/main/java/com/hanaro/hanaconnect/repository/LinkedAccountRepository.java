@@ -41,7 +41,7 @@ public interface LinkedAccountRepository extends JpaRepository<LinkedAccount, Lo
 	@Query("""
     select la
     from LinkedAccount la
-    join la.account a
+    join fetch la.account a
     where la.member.id = :parentId
       and a.member.id = :kidId
       and a.isEnd = false
