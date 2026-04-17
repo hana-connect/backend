@@ -57,6 +57,8 @@ public class AccountServiceImpl implements AccountService {
 	private final AccountHashService accountHashService;
 	private final AccountCryptoService accountCryptoService;
 
+	private final AssetAIService assetAIService;
+
 	@Override
 	public AccountLinkResponseDTO linkMyAccount(Long memberId, AccountLinkRequestDTO request) {
 		String normalizedAccountNumber = AccountNumberFormatter.normalize(request.getAccountNumber());
@@ -92,6 +94,8 @@ public class AccountServiceImpl implements AccountService {
 		}
 
 		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
+
+		assetAIService.clearRecommendationCache(memberId);
 
 		return new AccountLinkResponseDTO(
 			AccountNumberFormatter.format(decryptedAccountNumber),
@@ -332,6 +336,8 @@ public class AccountServiceImpl implements AccountService {
 
 		String decryptedAccountNumber =
 			accountCryptoService.decrypt(linkedAccount.getAccount().getAccountNumber());
+
+		assetAIService.clearRecommendationCache(memberId);
 
 		return RewardAccountResponseDTO.from(linkedAccount, decryptedAccountNumber);
 	}
