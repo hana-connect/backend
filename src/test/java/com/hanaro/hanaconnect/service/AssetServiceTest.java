@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
-import com.hanaro.hanaconnect.dto.AssetSummaryResponseDTO;
+import com.hanaro.hanaconnect.dto.asset.AssetSummaryResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;

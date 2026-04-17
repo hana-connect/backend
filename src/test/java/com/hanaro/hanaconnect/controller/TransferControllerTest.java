@@ -30,12 +30,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
-import com.hanaro.hanaconnect.dto.SenderInfoDTO;
-import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
+import com.hanaro.hanaconnect.dto.saving.SavingsDetailResponseDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransactionDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransferRequestDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.transfer.SenderInfoDTO;
+import com.hanaro.hanaconnect.dto.transfer.TransferPrepareResponseDto;
 import com.hanaro.hanaconnect.service.TransferService;
 
 @SpringBootTest

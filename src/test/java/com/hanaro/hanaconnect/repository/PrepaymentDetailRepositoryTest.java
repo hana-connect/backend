@@ -10,28 +10,39 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.hanaro.hanaconnect.common.config.TestSecurityConfig;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.enums.Status;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Prepayment;
 import com.hanaro.hanaconnect.entity.PrepaymentDetail;
+import com.hanaro.hanaconnect.service.AccountHashService;
 
 import jakarta.persistence.EntityManager;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import({AccountCryptoService.class, AccountHashService.class})
 @ActiveProfiles("test")
 class PrepaymentDetailRepositoryTest {
 
 	@Autowired
 	private PrepaymentDetailRepository prepaymentDetailRepository;
+
+	@Autowired
+	private AccountCryptoService accountCryptoService;
+
+	@Autowired
+	private AccountHashService accountHashService;
 
 	@Autowired
 	private EntityManager entityManager;
@@ -116,9 +127,12 @@ class PrepaymentDetailRepositoryTest {
 	}
 
 	private Account saveAccount(Member member, AccountType accountType, BigDecimal balance) {
+		String rawAccountNumber = generateAccount();
+
 		Account account = Account.builder()
 			.name("청약 계좌")
-			.accountNumber(generateAccount())
+			.accountNumber(rawAccountNumber)
+			.accountNumberHash(accountHashService.hash(rawAccountNumber))
 			.password(passwordEncoder.encode("1111"))
 			.accountType(accountType)
 			.balance(balance)

@@ -7,13 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
-import com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO;
+import com.hanaro.hanaconnect.dto.account.ConnectMemberResponseDTO;
 import com.hanaro.hanaconnect.entity.Relation;
 
 public interface RelationRepository extends JpaRepository<Relation, Long> {
 
 	@Query("""
-    select new com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO(
+    select new com.hanaro.hanaconnect.dto.account.ConnectMemberResponseDTO(
         cm.id,
         cm.name,
         pn.whomName,
@@ -30,7 +30,7 @@ public interface RelationRepository extends JpaRepository<Relation, Long> {
 	List<ConnectMemberResponseDTO> findParents(@Param("memberId") Long memberId);
 
 	@Query("""
-    select new com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO(
+    select new com.hanaro.hanaconnect.dto.account.ConnectMemberResponseDTO(
         cm.id,
         cm.name,
         pn.whomName,
@@ -55,7 +55,7 @@ public interface RelationRepository extends JpaRepository<Relation, Long> {
 	boolean existsByMemberIdAndConnectMemberId(Long kidId, Long parentId);
 
 	@Query("""
-	select new com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO(
+	select new com.hanaro.hanaconnect.dto.account.ConnectMemberResponseDTO(
 		parent.id,
 		parent.name,
 		pn.whomName,

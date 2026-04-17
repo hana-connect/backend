@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
-import com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO;
-import com.hanaro.hanaconnect.dto.WalletResponseDTO;
+import com.hanaro.hanaconnect.dto.account.ConnectMemberResponseDTO;
+import com.hanaro.hanaconnect.dto.account.WalletResponseDTO;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;

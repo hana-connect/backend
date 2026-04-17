@@ -19,15 +19,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
-import com.hanaro.hanaconnect.common.security.AccountCryptoService;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.common.security.JwtTokenProvider;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
+import com.hanaro.hanaconnect.common.util.AccountNumberFormatter;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.service.AccountHashService;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootTest
@@ -57,6 +60,9 @@ class AssetControllerTest {
 	@Autowired
 	JwtTokenProvider jwtTokenProvider;
 
+	@Autowired
+	private AccountHashService accountHashService;
+
 	private String accessToken;
 	private Long memberId;
 
@@ -64,7 +70,7 @@ class AssetControllerTest {
 	void setUp() {
 		String encodedPassword = passwordEncoder.encode("123456");
 
-		// 1. 회원 생성 및 저장
+		// 1. 회원 생성
 		Member member = Member.builder()
 			.name("테스트유저")
 			.password(encodedPassword)
@@ -84,27 +90,42 @@ class AssetControllerTest {
 
 		this.memberId = savedMember.getId();
 
+		// ===============================
+		// 계좌 1
+		// ===============================
+		String rawAccount1 = "111-1111-1111";
+		String normalizedAccount1 = AccountNumberFormatter.normalize(rawAccount1); // 수정된 normalize 사용
+
 		Account account1 = Account.builder()
 			.name("예금계좌")
-			.accountNumber("111-1111-1111")
+			.accountNumber(accountCryptoService.encrypt(normalizedAccount1))
+			.accountNumberHash(accountHashService.hash(normalizedAccount1))
 			.password("1234")
 			.accountType(com.hanaro.hanaconnect.common.enums.AccountType.DEPOSIT)
 			.balance(new BigDecimal("1000000"))
-			.member(savedMember) // savedMember 사용
+			.member(savedMember)
 			.build();
+
+		// ===============================
+		// 계좌 2
+		// ===============================
+		String rawAccount2 = "222-2222-2222";
+		String normalizedAccount2 = AccountNumberFormatter.normalize(rawAccount2);
 
 		Account account2 = Account.builder()
 			.name("연금계좌")
-			.accountNumber("222-2222-2222")
+			.accountNumber(accountCryptoService.encrypt(normalizedAccount2))
+			.accountNumberHash(accountHashService.hash(normalizedAccount2))
 			.password("1234")
 			.accountType(com.hanaro.hanaconnect.common.enums.AccountType.PENSION)
 			.balance(new BigDecimal("500000"))
-			.member(savedMember) // savedMember 사용
+			.member(savedMember)
 			.build();
 
 		accountRepository.save(account1);
 		accountRepository.save(account2);
 
+		// 연결
 		linkedAccountRepository.save(
 			LinkedAccount.builder()
 				.account(account1)
@@ -119,6 +140,7 @@ class AssetControllerTest {
 				.build()
 		);
 
+		// JWT 생성
 		TokenMemberPrincipal principal = new TokenMemberPrincipal(
 			savedMember.getId(),
 			savedMember.getName(),

@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.SubscriptionInfoResponseDto;
-import com.hanaro.hanaconnect.dto.SubscriptionRequestDto;
-import com.hanaro.hanaconnect.dto.SubscriptionResponseDto;
+import com.hanaro.hanaconnect.dto.subscription.SubscriptionInfoResponseDto;
+import com.hanaro.hanaconnect.dto.subscription.SubscriptionRequestDto;
+import com.hanaro.hanaconnect.dto.subscription.SubscriptionResponseDto;
 import com.hanaro.hanaconnect.service.SubscriptionService;
 
 import io.swagger.v3.oas.annotations.Operation;

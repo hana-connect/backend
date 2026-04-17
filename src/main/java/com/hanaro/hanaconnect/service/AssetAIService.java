@@ -3,8 +3,8 @@ package com.hanaro.hanaconnect.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.ai.AssetAiClient;
-import com.hanaro.hanaconnect.dto.AssetAIRecommendationResponseDTO;
-import com.hanaro.hanaconnect.dto.AssetSummaryResponseDTO;
+import com.hanaro.hanaconnect.dto.asset.AssetAIRecommendationResponseDTO;
+import com.hanaro.hanaconnect.dto.asset.AssetSummaryResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -15,7 +15,7 @@ import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
-import com.hanaro.hanaconnect.common.security.AccountCryptoService;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.House;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
@@ -32,6 +32,7 @@ import com.hanaro.hanaconnect.repository.MissionRepository;
 import com.hanaro.hanaconnect.repository.PhoneNameRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 import com.hanaro.hanaconnect.repository.TransactionRepository;
+import com.hanaro.hanaconnect.service.AccountHashService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +50,7 @@ public class InitLoader implements ApplicationRunner {
 	private final HouseRepository houseRepository;
 	private final LinkedAccountRepository linkedAccountRepository;
 	private final TransactionRepository transactionRepository;
+	private final AccountHashService accountHashService;
 
 	@Override
 	@Transactional
@@ -144,7 +146,8 @@ public class InitLoader implements ApplicationRunner {
 
 		Account parent1RewardAccount = accountRepository.save(Account.builder()
 			.name("부모 리워드 통장")
-			.accountNumber("22233336666")
+			.accountNumber(accountCryptoService.encrypt("22233336666"))
+			.accountNumberHash(accountHashService.hash("22233336666"))
 			.password(passwordEncoder.encode("5678"))
 			.accountType(AccountType.PENSION)
 			.balance(BigDecimal.ZERO)
@@ -204,7 +207,8 @@ public class InitLoader implements ApplicationRunner {
 
 		Account parent3RewardAccount = accountRepository.save(Account.builder()
 			.name("청약할머니 리워드 통장")
-			.accountNumber("77788880000")
+			.accountNumber(accountCryptoService.encrypt("77788880000"))
+			.accountNumberHash(accountHashService.hash("77788880000"))
 			.password(passwordEncoder.encode("1234"))
 			.accountType(AccountType.FREE)
 			.balance(BigDecimal.ZERO)
@@ -234,7 +238,8 @@ public class InitLoader implements ApplicationRunner {
 
 		accountRepository.save(Account.builder()
 			.name("청춘 적금(만기)")
-			.accountNumber("12345678901")
+			.accountNumber(accountCryptoService.encrypt("12345678901"))
+			.accountNumberHash(accountHashService.hash("12345678901"))
 			.password(passwordEncoder.encode("1234"))
 			.accountType(AccountType.SAVINGS)
 			.balance(new BigDecimal("2000000"))
@@ -244,7 +249,8 @@ public class InitLoader implements ApplicationRunner {
 
 		accountRepository.save(Account.builder()
 			.name("하나 새희망 적금")
-			.accountNumber("12121212121")
+			.accountNumber(accountCryptoService.encrypt("12121212121"))
+			.accountNumberHash(accountHashService.hash("12121212121"))
 			.password(passwordEncoder.encode("1234"))
 			.accountType(AccountType.SAVINGS)
 			.balance(new BigDecimal("5000000"))
@@ -423,16 +429,20 @@ public class InitLoader implements ApplicationRunner {
 
 	private Account createAccount(
 		String name,
-		String accountNumber,
+		String rawAccountNumber,
 		String rawPassword,
 		AccountType accountType,
 		BigDecimal balance,
 		Member member,
 		BigDecimal totalLimit
 	) {
+		String encryptedAccount = accountCryptoService.encrypt(rawAccountNumber);
+		String accountNumberHash = accountHashService.hash(rawAccountNumber);
+
 		return Account.builder()
 			.name(name)
-			.accountNumber(accountNumber)
+			.accountNumber(encryptedAccount)
+			.accountNumberHash(accountNumberHash)
 			.password(passwordEncoder.encode(rawPassword))
 			.accountType(accountType)
 			.balance(balance)

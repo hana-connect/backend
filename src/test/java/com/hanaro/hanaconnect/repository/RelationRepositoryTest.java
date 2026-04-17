@@ -5,16 +5,14 @@ import static org.assertj.core.api.Assertions.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
-import com.hanaro.hanaconnect.dto.ConnectMemberResponseDTO;
+import com.hanaro.hanaconnect.dto.account.ConnectMemberResponseDTO;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.PhoneName;
 import com.hanaro.hanaconnect.entity.Relation;

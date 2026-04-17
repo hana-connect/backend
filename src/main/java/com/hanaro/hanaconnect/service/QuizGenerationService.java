@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.ai.QuizAiClient;
-import com.hanaro.hanaconnect.dto.QuizGenerationResponseDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizGenerationResponseDTO;
 import com.hanaro.hanaconnect.entity.Mission;
 import com.hanaro.hanaconnect.entity.QuizQuestion;
 import com.hanaro.hanaconnect.entity.QuizSet;

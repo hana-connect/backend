@@ -1,6 +1,7 @@
 package com.hanaro.hanaconnect.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,17 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
-import com.hanaro.hanaconnect.dto.RecentTransferResponseDTO;
-import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
-import com.hanaro.hanaconnect.dto.RelayResponseDTO;
-import com.hanaro.hanaconnect.dto.SavingsDetailResponseDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransferRequestDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransferResponseDTO;
-import com.hanaro.hanaconnect.dto.SenderInfoDTO;
-import com.hanaro.hanaconnect.dto.TransferPrepareResponseDto;
-import com.hanaro.hanaconnect.dto.TransferRequestDto;
-import com.hanaro.hanaconnect.dto.TransferResponseDto;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
+import com.hanaro.hanaconnect.dto.saving.RelayHistoryDTO;
+import com.hanaro.hanaconnect.dto.saving.RelayResponseDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsDetailResponseDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransactionDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransferRequestDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.transfer.RecentTransferResponseDTO;
+import com.hanaro.hanaconnect.dto.transfer.SenderInfoDTO;
+import com.hanaro.hanaconnect.dto.transfer.TransferPrepareResponseDto;
+import com.hanaro.hanaconnect.dto.transfer.TransferRequestDto;
+import com.hanaro.hanaconnect.dto.transfer.TransferResponseDto;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Letter;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
@@ -50,34 +52,30 @@ public class TransferService {
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final LetterRepository letterRepository;
+	private final AccountCryptoService accountCryptoService;
 
 	// 적금
 	@Transactional
 	public SavingsTransferResponseDTO transferToChildSavings(Long memberId, SavingsTransferRequestDTO request) {
 
-		// 0. 사용자 조회
 		Member parent = memberRepository.findById(memberId)
-		.orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
 
 		BigDecimal amount = request.getAmount();
 
-		// 1. 계좌 조회
 		Account sender = accountRepository.findByMemberIdAndAccountTypeAndIsRewardFalseWithLock(memberId, AccountType.FREE)
 			.orElseThrow(() -> new IllegalArgumentException("지갑 계좌를 찾을 수 없습니다."));
 
 		Account receiver = accountRepository.findByIdWithLock(request.getTargetAccountId())
 			.orElseThrow(() -> new IllegalArgumentException("대상 적금 계좌를 찾을 수 없습니다."));
 
-		// 2. 연결된 계좌인지 확인
 		boolean isLinked = linkedAccountRepository.existsByAccountIdAndMemberId(request.getTargetAccountId(), memberId);
 		if (!isLinked) {
 			throw new IllegalArgumentException("연결된 손주 계좌가 아닙니다.");
 		}
 
-		// 3. 비밀번호 확인
 		validatePassword(request.getPassword(), parent.getPassword());
 
-		// 4. 적금 계좌 한도 확인
 		if (receiver.getTotalLimit() != null) {
 			BigDecimal newBalance = receiver.getBalance().add(amount);
 			if (newBalance.compareTo(receiver.getTotalLimit()) > 0) {
@@ -85,25 +83,19 @@ public class TransferService {
 			}
 		}
 
-		// 5. 출금
 		sender.withdraw(amount);
-
-		// 6. 입금
 		receiver.deposit(amount);
 
-		// 7. 거래 저장
-		// (1) 할머니 지갑 기준 출금 내역 저장
-		Transaction withdrawTx = createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_WITHDRAW);
+		Transaction withdrawTx =
+			createTransaction(sender, receiver, amount, sender.getBalance(), TransactionType.SAVINGS_WITHDRAW);
 		transactionRepository.save(withdrawTx);
 
-		// (2) 아이 적금 계좌 기준 입금 내역 저장
-		Transaction depositTx = createTransaction(sender, receiver, amount, receiver.getBalance(), TransactionType.SAVINGS_DEPOSIT);
+		Transaction depositTx =
+			createTransaction(sender, receiver, amount, receiver.getBalance(), TransactionType.SAVINGS_DEPOSIT);
 		Transaction savedTransaction = transactionRepository.save(depositTx);
 
-		// 메시지 정규화
 		String normalizedContent = (request.getContent() == null) ? null : request.getContent().trim();
 
-		// 8. Letter 저장
 		if (normalizedContent != null && !normalizedContent.isEmpty()) {
 			Letter letter = Letter.builder()
 				.content(normalizedContent)
@@ -112,7 +104,6 @@ public class TransferService {
 			letterRepository.save(letter);
 		}
 
-		// 8. 응답
 		return SavingsTransferResponseDTO.builder()
 			.transactionMoney(savedTransaction.getTransactionMoney())
 			.transactionBalance(savedTransaction.getTransactionBalance())
@@ -156,7 +147,7 @@ public class TransferService {
 		return TransferResponseDto.builder()
 			.transferId(savedDepositTransaction.getId())
 			.toAccountId(kidAccount.getId())
-			.toAccountNumber(kidAccount.getAccountNumber())
+			.toAccountNumber(accountCryptoService.decrypt(kidAccount.getAccountNumber()))
 			.amount(amount)
 			.transferredAt(savedDepositTransaction.getCreatedAt())
 			.build();
@@ -185,10 +176,9 @@ public class TransferService {
 			: kid.getName();
 
 		Account parentAccount = accountRepository
-			.findByMemberIdAndAccountTypeAndIsRewardFalse(loginMemberId, AccountType.FREE)
+			.findByMemberIdAndAccountType(loginMemberId, AccountType.FREE)
 			.orElseThrow(() -> new IllegalArgumentException("출금 계좌가 없습니다."));
 
-		// 1. 기본 빌더 생성
 		var builder = TransferPrepareResponseDto.builder()
 			.accountId(accountId)
 			.targetMemberName(kid.getName())
@@ -197,12 +187,10 @@ public class TransferService {
 			.accountAlias(kidAccount.getName())
 			.balance(parentAccount.getBalance());
 
-		// 2. 적금 계좌(SAVINGS)일 때만 한도 관련 데이터 추가
 		if (kidAccount.getAccountType() == AccountType.SAVINGS) {
 			builder.currentSaving(kidAccount.getBalance())
 				.savingLimit(kidAccount.getTotalLimit());
 		} else {
-			// 3. 적금이 아니면(일반/청약) 한도 체크가 필요 없으니 null이나 기본값 설정
 			builder.currentSaving(BigDecimal.ZERO)
 				.savingLimit(NO_LIMIT);
 		}
@@ -244,20 +232,17 @@ public class TransferService {
 			.build();
 	}
 
-	// 최근 적금_송금 내역 단건 조회
+	// 최근 적금 송금 내역 단건 조회
 	@Transactional(readOnly = true)
 	public RecentTransferResponseDTO getRecentTransferAmount(Long memberId, Long receiverAccountId) {
 
-		// 1. 권한 체크 (로그인한 memberId가 receiverAccountId에 접근 가능한지 검증)
 		validateAndGetSavingsAccount(memberId, receiverAccountId);
 
-		// 2. receiverAccountId로 가장 최근에 보낸 적금_송금 내역 조회
 		Transaction latestTx = transactionRepository.findTopByReceiverAccountIdAndTransactionTypeOrderByCreatedAtDesc(
 			receiverAccountId,
 			TransactionType.SAVINGS_WITHDRAW
 		).orElse(null);
 
-		// 3. 내역 없으면 null
 		if (latestTx == null) {
 			return null;
 		}
@@ -268,13 +253,10 @@ public class TransferService {
 			.build();
 	}
 
-	// 공통 로직: 권한 체크 및 적금 계좌 여부 검증
 	private LinkedAccount validateAndGetSavingsAccount(Long memberId, Long targetAccountId) {
-		// 1. 권한 체크 (연결된 계좌인지)
 		LinkedAccount linkedAccount = linkedAccountRepository.findByMemberIdAndAccountId(memberId, targetAccountId)
 			.orElseThrow(() -> new IllegalArgumentException("해당 계좌에 접근 권한이 없습니다."));
 
-		// 2. 적금 계좌 타입 검증
 		if (linkedAccount.getAccount().getAccountType() != AccountType.SAVINGS) {
 			throw new IllegalArgumentException("적금 계좌만 조회할 수 있습니다.");
 		}
@@ -300,7 +282,7 @@ public class TransferService {
 
 		return RelayResponseDTO.builder()
 			.productNickname(displayName)
-			.accountNumber(account.getAccountNumber())
+			.accountNumber(accountCryptoService.decrypt(account.getAccountNumber()))
 			.history(historyPage.getContent())
 			.isLast(historyPage.isLast())
 			.build();
@@ -314,13 +296,12 @@ public class TransferService {
 		String displayName = (linkedAccount.getNickname() != null && !linkedAccount.getNickname().isBlank())
 			? linkedAccount.getNickname() : account.getName();
 
-		// 딱 최근 3건만 가져오도록 PageRequest 생성
 		org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 3);
 		List<RelayHistoryDTO> history = letterRepository.findTop3RelayHistory(memberId, targetAccountId, pageable);
 
 		return RelayResponseDTO.builder()
 			.productNickname(displayName)
-			.accountNumber(account.getAccountNumber())
+			.accountNumber(accountCryptoService.decrypt(account.getAccountNumber()))
 			.history(history)
 			.build();
 	}
@@ -356,7 +337,7 @@ public class TransferService {
 
 		return SavingsDetailResponseDTO.builder()
 			.productName(account.getName())
-			.accountNumber(account.getAccountNumber())
+			.accountNumber(accountCryptoService.decrypt(account.getAccountNumber()))
 			.senders(senders)
 			.transactions(transactionsPage.getContent())
 			.isLast(transactionsPage.isLast())
@@ -380,7 +361,7 @@ public class TransferService {
 		return TransferResponseDto.builder()
 			.transferId(tx.getId())
 			.toAccountId(tx.getReceiverAccount().getId())
-			.toAccountNumber(tx.getReceiverAccount().getAccountNumber())
+			.toAccountNumber(accountCryptoService.decrypt(tx.getReceiverAccount().getAccountNumber()))
 			.amount(tx.getTransactionMoney())
 			.transferredAt(tx.getCreatedAt())
 			.build();

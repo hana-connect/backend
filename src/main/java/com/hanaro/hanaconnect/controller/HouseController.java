@@ -4,8 +4,8 @@ import java.time.LocalDate;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.HouseHistoryResponseDTO;
-import com.hanaro.hanaconnect.dto.HouseStatusResponseDTO;
+import com.hanaro.hanaconnect.dto.house.HouseHistoryResponseDTO;
+import com.hanaro.hanaconnect.dto.house.HouseStatusResponseDTO;
 import com.hanaro.hanaconnect.service.HouseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

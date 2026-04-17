@@ -2,9 +2,9 @@ package com.hanaro.hanaconnect.controller;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.AssetAIRecommendationResponseDTO;
+import com.hanaro.hanaconnect.dto.asset.AssetAIRecommendationResponseDTO;
 import com.hanaro.hanaconnect.service.AssetAIService;
-import com.hanaro.hanaconnect.dto.AssetSummaryResponseDTO;
+import com.hanaro.hanaconnect.dto.asset.AssetSummaryResponseDTO;
 import com.hanaro.hanaconnect.service.AssetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

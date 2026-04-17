@@ -26,13 +26,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
-import com.hanaro.hanaconnect.dto.LoginRequestDTO;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
+import com.hanaro.hanaconnect.dto.login.LoginRequestDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
+import com.hanaro.hanaconnect.service.AccountHashService;
 import com.jayway.jsonpath.JsonPath;
 
 @SpringBootTest
@@ -59,12 +61,38 @@ class AccountControllerTest {
 	@Autowired
 	PasswordEncoder passwordEncoder;
 
+	@Autowired
+	AccountCryptoService accountCryptoService;
+
+	@Autowired
+	AccountHashService accountHashService;
+
 	private Long memberId;
 	private String accessToken;
 
+	private Account createAccount(
+		Member member,
+		String name,
+		String rawAccountNumber,
+		String rawPassword,
+		AccountType accountType,
+		BigDecimal balance,
+		boolean isEnd
+	) {
+		return accountRepository.save(Account.builder()
+			.member(member)
+			.name(name)
+			.accountNumber(accountCryptoService.encrypt(rawAccountNumber))
+			.accountNumberHash(accountHashService.hash(rawAccountNumber))
+			.password(passwordEncoder.encode(rawPassword))
+			.accountType(accountType)
+			.balance(balance)
+			.isEnd(isEnd)
+			.build());
+	}
+
 	@BeforeEach
 	void setUp() throws Exception {
-		// 테스트용 회원 생성
 		Member member = memberRepository.save(Member.builder()
 			.name("홍길동")
 			.password(passwordEncoder.encode("123456"))
@@ -76,18 +104,16 @@ class AccountControllerTest {
 			.build());
 		memberId = member.getId();
 
-		// 만기된 적금 계좌 생성
-		accountRepository.save(Account.builder()
-			.member(member)
-			.name("만기 테스트 적금")
-			.accountNumber("49494848474")
-			.password("1234")
-			.accountType(AccountType.SAVINGS)
-			.balance(BigDecimal.valueOf(10000))
-			.isEnd(true)
-			.build());
+		createAccount(
+			member,
+			"만기 테스트 적금",
+			"49494848474",
+			"1234",
+			AccountType.SAVINGS,
+			BigDecimal.valueOf(10000),
+			true
+		);
 
-		// 로그인하여 토큰 발급받기
 		LoginRequestDTO loginRequest = new LoginRequestDTO();
 		loginRequest.setMemberId(memberId);
 		loginRequest.setPassword("123456");
@@ -117,7 +143,7 @@ class AccountControllerTest {
 	@DisplayName("나의 만기된 적금 목록 조회 API - 성공")
 	void getTerminatedSavings_success() throws Exception {
 		mvc.perform(get("/api/accounts/terminated-savings")
-				.header("Authorization", "Bearer " + accessToken) // 토큰 주입!
+				.header("Authorization", "Bearer " + accessToken)
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
@@ -132,7 +158,7 @@ class AccountControllerTest {
 	@DisplayName("인증되지 않은 사용자가 조회 시 401 에러")
 	void getTerminatedSavings_fail_unauthorized() throws Exception {
 		mvc.perform(get("/api/accounts/terminated-savings")
-				.contentType(MediaType.APPLICATION_JSON)) // 토큰 없이 호출
+				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isUnauthorized())
 			.andDo(print());
 	}
@@ -162,19 +188,22 @@ class AccountControllerTest {
 	@Test
 	@DisplayName("본인 계좌 확인 API - 성공")
 	void verifyMyAccount_success() throws Exception {
-		accountRepository.save(Account.builder()
-			.member(memberRepository.findById(memberId).orElseThrow())
-			.name("내 청약 통장")
-			.accountNumber("81818181818")
-			.password(passwordEncoder.encode("1234"))
-			.accountType(AccountType.SUBSCRIPTION)
-			.balance(BigDecimal.valueOf(150000))
-			.build());
+		Member member = memberRepository.findById(memberId).orElseThrow();
+
+		createAccount(
+			member,
+			"내 청약 통장",
+			"81818181818",
+			"1234",
+			AccountType.SUBSCRIPTION,
+			BigDecimal.valueOf(150000),
+			false
+		);
 
 		mvc.perform(post("/api/accounts/verify")
-					.header("Authorization", "Bearer " + accessToken)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content("""
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
 						{
 						  "accountNumber": "81818181818"
 						}
@@ -207,14 +236,17 @@ class AccountControllerTest {
 	@Test
 	@DisplayName("본인 계좌 등록 API - 성공")
 	void linkMyAccount_success() throws Exception {
-		accountRepository.save(Account.builder()
-			.member(memberRepository.findById(memberId).orElseThrow())
-			.name("내 적금 통장")
-			.accountNumber("73737373737")
-			.password(passwordEncoder.encode("1234"))
-			.accountType(AccountType.SAVINGS)
-			.balance(BigDecimal.valueOf(250000))
-			.build());
+		Member member = memberRepository.findById(memberId).orElseThrow();
+
+		createAccount(
+			member,
+			"내 적금 통장",
+			"73737373737",
+			"1234",
+			AccountType.SAVINGS,
+			BigDecimal.valueOf(250000),
+			false
+		);
 
 		mvc.perform(post("/api/accounts/link")
 				.header("Authorization", "Bearer " + accessToken)
@@ -255,23 +287,25 @@ class AccountControllerTest {
 	void getMyAccounts_success_linkedAccountOnly() throws Exception {
 		Member member = memberRepository.findById(memberId).orElseThrow();
 
-		Account linkedAccount = accountRepository.save(Account.builder()
-			.member(member)
-			.name("연결된 적금")
-			.accountNumber("91919191919")
-			.password(passwordEncoder.encode("1234"))
-			.accountType(AccountType.SAVINGS)
-			.balance(BigDecimal.valueOf(250000))
-			.build());
+		Account linkedAccount = createAccount(
+			member,
+			"연결된 적금",
+			"91919191919",
+			"1234",
+			AccountType.SAVINGS,
+			BigDecimal.valueOf(250000),
+			false
+		);
 
-		accountRepository.save(Account.builder()
-			.member(member)
-			.name("연결 안 된 통장")
-			.accountNumber("92929292929")
-			.password(passwordEncoder.encode("1234"))
-			.accountType(AccountType.FREE)
-			.balance(BigDecimal.valueOf(10000))
-			.build());
+		createAccount(
+			member,
+			"연결 안 된 통장",
+			"92929292929",
+			"1234",
+			AccountType.FREE,
+			BigDecimal.valueOf(10000),
+			false
+		);
 
 		LinkedAccount linked = linkedAccountRepository.save(LinkedAccount.builder()
 			.account(linkedAccount)
@@ -279,16 +313,16 @@ class AccountControllerTest {
 			.build());
 		linked.setCreatedAtForInit(LocalDateTime.of(2026, 4, 15, 10, 0));
 
-			mvc.perform(get("/api/accounts/me")
-					.header("Authorization", "Bearer " + accessToken)
-					.contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value(200))
-				.andExpect(jsonPath("$.data.length()").value(1))
-				.andExpect(jsonPath("$.data[0].name").value("연결된 적금"))
-				.andExpect(jsonPath("$.data[0].accountNumber").value("919-1919-1919"))
-				.andExpect(jsonPath("$.message").value("내 연결 계좌 목록 조회에 성공했습니다."))
-				.andDo(print());
+		mvc.perform(get("/api/accounts/me")
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data.length()").value(1))
+			.andExpect(jsonPath("$.data[0].name").value("연결된 적금"))
+			.andExpect(jsonPath("$.data[0].accountNumber").value("919-1919-1919"))
+			.andExpect(jsonPath("$.message").value("내 연결 계좌 목록 조회에 성공했습니다."))
+			.andDo(print());
 	}
 
 	@Test
@@ -302,7 +336,7 @@ class AccountControllerTest {
 
 	@Test
 	@DisplayName("아이 계좌 목록 조회 API - 부모가 추가한 아이 계좌만 반환")
-		void getKidAccounts_success() throws Exception {
+	void getKidAccounts_success() throws Exception {
 		Member parent = memberRepository.save(Member.builder()
 			.name("김엄마")
 			.password(passwordEncoder.encode("123456"))
@@ -316,14 +350,15 @@ class AccountControllerTest {
 		String parentAccessToken = login(parent.getId(), "123456");
 
 		Member kid = memberRepository.findById(memberId).orElseThrow();
-		Account kidAccount = accountRepository.save(Account.builder()
-			.member(kid)
-			.name("아이 청약 통장")
-			.accountNumber("94949494949")
-			.password(passwordEncoder.encode("1234"))
-			.accountType(AccountType.SUBSCRIPTION)
-			.balance(BigDecimal.valueOf(120000))
-			.build());
+		Account kidAccount = createAccount(
+			kid,
+			"아이 청약 통장",
+			"94949494949",
+			"1234",
+			AccountType.SUBSCRIPTION,
+			BigDecimal.valueOf(120000),
+			false
+		);
 
 		linkedAccountRepository.save(LinkedAccount.builder()
 			.account(kidAccount)

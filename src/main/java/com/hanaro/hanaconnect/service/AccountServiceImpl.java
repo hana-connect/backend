@@ -13,19 +13,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.common.util.AccountNumberFormatter;
-import com.hanaro.hanaconnect.dto.AccountLinkRequestDTO;
-import com.hanaro.hanaconnect.dto.AccountLinkResponseDTO;
-import com.hanaro.hanaconnect.dto.AccountVerifyRequestDTO;
-import com.hanaro.hanaconnect.dto.AccountVerifyResponseDTO;
-import com.hanaro.hanaconnect.dto.KidAccountAddRequestDTO;
-import com.hanaro.hanaconnect.dto.KidAccountAddResponseDTO;
-import com.hanaro.hanaconnect.dto.KidAccountListResponseDTO;
-import com.hanaro.hanaconnect.dto.KidLinkedAccountResponseDTO;
-import com.hanaro.hanaconnect.dto.KidWalletDetailResponseDTO;
-import com.hanaro.hanaconnect.dto.MyAccountResponseDTO;
-import com.hanaro.hanaconnect.dto.RewardAccountResponseDTO;
-import com.hanaro.hanaconnect.dto.TerminatedAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.account.AccountLinkRequestDTO;
+import com.hanaro.hanaconnect.dto.account.AccountLinkResponseDTO;
+import com.hanaro.hanaconnect.dto.account.AccountVerifyRequestDTO;
+import com.hanaro.hanaconnect.dto.account.AccountVerifyResponseDTO;
+import com.hanaro.hanaconnect.dto.account.KidAccountAddRequestDTO;
+import com.hanaro.hanaconnect.dto.account.KidAccountAddResponseDTO;
+import com.hanaro.hanaconnect.dto.account.KidAccountListResponseDTO;
+import com.hanaro.hanaconnect.dto.account.KidLinkedAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.account.KidWalletDetailResponseDTO;
+import com.hanaro.hanaconnect.dto.account.MyAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.account.RewardAccountResponseDTO;
+import com.hanaro.hanaconnect.dto.account.TerminatedAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
@@ -53,13 +54,18 @@ public class AccountServiceImpl implements AccountService {
 	private final PasswordEncoder passwordEncoder;
 	private final RelationRepository relationRepository;
 
+	private final AccountHashService accountHashService;
+	private final AccountCryptoService accountCryptoService;
+
 	@Override
 	public AccountLinkResponseDTO linkMyAccount(Long memberId, AccountLinkRequestDTO request) {
 		String normalizedAccountNumber = AccountNumberFormatter.normalize(request.getAccountNumber());
 
 		validateAccountNumber(normalizedAccountNumber);
 
-		Account account = accountRepository.findByAccountNumberAndMemberIdWithLock(normalizedAccountNumber, memberId)
+		String accountNumberHash = accountHashService.hash(normalizedAccountNumber);
+
+		Account account = accountRepository.findByAccountNumberHashAndMemberId(accountNumberHash, memberId)
 			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
 
 		if (!passwordEncoder.matches(request.getAccountPassword(), account.getPassword())) {
@@ -85,8 +91,10 @@ public class AccountServiceImpl implements AccountService {
 			throw e;
 		}
 
+		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
+
 		return new AccountLinkResponseDTO(
-			AccountNumberFormatter.format(account.getAccountNumber()),
+			AccountNumberFormatter.format(decryptedAccountNumber),
 			savedLinkedAccount.getCreatedAt().format(LINKED_AT_FORMATTER)
 		);
 	}
@@ -98,15 +106,19 @@ public class AccountServiceImpl implements AccountService {
 
 		validateAccountNumber(normalizedAccountNumber);
 
-		Account account = accountRepository.findByAccountNumberAndMemberId(normalizedAccountNumber, memberId)
+		String accountNumberHash = accountHashService.hash(normalizedAccountNumber);
+
+		Account account = accountRepository.findByAccountNumberHashAndMemberId(accountNumberHash, memberId)
 			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
 
 		if (linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), memberId)) {
 			throw new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE);
 		}
 
+		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
+
 		return new AccountVerifyResponseDTO(
-			AccountNumberFormatter.format(account.getAccountNumber()),
+			AccountNumberFormatter.format(decryptedAccountNumber),
 			account.getAccountType()
 		);
 	}
@@ -118,7 +130,9 @@ public class AccountServiceImpl implements AccountService {
 		String normalizedAccountNumber = AccountNumberFormatter.normalize(request.getAccountNumber());
 		validateAccountNumber(normalizedAccountNumber);
 
-		Account account = accountRepository.findByAccountNumberAndMemberIdWithLock(normalizedAccountNumber, kidId)
+		String accountNumberHash = accountHashService.hash(normalizedAccountNumber);
+
+		Account account = accountRepository.findByAccountNumberHashAndMemberId(accountNumberHash, kidId)
 			.orElseThrow(() -> new IllegalArgumentException(INVALID_ACCOUNT_MESSAGE));
 
 		if (linkedAccountRepository.existsByAccountIdAndMemberId(account.getId(), memberId)) {
@@ -144,9 +158,11 @@ public class AccountServiceImpl implements AccountService {
 			throw e;
 		}
 
+		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
+
 		return new KidAccountAddResponseDTO(
 			account.getMember().getName(),
-			AccountNumberFormatter.format(account.getAccountNumber()),
+			AccountNumberFormatter.format(decryptedAccountNumber),
 			account.getAccountType(),
 			savedLinkedAccount.getCreatedAt().format(LINKED_AT_FORMATTER)
 		);
@@ -160,11 +176,12 @@ public class AccountServiceImpl implements AccountService {
 		return linkedAccounts.stream()
 			.map(linkedAccount -> {
 				Account account = linkedAccount.getAccount();
+				String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
 
 				return MyAccountResponseDTO.builder()
 					.accountId(linkedAccount.getId())
 					.name(account.getName())
-					.accountNumber(AccountNumberFormatter.format(account.getAccountNumber()))
+					.accountNumber(AccountNumberFormatter.format(decryptedAccountNumber))
 					.balance(account.getBalance())
 					.accountType(account.getAccountType())
 					.createdAt(linkedAccount.getCreatedAt().format(LINKED_AT_FORMATTER))
@@ -181,12 +198,17 @@ public class AccountServiceImpl implements AccountService {
 		List<LinkedAccount> linkedAccounts = getLinkedKidAccounts(memberId, limit);
 
 		return linkedAccounts.stream()
-			.map(linkedAccount -> KidAccountListResponseDTO.builder()
-				.linkedAccountId(linkedAccount.getId())
-				.accountId(linkedAccount.getAccount().getId())
-				.nickname(linkedAccount.getNickname())
-				.accountNumber(AccountNumberFormatter.format(linkedAccount.getAccount().getAccountNumber()))
-				.build())
+			.map(linkedAccount -> {
+				String decryptedAccountNumber =
+					accountCryptoService.decrypt(linkedAccount.getAccount().getAccountNumber());
+
+				return KidAccountListResponseDTO.builder()
+					.linkedAccountId(linkedAccount.getId())
+					.accountId(linkedAccount.getAccount().getId())
+					.nickname(linkedAccount.getNickname())
+					.accountNumber(AccountNumberFormatter.format(decryptedAccountNumber))
+					.build();
+			})
 			.toList();
 	}
 
@@ -263,7 +285,10 @@ public class AccountServiceImpl implements AccountService {
 				memberId,
 				AccountType.SAVINGS
 			).stream()
-			.map(TerminatedAccountResponseDTO::from)
+			.map(account -> TerminatedAccountResponseDTO.from(
+				account,
+				accountCryptoService.decrypt(account.getAccountNumber())
+			))
 			.toList();
 	}
 
@@ -317,15 +342,20 @@ public class AccountServiceImpl implements AccountService {
 			linkedAccountRepository.findKidLinkedAccounts(parentId, kidId);
 
 		List<KidLinkedAccountResponseDTO> accountDTOs = linkedAccounts.stream()
-			.map(linkedAccount -> KidLinkedAccountResponseDTO.builder()
-				.linkedAccountId(linkedAccount.getId())
-				.accountId(linkedAccount.getAccount().getId())
-				.nickname(linkedAccount.getNickname())
-				.name(linkedAccount.getAccount().getName())
-				.accountNumber(AccountNumberFormatter.format(linkedAccount.getAccount().getAccountNumber()))
-				.balance(linkedAccount.getAccount().getBalance())
-				.accountType(linkedAccount.getAccount().getAccountType())
-				.build())
+			.map(linkedAccount -> {
+				String decryptedAccountNumber =
+					accountCryptoService.decrypt(linkedAccount.getAccount().getAccountNumber());
+
+				return KidLinkedAccountResponseDTO.builder()
+					.linkedAccountId(linkedAccount.getId())
+					.accountId(linkedAccount.getAccount().getId())
+					.nickname(linkedAccount.getNickname())
+					.name(linkedAccount.getAccount().getName())
+					.accountNumber(AccountNumberFormatter.format(decryptedAccountNumber))
+					.balance(linkedAccount.getAccount().getBalance())
+					.accountType(linkedAccount.getAccount().getAccountType())
+					.build();
+			})
 			.toList();
 
 		return KidWalletDetailResponseDTO.builder()

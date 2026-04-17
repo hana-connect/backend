@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hanaro.hanaconnect.common.response.CustomAPIResponse;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.QuizAnswerRequestDTO;
-import com.hanaro.hanaconnect.dto.QuizAnswerResponseDTO;
-import com.hanaro.hanaconnect.dto.QuizEntryResponseDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizAnswerRequestDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizAnswerResponseDTO;
+import com.hanaro.hanaconnect.dto.quiz.QuizEntryResponseDTO;
 import com.hanaro.hanaconnect.service.QuizService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

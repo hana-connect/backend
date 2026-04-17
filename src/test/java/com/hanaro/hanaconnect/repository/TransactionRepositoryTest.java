@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -20,6 +21,7 @@ import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.enums.TransactionType;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Transaction;
@@ -28,11 +30,15 @@ import jakarta.persistence.EntityManager;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(AccountCryptoService.class)
 @ActiveProfiles("test")
 class TransactionRepositoryTest {
 
 	@Autowired
 	private TransactionRepository transactionRepository;
+
+	@Autowired
+	private AccountCryptoService accountCryptoService;
 
 	@Autowired
 	private EntityManager entityManager;
@@ -224,9 +230,12 @@ class TransactionRepositoryTest {
 	}
 
 	private Account saveAccount(Member member, AccountType accountType, BigDecimal balance) {
+		String rawAccountNumber = generateAccount();
+
 		Account account = Account.builder()
 			.name(accountType == AccountType.FREE ? "자유 입출금" : "아이 적금")
-			.accountNumber(generateAccount())
+			.accountNumber(rawAccountNumber)
+			.accountNumberHash(accountCryptoService.encrypt(rawAccountNumber))
 			.password(passwordEncoder.encode("1111"))
 			.accountType(accountType)
 			.balance(balance)

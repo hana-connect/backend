@@ -9,14 +9,20 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.hanaro.hanaconnect.common.config.TestSecurityConfig;
 import com.hanaro.hanaconnect.common.enums.AccountType;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.Role;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.House;
 import com.hanaro.hanaconnect.entity.Member;
+import com.hanaro.hanaconnect.service.AccountHashService;
 
+@Import({AccountCryptoService.class, TestSecurityConfig.class, AccountHashService.class})
 class HouseRepositoryTest extends BaseRepositoryTest {
 
 	@Autowired
@@ -28,6 +34,15 @@ class HouseRepositoryTest extends BaseRepositoryTest {
 	@Autowired
 	private AccountRepository accountRepository;
 
+	@Autowired
+	private AccountCryptoService accountCryptoService;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private AccountHashService accountHashService;
+
 	private static long virtualAccountSeq = 10000000000L;
 	private static long accountNumberSeq = 20000000000L;
 
@@ -35,7 +50,7 @@ class HouseRepositoryTest extends BaseRepositoryTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.password("123456")
+				.password(passwordEncoder.encode("123456"))
 				.birthday(LocalDate.of(2010, 1, 1))
 				.virtualAccount(generateVirtualAccount())
 				.walletMoney(BigDecimal.ZERO)
@@ -46,11 +61,14 @@ class HouseRepositoryTest extends BaseRepositoryTest {
 	}
 
 	private Account createAccount(String name, AccountType accountType, Member member) {
+		String rawAccountNumber = generateAccountNumber();
+
 		return accountRepository.save(
 			Account.builder()
 				.name(name)
-				.accountNumber(generateAccountNumber())
-				.password("1234")
+				.accountNumber(accountCryptoService.encrypt(rawAccountNumber))
+				.accountNumberHash(accountHashService.hash(rawAccountNumber))
+				.password(passwordEncoder.encode("1234"))
 				.accountType(accountType)
 				.balance(new BigDecimal("100000"))
 				.member(member)

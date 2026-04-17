@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanaro.hanaconnect.ai.AssetAiClient;
-import com.hanaro.hanaconnect.dto.AssetAIRecommendationResponseDTO;
-import com.hanaro.hanaconnect.dto.AssetSummaryResponseDTO;
+import com.hanaro.hanaconnect.dto.asset.AssetAIRecommendationResponseDTO;
+import com.hanaro.hanaconnect.dto.asset.AssetSummaryResponseDTO;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

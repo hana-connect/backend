@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.security.JwtTokenProvider;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
-import com.hanaro.hanaconnect.dto.HouseHistoryResponseDTO;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 

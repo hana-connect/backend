@@ -1,8 +1,8 @@
 package com.hanaro.hanaconnect.repository;
 
-import com.hanaro.hanaconnect.dto.RelayHistoryDTO;
-import com.hanaro.hanaconnect.dto.SavingsTransactionDTO;
-import com.hanaro.hanaconnect.dto.SenderInfoDTO;
+import com.hanaro.hanaconnect.dto.saving.RelayHistoryDTO;
+import com.hanaro.hanaconnect.dto.saving.SavingsTransactionDTO;
+import com.hanaro.hanaconnect.dto.transfer.SenderInfoDTO;
 import com.hanaro.hanaconnect.entity.Letter;
 
 import org.springframework.data.domain.Page;
@@ -15,7 +15,7 @@ import java.util.List;
 public interface LetterRepository extends JpaRepository<Letter, Long> {
 
 	// 부모용
-	@Query("SELECT new com.hanaro.hanaconnect.dto.RelayHistoryDTO(" +
+	@Query("SELECT new com.hanaro.hanaconnect.dto.saving.RelayHistoryDTO(" +
 		"t.id, t.createdAt, t.transactionMoney, l.content) " +
 		"FROM Letter l " +
 		"JOIN l.transaction t " +
@@ -30,7 +30,7 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
 	);
 
 	// 최근 3개만 가져오는 메서드
-	@Query("SELECT new com.hanaro.hanaconnect.dto.RelayHistoryDTO(" +
+	@Query("SELECT new com.hanaro.hanaconnect.dto.saving.RelayHistoryDTO(" +
 		"t.id, t.createdAt, t.transactionMoney, l.content) " +
 		"FROM Letter l " +
 		"JOIN l.transaction t " +
@@ -42,7 +42,7 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
 		org.springframework.data.domain.Pageable pageable);
 
 	// 아이용
-	@Query("SELECT new com.hanaro.hanaconnect.dto.SavingsTransactionDTO(" +
+	@Query("SELECT new com.hanaro.hanaconnect.dto.saving.SavingsTransactionDTO(" +
 		"t.id, t.createdAt, t.transactionMoney, t.transactionBalance, l.content, m.name, m.id) " +
 		"FROM Transaction t " +
 		"JOIN Letter l ON l.transaction = t " +
@@ -58,7 +58,7 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
 		Pageable pageable
 	);
 
-	@Query("SELECT DISTINCT new com.hanaro.hanaconnect.dto.SenderInfoDTO(m.id, m.name) " +
+	@Query("SELECT DISTINCT new com.hanaro.hanaconnect.dto.transfer.SenderInfoDTO(m.id, m.name) " +
 		"FROM Transaction t " +
 		"JOIN Letter l ON l.transaction = t " +
 		"JOIN t.senderAccount sa " +
