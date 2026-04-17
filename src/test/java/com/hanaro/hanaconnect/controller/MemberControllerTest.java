@@ -288,7 +288,11 @@ class MemberControllerTest {
 	void getOtherParentsFailTest() throws Exception {
 		mvc.perform(get("/api/" + kidId + "/parents")
 				.header("Authorization", "Bearer " + kidFriendAccessToken))
-			.andExpect(status().isBadRequest())
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(0))
 			.andDo(print());
 	}
 
