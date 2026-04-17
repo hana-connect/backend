@@ -182,7 +182,7 @@ public class InitLoader implements ApplicationRunner {
 			"22233330000",
 			"5678",
 			AccountType.WALLET,
-			new BigDecimal("800000"),
+			new BigDecimal("830000"),
 			parent1,
 			null
 		));

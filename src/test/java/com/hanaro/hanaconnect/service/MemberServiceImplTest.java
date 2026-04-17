@@ -206,11 +206,13 @@ class MemberServiceImplTest {
 	}
 
 	private void createWalletAccount(Member member, BigDecimal balance) {
+		String rawAccountNumber = generateVirtualAccount();
+
 		accountRepository.save(
 			Account.builder()
 				.name(member.getName() + " 지갑")
-				.accountNumber(accountCryptoService.encrypt(generateVirtualAccount()))
-				.accountNumberHash(accountHashService.hash(generateVirtualAccount()))
+				.accountNumber(accountCryptoService.encrypt(rawAccountNumber))
+				.accountNumberHash(accountHashService.hash(rawAccountNumber))
 				.password(passwordEncoder.encode("1234"))
 				.accountType(AccountType.WALLET)
 				.balance(balance)

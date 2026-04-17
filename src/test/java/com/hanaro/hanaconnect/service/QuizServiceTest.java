@@ -21,6 +21,7 @@ import com.hanaro.hanaconnect.common.enums.MemberRole;
 import com.hanaro.hanaconnect.common.enums.QuizQuestionStatus;
 import com.hanaro.hanaconnect.common.enums.QuizSetStatus;
 import com.hanaro.hanaconnect.common.enums.Role;
+import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.dto.quiz.QuizAnswerResponseDTO;
 import com.hanaro.hanaconnect.dto.quiz.QuizEntryResponseDTO;
 import com.hanaro.hanaconnect.entity.Member;
@@ -54,6 +55,9 @@ class QuizServiceTest {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private AccountCryptoService accountCryptoService;
 
 	private static long virtualAccountSeq = 40000000000L;
 
@@ -109,7 +113,7 @@ class QuizServiceTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.virtualAccount(rawVirtualAccount)
+				.virtualAccount(accountCryptoService.encrypt(rawVirtualAccount))
 				.birthday(memberRole == MemberRole.KID
 					? LocalDate.of(2015, 1, 1)
 					: LocalDate.of(1985, 1, 1))
