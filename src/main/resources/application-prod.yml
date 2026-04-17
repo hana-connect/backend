@@ -1,25 +1,19 @@
 spring:
-  application:
-    name: hanaconnect
-
   config:
     import:
       - classpath:security.yml
 
-  profiles:
-    active: local
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3308/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://hanaconnectdb.c3o4mkm04538.ap-northeast-2.rds.amazonaws.com:3366/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: hanaconnect
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: true
+    show-sql: false
     defer-datasource-initialization: true
     properties:
       hibernate:
