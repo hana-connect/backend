@@ -57,13 +57,13 @@ public class MemberServiceImpl implements MemberService{
 	public List<ConnectMemberResponseDTO> getOtherParents(Long memberId, Long kidId) {
 		boolean isRelated = relationRepository
 			.existsByMember_IdAndConnectMember_IdAndConnectMemberRole(
-				kidId,          // member (아이)
-				memberId,       // connectMember (부모)
+				kidId,
+				memberId,
 				MemberRole.PARENT
 			);
 
 		if (!isRelated) {
-			throw new IllegalArgumentException("해당 아이와 연결된 부모만 조회할 수 있습니다.");
+			return List.of();
 		}
 
 		return relationRepository.findOtherParents(memberId, kidId);
