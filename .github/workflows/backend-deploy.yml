@@ -27,6 +27,8 @@ jobs:
             EOF
 
             cd /home/ec2-user/workspace/backend
+            
+            rm -f src/main/resources/application-prod.yml
 
             git fetch origin
             git checkout main

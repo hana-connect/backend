@@ -1,4 +1,4 @@
-name: Hana Connect CI
+name: Hana Connect Main CI
 
 on:
   push:
