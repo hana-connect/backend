@@ -11,4 +11,5 @@ public class SavingsTransferResponseDTO {
 	private BigDecimal transactionMoney;   // 보낸 금액
 	private BigDecimal transactionBalance; // 남은 잔액
 	private String message;                // 보낸 편지 내용
+	private String toAccountNumber;
 }
