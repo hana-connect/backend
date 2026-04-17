@@ -36,4 +36,7 @@ public class HouseStatusResponseDTO {
 		nullable = true
 	)
 	private String message;
+
+	@Schema(description = "아이 이름", example = "별돌이")
+	private String kidName;
 }
