@@ -30,7 +30,7 @@ public class AssetAIService {
 		AssetSummaryResponseDTO summary = assetService.getMemberAssetSummary(memberId);
 		BigDecimal realTotal = summary.getTotalAssets();
 
-		String cacheKey = memberId + "_" + realTotal.toPlainString();
+		String cacheKey = buildCacheKey(memberId, summary);
 
 		// 캐시에 값이 있으면 즉시 반환 (AI 호출 안 함)
 		if (recommendationCache.containsKey(cacheKey)) {
@@ -181,5 +181,20 @@ public class AssetAIService {
 
 	public void clearRecommendationCache(Long memberId) {
 		recommendationCache.keySet().removeIf(key -> key.startsWith(memberId + "_"));
+	}
+
+	private String buildCacheKey(Long memberId, AssetSummaryResponseDTO summary) {
+		return String.join("_",
+			memberId.toString(),
+			normalize(summary.getTotalAssets()),
+			normalize(summary.getDepositSavings()),
+			normalize(summary.getDepositWithdrawal()),
+			normalize(summary.getInvestment()),
+			normalize(summary.getPension())
+		);
+	}
+
+	private String normalize(BigDecimal value) {
+		return value.stripTrailingZeros().toPlainString();
 	}
 }
