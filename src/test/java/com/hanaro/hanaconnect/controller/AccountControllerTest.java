@@ -332,7 +332,6 @@ class AccountControllerTest {
 			.password(passwordEncoder.encode("123456"))
 			.birthday(LocalDate.of(1990, 1, 1))
 			.virtualAccount("93939393939")
-			.walletMoney(BigDecimal.ZERO)
 			.memberRole(MemberRole.PARENT)
 			.role(Role.USER)
 			.build());
@@ -342,7 +341,6 @@ class AccountControllerTest {
 			.password(passwordEncoder.encode("123456"))
 			.birthday(LocalDate.of(2015, 1, 1))
 			.virtualAccount("94949494949")
-			.walletMoney(BigDecimal.ZERO)
 			.memberRole(MemberRole.KID)
 			.role(Role.USER)
 			.build());

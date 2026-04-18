@@ -184,12 +184,16 @@ public class TransferService {
 			.findByMemberIdAndAccountId(loginMemberId, accountId)
 			.orElseThrow(() -> new IllegalArgumentException("연결된 계좌 정보가 없습니다."));
 
+		String accountAlias = (linkedAccount.getNickname() != null && !linkedAccount.getNickname().isBlank())
+			? linkedAccount.getNickname()
+			: kidAccount.getName();
+
 		var builder = TransferPrepareResponseDto.builder()
 			.accountId(accountId)
 			.targetMemberName(kid.getName())
 			.phoneSavedName(phoneSavedName)
 			.displayName(displayName)
-			.accountAlias(linkedAccount.getNickname())   // 여기 변경
+			.accountAlias(accountAlias)
 			.balance(parentWalletAccount.getBalance());
 
 		if (kidAccount.getAccountType() == AccountType.SAVINGS) {
