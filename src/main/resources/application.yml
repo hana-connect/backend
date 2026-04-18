@@ -6,20 +6,13 @@ spring:
     import:
       - classpath:security.yml
 
-  profiles:
-    active: local
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3308/hanaconnectdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: hanaconnect
 
   jpa:
     hibernate:
-      ddl-auto: create
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: true
     defer-datasource-initialization: true
     properties:
       hibernate:
