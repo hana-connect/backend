@@ -59,4 +59,6 @@ public interface LinkedAccountRepository extends JpaRepository<LinkedAccount, Lo
 
 	@EntityGraph(attributePaths = "account")
 	Optional<LinkedAccount> findByMemberIdAndAccount_IsRewardTrue(Long memberId);
+
+	Optional<LinkedAccount> findByAccountIdAndMemberId(Long accountId, Long memberId);
 }

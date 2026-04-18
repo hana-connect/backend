@@ -15,6 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.hanaro.hanaconnect.common.enums.AccountType;
@@ -27,6 +30,7 @@ import com.hanaro.hanaconnect.dto.account.AccountVerifyRequestDTO;
 import com.hanaro.hanaconnect.dto.account.AccountVerifyResponseDTO;
 import com.hanaro.hanaconnect.dto.account.KidAccountAddRequestDTO;
 import com.hanaro.hanaconnect.dto.account.KidAccountAddResponseDTO;
+import com.hanaro.hanaconnect.dto.account.KidAccountListResponseDTO;
 import com.hanaro.hanaconnect.dto.account.KidWalletDetailResponseDTO;
 import com.hanaro.hanaconnect.dto.account.MyAccountResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
@@ -36,6 +40,8 @@ import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class AccountServiceImplTest {
@@ -474,7 +480,6 @@ class AccountServiceImplTest {
 			.password("encoded")
 			.birthday(LocalDate.of(2010, 1, 1))
 			.virtualAccount("encrypted")
-			.walletMoney(walletMoney)
 			.memberRole(role)
 			.role(Role.USER)
 			.build();
@@ -505,5 +510,115 @@ class AccountServiceImplTest {
 			.build();
 		linked.setCreatedAtForInit(createdAt);
 		return linked;
+	}
+
+	@Test
+	@DisplayName("아이 계좌 목록 조회 성공 - limit 없음")
+	void getKidAccounts_success_withoutLimit() {
+		Member parent = createMember(3L, "김엄마", MemberRole.PARENT);
+		Member kid = createMember(1L, "홍길동", MemberRole.KID);
+
+		Account account = createAccount(
+			30L, "아이 통장", "encrypted-77788889999", "encoded", AccountType.SUBSCRIPTION, kid
+		);
+
+		LinkedAccount linked = createLinkedAccount(
+			300L, "민수 청약", account, parent, LocalDateTime.of(2026, 4, 15, 14, 0)
+		);
+
+		given(memberRepository.findById(3L)).willReturn(Optional.of(parent));
+		given(linkedAccountRepository
+			.findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(3L, MemberRole.KID))
+			.willReturn(List.of(linked));
+		given(accountCryptoService.decrypt("encrypted-77788889999")).willReturn("77788889999");
+
+		List<KidAccountListResponseDTO> result = accountService.getKidAccounts(3L, null);
+
+		assertThat(result).isNotNull();
+		assertThat(result.size()).isEqualTo(1);
+		assertThat(result.get(0).getAccountNumber()).isEqualTo("777-8888-9999");
+	}
+
+	@Test
+	@DisplayName("아이 계좌 목록 조회 실패 - 부모 권한 아님")
+	void getKidAccounts_fail_notParent() {
+		Member kid = createMember(1L, "홍길동", MemberRole.KID);
+
+		given(memberRepository.findById(1L)).willReturn(Optional.of(kid));
+
+		assertThatThrownBy(() -> accountService.getKidAccounts(1L, null))
+			.isInstanceOf(AccessDeniedException.class)
+			.hasMessage("접근 권한이 없습니다.");
+	}
+
+	@Test
+	@DisplayName("내 계좌 조회 성공 - limit 적용")
+	void getMyAccounts_success_withLimit() {
+		Member parent = createMember(3L, "김엄마", MemberRole.PARENT);
+
+		Account account = createAccount(
+			20L, "부모 계좌", "encrypted-22233334444", "encoded", AccountType.DEPOSIT, parent
+		);
+
+		LinkedAccount linked = createLinkedAccount(
+			200L, null, account, parent, LocalDateTime.of(2026, 4, 15, 12, 0)
+		);
+
+		given(linkedAccountRepository
+			.findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(eq(3L), eq(3L), any(Pageable.class)))
+			.willReturn(List.of(linked));
+
+		given(accountCryptoService.decrypt("encrypted-22233334444"))
+			.willReturn("22233334444");
+
+		List<MyAccountResponseDTO> result = accountService.getMyAccounts(3L, 1);
+
+		assertThat(result).isNotNull();
+		assertThat(result.size()).isEqualTo(1);
+		assertThat(result.get(0).getAccountNumber()).isEqualTo("222-3333-4444");
+	}
+
+	@Test
+	@DisplayName("본인 계좌 등록 실패 - 저장 중 중복 발생")
+	void linkMyAccount_fail_duplicate_onSave() {
+		Member kid = createMember(1L, "홍길동", MemberRole.KID);
+		Account account = createAccount(
+			10L, "아이 입출금 통장", "encrypted-11122223333", "encoded", AccountType.FREE, kid
+		);
+
+		AccountLinkRequestDTO request = new AccountLinkRequestDTO();
+		request.setAccountNumber("11122223333");
+		request.setAccountPassword("1234");
+
+		given(accountHashService.hash("11122223333")).willReturn("hashed-11122223333");
+		given(accountRepository.findByAccountNumberHashAndMemberId("hashed-11122223333", 1L))
+			.willReturn(Optional.of(account));
+		given(passwordEncoder.matches("1234", "encoded")).willReturn(true);
+		given(linkedAccountRepository.existsByAccountIdAndMemberId(10L, 1L))
+			.willReturn(false, true);
+		given(linkedAccountRepository.saveAndFlush(any()))
+			.willThrow(new DataIntegrityViolationException("dup"));
+
+		assertThatThrownBy(() -> accountService.linkMyAccount(1L, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("이미 등록된 계좌입니다.");
+	}
+
+	@Test
+	@DisplayName("리워드 계좌 변경 실패 - 연금 계좌가 아님")
+	void updateRewardAccount_fail_notPension() {
+		Member parent = createMember(3L, "김엄마", MemberRole.PARENT);
+		Account account = createAccount(
+			20L, "부모 계좌", "encrypted-22233334444", "encoded", AccountType.DEPOSIT, parent
+		);
+		LinkedAccount linked = createLinkedAccount(
+			200L, null, account, parent, LocalDateTime.of(2026, 4, 15, 12, 0)
+		);
+
+		given(linkedAccountRepository.findById(200L)).willReturn(Optional.of(linked));
+
+		assertThatThrownBy(() -> accountService.updateRewardAccount(3L, 200L))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("연금 계좌만 리워드 계좌로 설정할 수 있습니다.");
 	}
 }

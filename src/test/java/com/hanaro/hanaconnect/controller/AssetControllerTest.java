@@ -76,7 +76,6 @@ class AssetControllerTest {
 			.password(encodedPassword)
 			.birthday(LocalDate.of(2000, 1, 1))
 			.virtualAccount(accountCryptoService.encrypt("1234567890"))
-			.walletMoney(new BigDecimal("100000"))
 			.memberRole(MemberRole.PARENT)
 			.role(Role.USER)
 			.build();
