@@ -68,7 +68,7 @@ jobs:
         run: |
           mkdir -p src/test/resources
 
-          cat > src/test/resources/application-ci.yml <<EOF
+          cat > src/test/resources/application.yml <<EOF
           spring:
             config:
               import:
@@ -134,4 +134,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew clean build --no-daemon --stacktrace -Dspring.profiles.active=ci
+        run: ./gradlew clean build --no-daemon --stacktrace
