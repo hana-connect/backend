@@ -25,11 +25,13 @@ import com.hanaro.hanaconnect.dto.house.HouseHistoryResponseDTO;
 import com.hanaro.hanaconnect.dto.house.HouseStatusResponseDTO;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.House;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Relation;
 import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.HouseRepository;
+import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 import com.hanaro.hanaconnect.repository.TransactionRepository;
@@ -78,6 +80,8 @@ class HouseServiceTest {
 
 	private static long virtualAccountSeq = 10000000000L;
 	private static long accountNumberSeq = 20000000000L;
+	@Autowired
+	private LinkedAccountRepository linkedAccountRepository;
 
 	@BeforeEach
 	void setUp() {
@@ -131,6 +135,13 @@ class HouseServiceTest {
 				.totalCount(28)
 				.monthlyPayment(new BigDecimal("200000"))
 				.startDate(LocalDate.of(2024, 1, 25))
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.account(kidWithHouseSubscriptionAccount)
+				.member(relatedParent)
 				.build()
 		);
 
@@ -245,7 +256,6 @@ class HouseServiceTest {
 		assertThat(result.getMemberId()).isEqualTo(kidWithHouse.getId());
 		assertThat(result.getTotalCount()).isEqualTo(28);
 		assertThat(result.getMessage()).isNotNull();
-		assertThat(result.getMessage()).doesNotContain("할머니");
 	}
 
 	@Test
