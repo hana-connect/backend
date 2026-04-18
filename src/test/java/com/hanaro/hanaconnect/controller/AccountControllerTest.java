@@ -325,6 +325,72 @@ class AccountControllerTest {
 	}
 
 	@Test
+	@DisplayName("내 연결 계좌 목록 조회 API - 부모가 추가한 아이 계좌는 제외한다")
+	void getMyAccounts_excludesKidAccountsAddedByParent() throws Exception {
+		Member parent = memberRepository.save(Member.builder()
+			.name("김엄마")
+			.password(passwordEncoder.encode("123456"))
+			.birthday(LocalDate.of(1990, 1, 1))
+			.virtualAccount("93939393939")
+			.walletMoney(BigDecimal.ZERO)
+			.memberRole(MemberRole.PARENT)
+			.role(Role.USER)
+			.build());
+
+		Member kid = memberRepository.save(Member.builder()
+			.name("홍길동")
+			.password(passwordEncoder.encode("123456"))
+			.birthday(LocalDate.of(2015, 1, 1))
+			.virtualAccount("94949494949")
+			.walletMoney(BigDecimal.ZERO)
+			.memberRole(MemberRole.KID)
+			.role(Role.USER)
+			.build());
+
+		Account ownAccount = createAccount(
+			parent,
+			"부모 예금",
+			"83838383838",
+			"1234",
+			AccountType.DEPOSIT,
+			BigDecimal.valueOf(150000),
+			false
+		);
+		Account kidAccount = createAccount(
+			kid,
+			"아이 청약 통장",
+			"84848484848",
+			"1234",
+			AccountType.SUBSCRIPTION,
+			BigDecimal.valueOf(50000),
+			false
+		);
+
+		linkedAccountRepository.save(LinkedAccount.builder()
+			.account(ownAccount)
+			.member(parent)
+			.build());
+		linkedAccountRepository.save(LinkedAccount.builder()
+			.account(kidAccount)
+			.member(parent)
+			.nickname("민수 청약")
+			.build());
+
+		String parentAccessToken = login(parent.getId(), "123456");
+
+		mvc.perform(get("/api/accounts/me")
+				.header("Authorization", "Bearer " + parentAccessToken)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data.length()").value(1))
+			.andExpect(jsonPath("$.data[0].name").value("부모 예금"))
+			.andExpect(jsonPath("$.data[0].accountNumber").value("838-3838-3838"))
+			.andExpect(jsonPath("$.message").value("내 연결 계좌 목록 조회에 성공했습니다."))
+			.andDo(print());
+	}
+
+	@Test
 	@DisplayName("내 연결 계좌 목록 조회 API - 인증되지 않은 사용자는 401")
 	void getMyAccounts_fail_unauthorized() throws Exception {
 		mvc.perform(get("/api/accounts/me")

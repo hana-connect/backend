@@ -93,9 +93,9 @@ public class AccountServiceImpl implements AccountService {
 			throw e;
 		}
 
-		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
-
 		assetAIService.clearRecommendationCache(memberId);
+
+		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
 
 		return new AccountLinkResponseDTO(
 			AccountNumberFormatter.format(decryptedAccountNumber),
@@ -163,6 +163,8 @@ public class AccountServiceImpl implements AccountService {
 			throw e;
 		}
 
+		assetAIService.clearRecommendationCache(memberId);
+
 		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
 
 		return new KidAccountAddResponseDTO(
@@ -220,10 +222,18 @@ public class AccountServiceImpl implements AccountService {
 	private List<LinkedAccount> getLinkedAccounts(Long memberId, Integer limit) {
 		if (limit != null && limit > 0) {
 			Pageable pageable = PageRequest.of(0, limit);
-			return linkedAccountRepository.findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(memberId, pageable);
+			return linkedAccountRepository
+				.findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(
+					memberId,
+					memberId,
+					pageable
+				);
 		}
 
-		return linkedAccountRepository.findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(memberId);
+		return linkedAccountRepository.findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(
+			memberId,
+			memberId
+		);
 	}
 
 	private List<LinkedAccount> getLinkedKidAccounts(Long memberId, Integer limit) {

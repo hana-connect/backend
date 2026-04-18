@@ -220,7 +220,7 @@ class AccountServiceImplTest {
 			LocalDateTime.of(2026, 4, 15, 12, 0)
 		);
 
-		given(linkedAccountRepository.findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(3L))
+		given(linkedAccountRepository.findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(3L, 3L))
 			.willReturn(List.of(linked));
 
 		given(accountCryptoService.decrypt("encrypted-22233334444"))
