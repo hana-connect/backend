@@ -62,7 +62,6 @@ class AuthControllerTest {
 			.password(encodedPassword)
 			.birthday(LocalDate.of(2010, 1, 2))
 			.virtualAccount(accountCryptoService.encrypt(account))
-			.walletMoney(new BigDecimal("50000"))
 			.memberRole(MemberRole.KID)
 			.role(Role.USER)
 			.build();

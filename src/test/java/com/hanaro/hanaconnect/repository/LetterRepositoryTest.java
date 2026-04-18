@@ -62,7 +62,6 @@ class LetterRepositoryTest {
 			.virtualAccount("PARENT_V_ACC")
 			.memberRole(MemberRole.PARENT)
 			.role(Role.USER)
-			.walletMoney(BigDecimal.ZERO)
 			.build();
 		parent = memberRepository.saveAndFlush(parent);
 
@@ -74,7 +73,6 @@ class LetterRepositoryTest {
 			.virtualAccount("KID_V_ACC")
 			.memberRole(MemberRole.KID)
 			.role(Role.USER)
-			.walletMoney(BigDecimal.ZERO)
 			.build();
 		kid = memberRepository.saveAndFlush(kid);
 

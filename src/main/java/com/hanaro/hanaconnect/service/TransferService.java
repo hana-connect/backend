@@ -180,12 +180,16 @@ public class TransferService {
 			.findByMemberIdAndAccountType(loginMemberId, AccountType.WALLET)
 			.orElseThrow(() -> new IllegalArgumentException("지갑 계좌가 없습니다."));
 
+		LinkedAccount linkedAccount = linkedAccountRepository
+			.findByMemberIdAndAccountId(loginMemberId, accountId)
+			.orElseThrow(() -> new IllegalArgumentException("연결된 계좌 정보가 없습니다."));
+
 		var builder = TransferPrepareResponseDto.builder()
 			.accountId(accountId)
 			.targetMemberName(kid.getName())
 			.phoneSavedName(phoneSavedName)
 			.displayName(displayName)
-			.accountAlias(kidAccount.getName())
+			.accountAlias(linkedAccount.getNickname())   // 여기 변경
 			.balance(parentWalletAccount.getBalance());
 
 		if (kidAccount.getAccountType() == AccountType.SAVINGS) {
@@ -339,7 +343,10 @@ public class TransferService {
 		org.springframework.data.domain.Page<SavingsTransactionDTO> transactionsPage =
 			letterRepository.findAllSavingsDetails(accountId, senderId, pageable);
 
-		List<SenderInfoDTO> senders = letterRepository.findDistinctSendersByAccountId(accountId);
+		List<SenderInfoDTO> senders = replaceSenderNameWithPhoneName(
+			memberId,
+			letterRepository.findDistinctSendersByAccountId(accountId)
+		);
 
 		return SavingsDetailResponseDTO.builder()
 			.productName(account.getName())
@@ -371,5 +378,27 @@ public class TransferService {
 			.amount(tx.getTransactionMoney())
 			.transferredAt(tx.getCreatedAt())
 			.build();
+	}
+
+	private List<SenderInfoDTO> replaceSenderNameWithPhoneName(
+		Long loginMemberId,
+		List<SenderInfoDTO> senders
+	) {
+		if (senders.isEmpty()) {
+			return senders;
+		}
+
+		return senders.stream()
+			.map(sender -> {
+				String phoneName = phoneNameRepository
+					.findNameByOwnerIdAndTargetId(loginMemberId, sender.getSenderId())
+					.orElse(sender.getSenderName());
+
+				return SenderInfoDTO.builder()
+					.senderId(sender.getSenderId())
+					.senderName(phoneName)
+					.build();
+			})
+			.toList();
 	}
 }

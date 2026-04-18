@@ -474,7 +474,6 @@ class AccountServiceImplTest {
 			.password("encoded")
 			.birthday(LocalDate.of(2010, 1, 1))
 			.virtualAccount("encrypted")
-			.walletMoney(walletMoney)
 			.memberRole(role)
 			.role(Role.USER)
 			.build();

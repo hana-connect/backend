@@ -53,7 +53,6 @@ class HouseRepositoryTest extends BaseRepositoryTest {
 				.password(passwordEncoder.encode("123456"))
 				.birthday(LocalDate.of(2010, 1, 1))
 				.virtualAccount(generateVirtualAccount())
-				.walletMoney(BigDecimal.ZERO)
 				.memberRole(memberRole)
 				.role(Role.USER)
 				.build()

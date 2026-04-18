@@ -55,7 +55,6 @@ class AccountServiceTest {
 			.name("홍길동")
 			.password(passwordEncoder.encode("123456"))
 			.virtualAccount("33338888777")
-			.walletMoney(BigDecimal.ZERO)
 			.memberRole(MemberRole.KID)
 			.birthday(LocalDate.of(2000, 1, 1))
 			.role(Role.USER)
