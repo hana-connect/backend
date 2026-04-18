@@ -30,11 +30,13 @@ import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
 import com.hanaro.hanaconnect.common.util.AccountCryptoService;
 import com.hanaro.hanaconnect.entity.Account;
 import com.hanaro.hanaconnect.entity.House;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Relation;
 import com.hanaro.hanaconnect.entity.Transaction;
 import com.hanaro.hanaconnect.repository.AccountRepository;
 import com.hanaro.hanaconnect.repository.HouseRepository;
+import com.hanaro.hanaconnect.repository.LinkedAccountRepository;
 import com.hanaro.hanaconnect.repository.MemberRepository;
 import com.hanaro.hanaconnect.repository.RelationRepository;
 import com.hanaro.hanaconnect.repository.TransactionRepository;
@@ -75,6 +77,9 @@ class HouseControllerTest {
 
 	@Autowired
 	private AccountHashService accountHashService;
+
+	@Autowired
+	private LinkedAccountRepository linkedAccountRepository;
 
 	private static long accountSeq = 77000000000L;
 
@@ -145,6 +150,13 @@ class HouseControllerTest {
 				.totalCount(28)
 				.monthlyPayment(new BigDecimal("200000"))
 				.startDate(LocalDate.of(2024, 1, 25))
+				.build()
+		);
+
+		linkedAccountRepository.save(
+			LinkedAccount.builder()
+				.member(relatedParent)
+				.account(kidWithHouseSubscriptionAccount)
 				.build()
 		);
 
