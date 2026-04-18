@@ -61,8 +61,8 @@ public class HouseService {
 
 		if (requester.getMemberRole() == MemberRole.PARENT) {
 			boolean isLinked = linkedAccountRepository.existsByAccountIdAndMemberId(
-				requester.getId(),
-				house.getAccount().getId()
+				house.getAccount().getId(),
+				requester.getId()
 			);
 
 			if (!isLinked) {
