@@ -22,25 +22,55 @@ public class AssetAIService {
 	private final AssetAiClient assetAiClient;
 	private final ObjectMapper objectMapper;
 
-	private final Map<Long, AssetAIRecommendationResponseDTO> recommendationCache = new ConcurrentHashMap<>();
+	private final Map<String, AssetAIRecommendationResponseDTO> recommendationCache = new ConcurrentHashMap<>();
 
 	private final List<String> investmentStyles = List.of("공격형", "중립형", "안정형");
 
 	public AssetAIRecommendationResponseDTO getAssetRecommendation(Long memberId) {
-		// 캐시에 값이 있으면 즉시 반환 (AI 호출 안 함)
-		if (recommendationCache.containsKey(memberId)) {
-			return recommendationCache.get(memberId);
-		}
-
 		AssetSummaryResponseDTO summary = assetService.getMemberAssetSummary(memberId);
 		BigDecimal realTotal = summary.getTotalAssets();
 
-		// 1. memberId 기반 고정 투자 성향 선택 (사용자마다 고정된 프롬프트 생성)
+		String cacheKey = buildCacheKey(memberId, summary);
+
+		// 캐시에 값이 있으면 즉시 반환 (AI 호출 안 함)
+		if (recommendationCache.containsKey(cacheKey)) {
+			return recommendationCache.get(cacheKey);
+		}
+
+		System.out.println("조회된 총 자산 금액: " + realTotal);
+
+		System.out.println("AI 분석 시작 - 사용자 ID: " + memberId);
+		System.out.println("조회된 총 자산 금액: " + realTotal);
+
+		// 1. 투자 성향 선택 (memberId를 기반으로 고정된 성향을 선택하여 일관된 결과 제공)
 		String fixedStyle = investmentStyles.get((int) (memberId % investmentStyles.size()));
+
+		// 성향별 구체적인 가이드라인 설정
+		String styleGuideline;
+		switch (fixedStyle) {
+			case "공격형":
+				styleGuideline = "투자 비율을 전체 자산의 30%~50% 사이로 높게 설정하고, 공격적인 자산 증식을 제안해줘.";
+				break;
+			case "중립형":
+				styleGuideline = "투자 비율을 15%~30% 사이로 설정하고, 안정성과 수익성의 균형을 맞춰줘.";
+				break;
+			case "안정형":
+			default:
+				styleGuideline = "투자 비율을 15% 미만으로 낮게 잡고, 예적금 위주의 보수적인 자산 운용을 제안해줘.";
+				break;
+		}
+
+		String styleWithGuideline = fixedStyle + " (가이드라인: " + styleGuideline + ")";
 
 		// 2. 프롬프트 생성
 		String prompt = String.format("""
           사용자 현재 자산: 총 %s원 (예적금: %s, 입출금: %s, 투자: %s, 연금: %s).
+          
+          [절대 규칙 - 위반 시 무효]
+		   1. 너가 추천하는 4가지 항목(recommendedDepositSavings, recommendedDepositWithdrawal, recommendedInvestment, recommendedPension)의 **산술적 합계는 반드시 정확히 %s원**이어야 해.
+		   2. 이전의 모든 연산 결과나 데이터는 완전히 잊고, 오직 현재 자산인 %s원을 기준으로만 새롭게 분배해줘.
+		   3. 자산이 변동되었으므로, 과거의 추천 비율에 얽매이지 말고 '지금 이 금액'에 가장 적합한 설계를 다시 해줘.
+				         
           [미션]
           1. 사용자의 투자 성향이 '%s'이라고 가정하고, 현재 총 자산(%s원)을 유지한 채 4가지 항목(예적금, 입출금, 투자, 연금)에 대한 최적의 분배 금액을 결정해줘.
           2. 각 항목의 합은 반드시 총 자산(%s원)과 일치해야 해.
@@ -62,9 +92,16 @@ public class AssetAIService {
           }
           8. **중요: 모든 비율은 반드시 '10:90' 또는 '20:80'과 같은 [숫자:숫자] 형식으로만 작성해줘.**
           """,
-			realTotal, summary.getDepositSavings(), summary.getDepositWithdrawal(),
-			summary.getInvestment(), summary.getPension(),
-			fixedStyle, realTotal, realTotal, realTotal, fixedStyle);
+			// 1~5번: 현재 자산 정보
+			realTotal, summary.getDepositSavings(), summary.getDepositWithdrawal(), summary.getInvestment(), summary.getPension(),
+			// 6~7번: 절대 규칙용 (realTotal)
+			realTotal, realTotal,
+			// 8~10번: 미션용 (styleWithGuideline, realTotal, realTotal)
+			styleWithGuideline, realTotal, realTotal,
+			// 11번: 생활비 산출용 (realTotal)
+			realTotal,
+			// 12번: 코멘트 형식용 (fixedStyle)
+			fixedStyle);
 
 		try {
 			// AI 서버 호출
@@ -104,7 +141,7 @@ public class AssetAIService {
 				.build();
 
 			// 결과를 캐시에 저장
-			recommendationCache.put(memberId, response);
+			recommendationCache.put(cacheKey, response);
 			return response;
 
 		} catch (Exception e) {
@@ -143,6 +180,21 @@ public class AssetAIService {
 	}
 
 	public void clearRecommendationCache(Long memberId) {
-		recommendationCache.remove(memberId);
+		recommendationCache.keySet().removeIf(key -> key.startsWith(memberId + "_"));
+	}
+
+	private String buildCacheKey(Long memberId, AssetSummaryResponseDTO summary) {
+		return String.join("_",
+			memberId.toString(),
+			normalize(summary.getTotalAssets()),
+			normalize(summary.getDepositSavings()),
+			normalize(summary.getDepositWithdrawal()),
+			normalize(summary.getInvestment()),
+			normalize(summary.getPension())
+		);
+	}
+
+	private String normalize(BigDecimal value) {
+		return value.stripTrailingZeros().toPlainString();
 	}
 }

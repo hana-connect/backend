@@ -93,9 +93,9 @@ public class AccountServiceImpl implements AccountService {
 			throw e;
 		}
 
-		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
-
 		assetAIService.clearRecommendationCache(memberId);
+
+		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
 
 		return new AccountLinkResponseDTO(
 			AccountNumberFormatter.format(decryptedAccountNumber),
@@ -162,6 +162,8 @@ public class AccountServiceImpl implements AccountService {
 			}
 			throw e;
 		}
+
+		assetAIService.clearRecommendationCache(memberId);
 
 		String decryptedAccountNumber = accountCryptoService.decrypt(account.getAccountNumber());
 

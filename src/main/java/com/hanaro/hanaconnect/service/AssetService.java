@@ -35,7 +35,12 @@ public class AssetService {
 			List.of(AccountType.DEPOSIT, AccountType.SAVINGS, AccountType.SUBSCRIPTION), memberId
 		);
 
-		BigDecimal depositWithdrawal = sumBalanceByAccountType(linkedAccounts, AccountType.FREE, memberId);
+		// 입출금 계좌 + 가상 계좌 (FREE, WALLET) 합산
+		BigDecimal depositWithdrawal = sumBalanceByAccountTypes(
+			linkedAccounts,
+			List.of(AccountType.FREE, AccountType.WALLET), memberId
+		);
+
 		BigDecimal investment = sumBalanceByAccountType(linkedAccounts, AccountType.INVESTMENT, memberId);
 		BigDecimal pension = sumBalanceByAccountType(linkedAccounts, AccountType.PENSION, memberId);
 
