@@ -47,12 +47,25 @@ jobs:
             chmod +x gradlew
             ./gradlew clean build -x test
 
-            APP_PID=$(pgrep -f 'hanaconnect-0.0.1-SNAPSHOT.jar' || true)
-            if [ -n "$APP_PID" ]; then
-              kill -15 "$APP_PID" || true
-              sleep 5
+            if [ -f app.pid ]; then
+              OLD_PID=$(cat app.pid)
+              if ps -p "$OLD_PID" > /dev/null 2>&1; then
+                kill -15 "$OLD_PID" || true
+                sleep 5
+              fi
+              rm -f app.pid
             fi
 
-            setsid nohup java -jar build/libs/hanaconnect-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod > app.log 2>&1 < /dev/null &
-            sleep 15
-            grep -q "Started HanaconnectApplication" app.log
+            nohup bash -c "java -jar build/libs/hanaconnect-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod" > app.log 2>&1 < /dev/null &
+            echo $! > app.pid
+
+            for i in {1..12}; do
+              if grep -q "Started HanaconnectApplication" app.log; then
+                tail -n 30 app.log
+                exit 0
+              fi
+              sleep 5
+            done
+
+            tail -n 100 app.log
+            exit 1
