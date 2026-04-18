@@ -1,7 +1,6 @@
 package com.hanaro.hanaconnect.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -14,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +36,8 @@ import com.hanaro.hanaconnect.dto.saving.SavingsTransferRequestDTO;
 import com.hanaro.hanaconnect.dto.saving.SavingsTransferResponseDTO;
 import com.hanaro.hanaconnect.dto.transfer.SenderInfoDTO;
 import com.hanaro.hanaconnect.dto.transfer.TransferPrepareResponseDto;
+import com.hanaro.hanaconnect.dto.transfer.TransferRequestDto;
+import com.hanaro.hanaconnect.dto.transfer.TransferResponseDto;
 import com.hanaro.hanaconnect.service.TransferService;
 
 @SpringBootTest
@@ -220,4 +222,255 @@ class TransferControllerTest {
 			.andExpect(jsonPath("$.data.transactions[0].senderName").value("엄마"))
 			.andExpect(jsonPath("$.data.transactions[0].message").value("사랑해!"));
 	}
+
+	@Test
+	@DisplayName("송금 준비 조회 실패 - 계좌가 존재하지 않음")
+	void getTransferPrepare_fail_account_not_found() throws Exception {
+		Long memberId = 1L;
+		Long accountId = 999L;
+
+		given(transferService.getTransferPrepareInfo(eq(memberId), eq(accountId)))
+			.willThrow(new IllegalArgumentException("계좌가 존재하지 않습니다."));
+
+		mvc.perform(get("/api/transfer/prepare")
+				.param("accountId", String.valueOf(accountId))
+				.with(authentication(createAuthentication(memberId))))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value("계좌가 존재하지 않습니다."));
+	}
+
+	@Test
+	@DisplayName("송금 준비 조회 실패 - 인증되지 않은 사용자")
+	void getTransferPrepare_fail_unauthenticated() throws Exception {
+		mvc.perform(get("/api/transfer/prepare")
+				.param("accountId", "10"))
+			.andExpect(status().isUnauthorized());
+
+		verify(transferService, never()).getTransferPrepareInfo(any(), any());
+	}
+
+	@Test
+	@DisplayName("만기 적금 상세 내역 조회 성공 - senderId 없이")
+	void getSavingsDetail_success_without_senderId() throws Exception {
+		Long memberId = 1L;
+		Long accountId = 10L;
+		int page = 0;
+
+		SavingsDetailResponseDTO response = SavingsDetailResponseDTO.builder()
+			.productName("아이 적금 통장")
+			.accountNumber("12345678901")
+			.senders(List.of(new SenderInfoDTO(5L, "엄마")))
+			.transactions(List.of())
+			.build();
+
+		given(transferService.getExpiredSavingsDetail(eq(memberId), eq(accountId), eq(page), eq(null)))
+			.willReturn(response);
+
+		mvc.perform(get("/api/accounts/terminated-savings/{accountId}", accountId)
+				.param("page", String.valueOf(page))
+				.with(authentication(createAuthentication(memberId))))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data.productName").value("아이 적금 통장"));
+	}
+
+	@Test
+	@DisplayName("만기 적금 상세 내역 조회 실패 - 계좌가 존재하지 않음")
+	void getSavingsDetail_fail_account_not_found() throws Exception {
+		Long memberId = 1L;
+		Long accountId = 999L;
+
+		given(transferService.getExpiredSavingsDetail(eq(memberId), eq(accountId), eq(0), eq(null)))
+			.willThrow(new IllegalArgumentException("계좌가 존재하지 않습니다."));
+
+		mvc.perform(get("/api/accounts/terminated-savings/{accountId}", accountId)
+				.param("page", "0")
+				.with(authentication(createAuthentication(memberId))))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value("계좌가 존재하지 않습니다."));
+	}
+
+	@Test
+	@DisplayName("만기 적금 상세 내역 조회 실패 - 인증되지 않은 사용자")
+	void getSavingsDetail_fail_unauthenticated() throws Exception {
+		mvc.perform(get("/api/accounts/terminated-savings/{accountId}", 10L)
+				.param("page", "0"))
+			.andExpect(status().isUnauthorized());
+
+		verify(transferService, never()).getExpiredSavingsDetail(any(), any(), anyInt(), any());
+	}
+
+	@Test
+	@DisplayName("적금 송금 실패 - amount 누락")
+	void transferToSavings_fail_amount_null() throws Exception {
+		Long memberId = 1L;
+
+		SavingsTransferRequestDTO request = createRequest();
+		request.setAmount(null);
+
+		mvc.perform(post("/api/transfer/savings")
+				.with(authentication(createAuthentication(memberId)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("적금 송금 실패 - targetAccountId 누락")
+	void transferToSavings_fail_targetAccountId_null() throws Exception {
+		Long memberId = 1L;
+
+		SavingsTransferRequestDTO request = createRequest();
+		request.setTargetAccountId(null);
+
+		mvc.perform(post("/api/transfer/savings")
+				.with(authentication(createAuthentication(memberId)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("일반 송금 성공")
+	void transfer_success() throws Exception {
+		Long memberId = 1L;
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(2L)
+			.amount(new BigDecimal("50000"))
+			.password("111111")
+			.build();
+
+		TransferResponseDto response = TransferResponseDto.builder()
+			.transferId(100L)
+			.toAccountId(2L)
+			.toAccountNumber("12345678901")
+			.amount(new BigDecimal("50000"))
+			.transferredAt(LocalDateTime.of(2026, 4, 18, 13, 0, 0))
+			.build();
+
+		given(transferService.transfer(eq(memberId), any(TransferRequestDto.class)))
+			.willReturn(response);
+
+		mvc.perform(post("/api/transfer")
+				.with(authentication(createAuthentication(memberId)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.message").value("송금이 완료되었습니다."))
+			.andExpect(jsonPath("$.data.transferId").value(100))
+			.andExpect(jsonPath("$.data.toAccountId").value(2))
+			.andExpect(jsonPath("$.data.toAccountNumber").value("12345678901"))
+			.andExpect(jsonPath("$.data.amount").value(50000));
+	}
+
+	@Test
+	@DisplayName("일반 송금 실패 - 인증되지 않은 사용자")
+	void transfer_fail_unauthenticated() throws Exception {
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(2L)
+			.amount(new BigDecimal("50000"))
+			.password("111111")
+			.build();
+
+		mvc.perform(post("/api/transfer")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isUnauthorized());
+
+		verify(transferService, never()).transfer(any(), any());
+	}
+
+	@Test
+	@DisplayName("일반 송금 실패 - accountId 누락")
+	void transfer_fail_accountId_null() throws Exception {
+		Long memberId = 1L;
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(null)
+			.amount(new BigDecimal("50000"))
+			.password("111111")
+			.build();
+
+		mvc.perform(post("/api/transfer")
+				.with(authentication(createAuthentication(memberId)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("일반 송금 실패 - amount 누락")
+	void transfer_fail_amount_null() throws Exception {
+		Long memberId = 1L;
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(2L)
+			.amount(null)
+			.password("111111")
+			.build();
+
+		mvc.perform(post("/api/transfer")
+				.with(authentication(createAuthentication(memberId)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("일반 송금 실패 - amount가 0")
+	void transfer_fail_amount_zero() throws Exception {
+		Long memberId = 1L;
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(2L)
+			.amount(BigDecimal.ZERO)
+			.password("111111")
+			.build();
+
+		mvc.perform(post("/api/transfer")
+				.with(authentication(createAuthentication(memberId)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("일반 송금 실패 - password 누락")
+	void transfer_fail_password_null() throws Exception {
+		Long memberId = 1L;
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(2L)
+			.amount(new BigDecimal("50000"))
+			.password(null)
+			.build();
+
+		mvc.perform(post("/api/transfer")
+				.with(authentication(createAuthentication(memberId)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("일반 송금 실패 - password 길이 오류")
+	void transfer_fail_password_size() throws Exception {
+		Long memberId = 1L;
+
+		TransferRequestDto request = TransferRequestDto.builder()
+			.accountId(2L)
+			.amount(new BigDecimal("50000"))
+			.password("123")
+			.build();
+
+		mvc.perform(post("/api/transfer")
+				.with(authentication(createAuthentication(memberId)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest());
+	}
+
+
 }

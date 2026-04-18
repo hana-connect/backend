@@ -128,7 +128,7 @@ public class InitLoader implements ApplicationRunner {
 
 
 		Member parent1 = createMember(
-			"할별돌",
+			"할별송",
 			encodedPassword,
 			LocalDate.of(1960, 5, 29),
 			"99988887777",
@@ -164,10 +164,10 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 별돌이-할별돌, 별돌이-별엄마, 별돌이-별송이?
+		// 별돌이-할별송, 별돌이-별엄마, 별돌이-별송이?
 		// 반대 방향은 해당 멤버 영역에서
 		relationRepository.save(createRelation(kid1, parent1));
-		phoneNameRepository.save(createPhoneName(kid1, parent1, "할아버지"));
+		phoneNameRepository.save(createPhoneName(kid1, parent1, "할머니"));
 		relationRepository.save(createRelation(kid1, parent2));
 		phoneNameRepository.save(createPhoneName(kid1, parent2, "우리 엄마"));
 		relationRepository.save(createRelation(kid1, kid2));
@@ -207,7 +207,7 @@ public class InitLoader implements ApplicationRunner {
 		));
 
 
-		// 할별돌-별돌이 적금 계좌 연결.
+		// 할별송-별돌이 적금 계좌 연결.
 		link(parent1, kid1SavingsAccount, "우리 큰 손주 별돌이 목돈");
 
 		// 별돌이 청약
@@ -239,7 +239,7 @@ public class InitLoader implements ApplicationRunner {
 		);
 
 
-		// 할별돌-별돌이 청약 계좌 연결
+		// 할별송-별돌이 청약 계좌 연결
 		link(parent1, kid1SubscriptionAccount, "우리 큰 손주 별돌이 집 적금");
 
 
@@ -252,7 +252,7 @@ public class InitLoader implements ApplicationRunner {
 			AccountType.SAVINGS,
 			null,
 			null,
-			BigDecimal.ZERO, // 할아버지 10만원씩 30회 + 엄마 5만원씩 4회
+			BigDecimal.ZERO, // 할머니 10만원씩 30회 + 엄마 5만원씩 4회
 			false,
 			true,
 			kid1,
@@ -267,13 +267,13 @@ public class InitLoader implements ApplicationRunner {
 		link(kid1, kid1EndSavingsAccount, "꿈꾸는 저금통");
 
 
-		// 할별돌-별돌이 적금 계좌 연결
-		link(parent1, kid1EndSavingsAccount, "별돌이의 꿈을 위해"); // 근데 메세지랑 안 맞는 것 같기도
+		// 할별송-별돌이 적금 계좌 연결
+		link(parent1, kid1EndSavingsAccount, "별돌이 꿈을 위한 할미 선물"); // 근데 메세지랑 안 맞는 것 같기도
 
 
-		// 할별돌 내 지갑 (가상계좌)
+		// 할별송 내 지갑 (가상계좌)
 		Account parent1WalletAccount = accountRepository.save(createAccount(
-			"할별돌 지갑",
+			"할별송 지갑",
 			parent1.getVirtualAccount(), // member의 virtual account랑 같게
 			"9876",
 			AccountType.WALLET,
@@ -286,7 +286,7 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 할별돌-별돌이, 할별돌-별엄마, 할별돌-별송이
+		// 할별송-별돌이, 할별송-별엄마, 할별송-별송이
 		relationRepository.save(createRelation(parent1, kid1));
 		phoneNameRepository.save(createPhoneName(parent1, kid1, "큰 손주"));
 		relationRepository.save(createRelation(parent1, parent2));
@@ -297,7 +297,7 @@ public class InitLoader implements ApplicationRunner {
 		// 별돌이 청약 히스토리 + 거래내역 추가
 		createCheongyakTransactions(parent1WalletAccount, kid1SubscriptionAccount);
 
-		// 할별돌 2만원 5번 + 3만원 3번 TODO 여기는 편지 안 씀?
+		// 할별송 2만원 5번 + 3만원 3번 TODO 여기는 편지 안 씀?
 		for (int i = 0; i < 5; i++) {
 			createTransaction(
 				parent1WalletAccount,
@@ -318,8 +318,8 @@ public class InitLoader implements ApplicationRunner {
 			);
 		}
 
-		// 할별돌 예금
-		// 시연할 때 할별돌이 등록할 본인 계좌
+		// 할별송 예금
+		// 시연할 때 할별송이 등록할 본인 계좌
 		// account 테이블에만 존재해야 함. LinkedAccount X
 		Account parent1DepositAccount = accountRepository.save(createAccount(
 			"369 정기예금",
@@ -335,8 +335,8 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 할별돌 연금계좌들과 자유입출금 계좌는 Linked Account 테이블에 등록되어 있어야 함
-		// 할별돌 연금 계좌
+		// 할별송 연금계좌들과 자유입출금 계좌는 Linked Account 테이블에 등록되어 있어야 함
+		// 할별송 연금 계좌
 		// 1. 개인형 IRP - 리워드
 		Account parent1RewardAccount = accountRepository.save(createAccount(
 			"개인형 IRP", // 이름을 그냥 이렇게 해도 될지?
@@ -382,7 +382,7 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 할별돌 자유입출금
+		// 할별송 자유입출금
 		Account parent1FreeAccount = accountRepository.save(createAccount(
 			"주거래하나 통장",
 			"99988882222",
@@ -397,7 +397,7 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 할별돌 본인 계좌도 서비스에 등록
+		// 할별송 본인 계좌도 서비스에 등록
 		link(parent1, parent1FreeAccount, "주거래하나 통장");
 		link(parent1, parent1RewardAccount, "개인형 IRP");
 		link(parent1, parent1PensionAccount1, "하나더넥스트 연금통장");
@@ -425,11 +425,11 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 별엄마-별돌이, 별엄마-할별돌, 별엄마-별송이
+		// 별엄마-별돌이, 별엄마-할별송, 별엄마-별송이
 		relationRepository.save(createRelation(parent2, kid1));
 		phoneNameRepository.save(createPhoneName(parent2, kid1, "우리 아들"));
 		relationRepository.save(createRelation(parent2, parent1));
-		phoneNameRepository.save(createPhoneName(parent2, parent1, "아버님"));
+		phoneNameRepository.save(createPhoneName(parent2, parent1, "어머님"));
 		relationRepository.save(createRelation(parent2, kid2));
 		phoneNameRepository.save(createPhoneName(parent2, kid2, "우리 딸"));
 
@@ -491,17 +491,17 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 별송이-별돌이, 별송이-할별돌, 별송이-별엄마
+		// 별송이-별돌이, 별송이-할별송, 별송이-별엄마
 		relationRepository.save(createRelation(kid2, kid1));
 		phoneNameRepository.save(createPhoneName(kid2, kid1, "오빠"));
 		relationRepository.save(createRelation(kid2, parent1));
-		phoneNameRepository.save(createPhoneName(kid2, parent1, "할아버지"));
+		phoneNameRepository.save(createPhoneName(kid2, parent1, "할머니"));
 		relationRepository.save(createRelation(kid2, parent2));
 		phoneNameRepository.save(createPhoneName(kid2, parent2, "우리 엄마"));
 
 
 		// 별송이 청약
-		// 시연할 때 할별돌이 등록할 별송이 계좌
+		// 시연할 때 할별송이 등록할 별송이 계좌
 		// account 테이블에만 존재해야 함. LinkedAccount X
 		Account kid2SubscriptionAccount = accountRepository.save(createAccount(
 			"주택청약종합저축",
@@ -517,7 +517,7 @@ public class InitLoader implements ApplicationRunner {
 			null
 		));
 
-		// 할별돌용 별돌이 미션 퀴즈
+		// 할별송용 별돌이 미션 퀴즈
 		createSampleMissions(kid1, parent1);
 
 		// request 테이블에 더미 넣기

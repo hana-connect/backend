@@ -22,6 +22,7 @@ import com.hanaro.hanaconnect.dto.subscription.SubscriptionInfoResponseDto;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionRequestDto;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionResponseDto;
 import com.hanaro.hanaconnect.entity.Account;
+import com.hanaro.hanaconnect.entity.LinkedAccount;
 import com.hanaro.hanaconnect.entity.Member;
 import com.hanaro.hanaconnect.entity.Prepayment;
 import com.hanaro.hanaconnect.entity.PrepaymentDetail;
@@ -62,10 +63,9 @@ public class SubscriptionService {
 			throw new IllegalArgumentException("청약 계좌가 아닙니다.");
 		}
 
-		boolean isLinked = linkedAccountRepository.existsByAccountIdAndMemberId(subscriptionId, memberId);
-		if (!isLinked) {
-			throw new IllegalArgumentException("접근할 수 없는 청약 계좌입니다.");
-		}
+		LinkedAccount linkedAccount = linkedAccountRepository
+			.findByAccountIdAndMemberId(subscriptionId, memberId)
+			.orElseThrow(() -> new IllegalArgumentException("접근할 수 없는 청약 계좌입니다."));
 
 		Member kid = subscriptionAccount.getMember();
 		Long kidId = kid.getId();
@@ -90,6 +90,10 @@ public class SubscriptionService {
 			TransactionType.SUBSCRIPTION
 		);
 
+		if (alreadyPaidAmount == null) {
+			alreadyPaidAmount = BigDecimal.ZERO;
+		}
+
 		boolean hasPaidThisMonth = alreadyPaidAmount.compareTo(BigDecimal.ZERO) > 0;
 
 		Account walletAccount = accountRepository
@@ -100,13 +104,19 @@ public class SubscriptionService {
 			.findByMemberIdAndIsRewardTrue(memberId)
 			.orElse(null);
 
+		String linkedNickname = linkedAccount.getNickname();
+		String subscriptionDisplayName =
+			(linkedNickname != null && !linkedNickname.isBlank())
+				? linkedNickname
+				: subscriptionAccount.getName();
+
 		return new SubscriptionInfoResponseDto(
 			subscriptionAccount.getId(),
 			subscriptionAccount.getAccountNumber(),
 			hasPaidThisMonth,
 			alreadyPaidAmount,
 			displayName,
-			subscriptionAccount.getName(),
+			subscriptionDisplayName,
 			walletAccount.getBalance(),
 			rewardAccount != null ? rewardAccount.getName() : null
 		);
