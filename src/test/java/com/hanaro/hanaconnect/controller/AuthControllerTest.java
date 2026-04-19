@@ -54,7 +54,7 @@ class AuthControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		String encodedPassword = passwordEncoder.encode("123456");
+		String encodedPassword = passwordEncoder.encode("260420");
 		String account = generateAccount();
 
 		Member member = Member.builder()
@@ -75,7 +75,7 @@ class AuthControllerTest {
 		// given
 		LoginRequestDTO request = new LoginRequestDTO();
 		request.setMemberId(memberId);
-		request.setPassword("123456");
+		request.setPassword("260420");
 
 		// when & then
 		mvc.perform(post("/api/auth/login")

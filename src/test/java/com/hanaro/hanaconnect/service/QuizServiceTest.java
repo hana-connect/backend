@@ -123,7 +123,7 @@ class QuizServiceTest {
 				.birthday(memberRole == MemberRole.KID
 					? LocalDate.of(2015, 1, 1)
 					: LocalDate.of(1985, 1, 1))
-				.password(passwordEncoder.encode("123456"))
+				.password(passwordEncoder.encode("260420"))
 				.memberRole(memberRole)
 				.role(Role.USER)
 				.build()

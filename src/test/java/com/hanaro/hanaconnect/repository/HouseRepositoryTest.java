@@ -50,7 +50,7 @@ class HouseRepositoryTest extends BaseRepositoryTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.password(passwordEncoder.encode("123456"))
+				.password(passwordEncoder.encode("260420"))
 				.birthday(LocalDate.of(2010, 1, 1))
 				.virtualAccount(generateVirtualAccount())
 				.memberRole(memberRole)

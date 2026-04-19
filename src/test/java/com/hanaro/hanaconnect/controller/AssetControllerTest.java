@@ -68,7 +68,7 @@ class AssetControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		String encodedPassword = passwordEncoder.encode("123456");
+		String encodedPassword = passwordEncoder.encode("260420");
 
 		// 1. 회원 생성
 		Member member = Member.builder()

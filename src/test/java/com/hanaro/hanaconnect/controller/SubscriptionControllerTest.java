@@ -161,7 +161,7 @@ class SubscriptionControllerTest {
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
 		request.setAmount(new BigDecimal("100000"));
 		request.setPrepaymentCount(null);
-		request.setPassword("123456");
+		request.setPassword("260420");
 		request.setTransferExcessToReward(null);
 
 		SubscriptionResponseDto response = SubscriptionResponseDto.builder()
@@ -204,7 +204,7 @@ class SubscriptionControllerTest {
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
 		request.setAmount(new BigDecimal("300000"));
 		request.setPrepaymentCount(null);
-		request.setPassword("123456");
+		request.setPassword("260420");
 		request.setTransferExcessToReward(true);
 
 		SubscriptionResponseDto response = SubscriptionResponseDto.builder()
@@ -267,7 +267,7 @@ class SubscriptionControllerTest {
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
 		request.setAmount(new BigDecimal("100000"));
 		request.setPrepaymentCount(null);
-		request.setPassword("123456");
+		request.setPassword("260420");
 
 		mvc.perform(post("/api/subscriptions/{subscriptionId}/payments", subscriptionId)
 				.contentType(MediaType.APPLICATION_JSON)
@@ -283,7 +283,7 @@ class SubscriptionControllerTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.password(passwordEncoder.encode("123456"))
+				.password(passwordEncoder.encode("260420"))
 				.birthday(LocalDate.of(2000, 1, 1))
 				.virtualAccount(virtualAccount)
 				.memberRole(memberRole)

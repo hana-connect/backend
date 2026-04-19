@@ -181,7 +181,7 @@ class SubscriptionServiceTest {
 		// parent1 계좌
 		parent1WalletAccount = createAccount(
 			"김엄마 지갑",
-			"123456",
+			"260420",
 			AccountType.WALLET,
 			new BigDecimal("800000"),
 			parent1,
@@ -191,7 +191,7 @@ class SubscriptionServiceTest {
 
 		createAccount(
 			"부모 입출금 통장",
-			"123456",
+			"260420",
 			AccountType.FREE,
 			new BigDecimal("800000"),
 			parent1,
@@ -201,7 +201,7 @@ class SubscriptionServiceTest {
 
 		parent1RewardAccount = createAccount(
 			"부모 리워드 통장",
-			"123456",
+			"260420",
 			AccountType.PENSION,
 			BigDecimal.ZERO,
 			parent1,
@@ -212,7 +212,7 @@ class SubscriptionServiceTest {
 		// parent3 계좌
 		parent3WalletAccount = createAccount(
 			"청약할머니 지갑",
-			"123456",
+			"260420",
 			AccountType.WALLET,
 			new BigDecimal("10000000"),
 			parent3,
@@ -222,7 +222,7 @@ class SubscriptionServiceTest {
 
 		createAccount(
 			"청약할머니 입출금 통장",
-			"123456",
+			"260420",
 			AccountType.FREE,
 			new BigDecimal("10000000"),
 			parent3,
@@ -232,7 +232,7 @@ class SubscriptionServiceTest {
 
 		parent3RewardAccount = createAccount(
 			"청약할머니 리워드 통장",
-			"123456",
+			"260420",
 			AccountType.PENSION,
 			BigDecimal.ZERO,
 			parent3,
@@ -287,7 +287,7 @@ class SubscriptionServiceTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.password(passwordEncoder.encode("123456"))
+				.password(passwordEncoder.encode("260420"))
 				.birthday(birthday)
 				.virtualAccount(accountCryptoService.encrypt(rawVirtualAccount))
 				.memberRole(memberRole)
@@ -444,7 +444,7 @@ class SubscriptionServiceTest {
 		SubscriptionRequestDto request = createRequest(
 			new BigDecimal("100000"),
 			null,
-			"123456",
+			"260420",
 			null
 		);
 
@@ -485,7 +485,7 @@ class SubscriptionServiceTest {
 		SubscriptionRequestDto request = createRequest(
 			new BigDecimal("300000"),
 			3,
-			"123456",
+			"260420",
 			null
 		);
 
@@ -527,7 +527,7 @@ class SubscriptionServiceTest {
 		SubscriptionRequestDto request = createRequest(
 			new BigDecimal("300000"),
 			null,
-			"123456",
+			"260420",
 			true
 		);
 
@@ -573,7 +573,7 @@ class SubscriptionServiceTest {
 		SubscriptionRequestDto request = createRequest(
 			new BigDecimal("300000"),
 			null,
-			"123456",
+			"260420",
 			false
 		);
 
@@ -613,7 +613,7 @@ class SubscriptionServiceTest {
 		SubscriptionRequestDto request = createRequest(
 			new BigDecimal("300000"),
 			null,
-			"123456",
+			"260420",
 			null
 		);
 
@@ -645,7 +645,7 @@ class SubscriptionServiceTest {
 		SubscriptionRequestDto request = createRequest(
 			new BigDecimal("20000000"),
 			null,
-			"123456",
+			"260420",
 			true
 		);
 
@@ -661,7 +661,7 @@ class SubscriptionServiceTest {
 		SubscriptionRequestDto request = createRequest(
 			new BigDecimal("300000"),
 			1,
-			"123456",
+			"260420",
 			null
 		);
 

@@ -34,7 +34,7 @@ class RelationRepositoryTest extends BaseRepositoryTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.password("123456")
+				.password("260420")
 				.birthday(LocalDate.of(2000, 1, 1))
 				.virtualAccount(generateAccount())
 				.memberRole(memberRole)

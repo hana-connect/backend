@@ -108,7 +108,7 @@ public class InitLoader implements ApplicationRunner {
 	@Transactional
 	public void run(@Nullable ApplicationArguments args) {
 
-		String encodedPassword = passwordEncoder.encode("123456");
+		String encodedPassword = passwordEncoder.encode("260420");
 
 		Member kid1 = createMember(
 			"별돌이",

@@ -135,7 +135,7 @@ class HouseControllerTest {
 
 		relatedParentWalletAccount = createAccount(
 			"청약할머니 지갑",
-			"123456",
+			"260420",
 			AccountType.WALLET,
 			new BigDecimal("990000"),
 			relatedParent,
@@ -285,7 +285,7 @@ class HouseControllerTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.password(passwordEncoder.encode("123456"))
+				.password(passwordEncoder.encode("260420"))
 				.birthday(birthday)
 				.virtualAccount(accountCryptoService.encrypt(rawVirtualAccount))
 				.memberRole(memberRole)

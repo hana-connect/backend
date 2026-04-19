@@ -95,7 +95,7 @@ class AccountControllerTest {
 	void setUp() throws Exception {
 		Member member = memberRepository.save(Member.builder()
 			.name("홍길동")
-			.password(passwordEncoder.encode("123456"))
+			.password(passwordEncoder.encode("260420"))
 			.birthday(LocalDate.of(2000, 1, 1))
 			.virtualAccount("09090987654")
 			.memberRole(MemberRole.KID)
@@ -115,7 +115,7 @@ class AccountControllerTest {
 
 		LoginRequestDTO loginRequest = new LoginRequestDTO();
 		loginRequest.setMemberId(memberId);
-		loginRequest.setPassword("123456");
+		loginRequest.setPassword("260420");
 
 		MvcResult result = mvc.perform(post("/api/auth/login")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -329,7 +329,7 @@ class AccountControllerTest {
 	void getMyAccounts_excludesKidAccountsAddedByParent() throws Exception {
 		Member parent = memberRepository.save(Member.builder()
 			.name("김엄마")
-			.password(passwordEncoder.encode("123456"))
+			.password(passwordEncoder.encode("260420"))
 			.birthday(LocalDate.of(1990, 1, 1))
 			.virtualAccount("93939393939")
 			.memberRole(MemberRole.PARENT)
@@ -338,7 +338,7 @@ class AccountControllerTest {
 
 		Member kid = memberRepository.save(Member.builder()
 			.name("홍길동")
-			.password(passwordEncoder.encode("123456"))
+			.password(passwordEncoder.encode("260420"))
 			.birthday(LocalDate.of(2015, 1, 1))
 			.virtualAccount("94949494949")
 			.memberRole(MemberRole.KID)
@@ -374,7 +374,7 @@ class AccountControllerTest {
 			.nickname("민수 청약")
 			.build());
 
-		String parentAccessToken = login(parent.getId(), "123456");
+		String parentAccessToken = login(parent.getId(), "260420");
 
 		mvc.perform(get("/api/accounts/me")
 				.header("Authorization", "Bearer " + parentAccessToken)
@@ -402,14 +402,14 @@ class AccountControllerTest {
 	void getKidAccounts_success() throws Exception {
 		Member parent = memberRepository.save(Member.builder()
 			.name("김엄마")
-			.password(passwordEncoder.encode("123456"))
+			.password(passwordEncoder.encode("260420"))
 			.birthday(LocalDate.of(1980, 1, 1))
 			.virtualAccount("93939393939")
 			.memberRole(MemberRole.PARENT)
 			.role(Role.USER)
 			.build());
 
-		String parentAccessToken = login(parent.getId(), "123456");
+		String parentAccessToken = login(parent.getId(), "260420");
 
 		Member kid = memberRepository.findById(memberId).orElseThrow();
 		Account kidAccount = createAccount(

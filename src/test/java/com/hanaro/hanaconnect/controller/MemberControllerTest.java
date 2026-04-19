@@ -86,7 +86,7 @@ class MemberControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		String encodedPassword = passwordEncoder.encode("123456");
+		String encodedPassword = passwordEncoder.encode("260420");
 
 		Member me = Member.builder()
 			.name("김꼬마")
