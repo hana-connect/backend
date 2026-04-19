@@ -30,7 +30,7 @@ public class TransferRequestDto {
 	@Positive(message = "송금 금액은 0보다 커야 합니다.") // 0보다 커야 한다
 	private BigDecimal amount;
 
-	@Schema(description = "간편 비밀번호 6자리", example = "123456")
+	@Schema(description = "간편 비밀번호 6자리", example = "260420")
 	@NotBlank(message = "간편 비밀번호는 필수입니다.")
 	@Size(min = 6, max = 6, message = "간편 비밀번호는 6자리여야 합니다.")
 	private String password;

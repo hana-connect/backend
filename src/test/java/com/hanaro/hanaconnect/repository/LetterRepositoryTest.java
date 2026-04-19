@@ -57,7 +57,7 @@ class LetterRepositoryTest {
 		// 부모 생성
 		Member parent = Member.builder()
 			.name("엄마")
-			.password(passwordEncoder.encode("123456"))
+			.password(passwordEncoder.encode("260420"))
 			.birthday(LocalDate.of(1980, 5, 19))
 			.virtualAccount("PARENT_V_ACC")
 			.memberRole(MemberRole.PARENT)
@@ -68,7 +68,7 @@ class LetterRepositoryTest {
 		// 아이 생성
 		Member kid = Member.builder()
 			.name("아이")
-			.password(passwordEncoder.encode("123456"))
+			.password(passwordEncoder.encode("260420"))
 			.birthday(LocalDate.of(2015, 1, 1))
 			.virtualAccount("KID_V_ACC")
 			.memberRole(MemberRole.KID)

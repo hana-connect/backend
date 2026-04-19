@@ -101,7 +101,7 @@ class MemberServiceImplTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.password(passwordEncoder.encode("123456"))
+				.password(passwordEncoder.encode("260420"))
 				.birthday(birthday)
 				.virtualAccount(accountCryptoService.encrypt(rawVirtualAccount))
 				.memberRole(memberRole)

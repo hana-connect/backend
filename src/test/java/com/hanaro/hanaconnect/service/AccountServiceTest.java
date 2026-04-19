@@ -53,7 +53,7 @@ class AccountServiceTest {
 		// Given
 		Member member = memberRepository.save(Member.builder()
 			.name("홍길동")
-			.password(passwordEncoder.encode("123456"))
+			.password(passwordEncoder.encode("260420"))
 			.virtualAccount("33338888777")
 			.memberRole(MemberRole.KID)
 			.birthday(LocalDate.of(2000, 1, 1))

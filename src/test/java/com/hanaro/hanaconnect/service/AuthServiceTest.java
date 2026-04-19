@@ -56,7 +56,7 @@ class AuthServiceTest {
 
 		request = new LoginRequestDTO();
 		request.setMemberId(1L);
-		request.setPassword("123456");
+		request.setPassword("260420");
 	}
 
 	@Test
@@ -64,7 +64,7 @@ class AuthServiceTest {
 	void login_success() {
 		// given
 		given(memberRepository.findById(1L)).willReturn(Optional.of(member));
-		given(passwordEncoder.matches("123456", "encodedPassword")).willReturn(true);
+		given(passwordEncoder.matches("260420", "encodedPassword")).willReturn(true);
 		given(jwtTokenProvider.createAccessToken(any())).willReturn("mock-access-token");
 
 		// when
@@ -80,7 +80,7 @@ class AuthServiceTest {
 		assertThat(response.getMemberRole()).isEqualTo("KID");
 
 		verify(memberRepository).findById(1L);
-		verify(passwordEncoder).matches("123456", "encodedPassword");
+		verify(passwordEncoder).matches("260420", "encodedPassword");
 		verify(jwtTokenProvider).createAccessToken(any());
 	}
 
@@ -105,7 +105,7 @@ class AuthServiceTest {
 	void login_fail_wrong_password() {
 		// given
 		given(memberRepository.findById(1L)).willReturn(Optional.of(member));
-		given(passwordEncoder.matches("123456", "encodedPassword")).willReturn(false);
+		given(passwordEncoder.matches("260420", "encodedPassword")).willReturn(false);
 
 		// when & then
 		assertThatThrownBy(() -> authService.login(request))
@@ -113,7 +113,7 @@ class AuthServiceTest {
 			.hasMessage("아이디 또는 비밀번호가 올바르지 않습니다.");
 
 		verify(memberRepository).findById(1L);
-		verify(passwordEncoder).matches("123456", "encodedPassword");
+		verify(passwordEncoder).matches("260420", "encodedPassword");
 		verify(jwtTokenProvider, never()).createAccessToken(any());
 	}
 }

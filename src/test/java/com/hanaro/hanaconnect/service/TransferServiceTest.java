@@ -101,7 +101,7 @@ class TransferServiceTest {
 
 		parentWalletAccount = createAccount(
 			"김엄마 지갑",
-			"123456",
+			"260420",
 			AccountType.WALLET,
 			new BigDecimal("800000"),
 			parent,
@@ -179,7 +179,7 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("10000"));
-		request.setPassword("123456");
+		request.setPassword("260420");
 		request.setContent("적금 응원 편지");
 
 		SavingsTransferResponseDTO result =
@@ -211,7 +211,7 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("10000"));
-		request.setPassword("123456");
+		request.setPassword("260420");
 		request.setContent("   ");
 
 		SavingsTransferResponseDTO result =
@@ -241,7 +241,7 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("7000"));
-		request.setPassword("123456");
+		request.setPassword("260420");
 		request.setContent(null);
 
 		SavingsTransferResponseDTO result =
@@ -281,7 +281,7 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(strangerFreeAccount.getId());
 		request.setAmount(new BigDecimal("10000"));
-		request.setPassword("123456");
+		request.setPassword("260420");
 		request.setContent("편지");
 
 		assertThatThrownBy(() -> transferService.transferToChildSavings(parent.getId(), request))
@@ -298,7 +298,7 @@ class TransferServiceTest {
 		TransferRequestDto request = new TransferRequestDto();
 		request.setAccountId(kidCheckingAccount.getId());
 		request.setAmount(new BigDecimal("5000"));
-		request.setPassword("123456");
+		request.setPassword("260420");
 
 		TransferResponseDto result = transferService.transfer(parent.getId(), request);
 
@@ -339,7 +339,7 @@ class TransferServiceTest {
 		TransferRequestDto request = new TransferRequestDto();
 		request.setAccountId(strangerFreeAccount.getId());
 		request.setAmount(new BigDecimal("5000"));
-		request.setPassword("123456");
+		request.setPassword("260420");
 
 		assertThatThrownBy(() -> transferService.transfer(parent.getId(), request))
 			.isInstanceOf(IllegalArgumentException.class)
@@ -396,7 +396,7 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("12000"));
-		request.setPassword("123456");
+		request.setPassword("260420");
 		request.setContent("최근 송금 테스트");
 
 		transferService.transferToChildSavings(parent.getId(), request);
@@ -423,7 +423,7 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request = new SavingsTransferRequestDTO();
 		request.setTargetAccountId(kidSavingsAccount.getId());
 		request.setAmount(new BigDecimal("50000"));
-		request.setPassword("123456");
+		request.setPassword("260420");
 		request.setContent("할머니가 주는 용돈이다!");
 
 		transferService.transferToChildSavings(parent.getId(), request);
@@ -465,13 +465,13 @@ class TransferServiceTest {
 		SavingsTransferRequestDTO request1 = new SavingsTransferRequestDTO();
 		request1.setTargetAccountId(kidSavingsAccount.getId());
 		request1.setAmount(new BigDecimal("1000"));
-		request1.setPassword("123456");
+		request1.setPassword("260420");
 		request1.setContent("첫 번째");
 
 		SavingsTransferRequestDTO request2 = new SavingsTransferRequestDTO();
 		request2.setTargetAccountId(kidSavingsAccount.getId());
 		request2.setAmount(new BigDecimal("2000"));
-		request2.setPassword("123456");
+		request2.setPassword("260420");
 		request2.setContent("두 번째");
 
 		transferService.transferToChildSavings(parent.getId(), request1);
@@ -572,7 +572,7 @@ class TransferServiceTest {
 		return memberRepository.save(
 			Member.builder()
 				.name(name)
-				.password(passwordEncoder.encode("123456"))
+				.password(passwordEncoder.encode("260420"))
 				.birthday(birthday)
 				.virtualAccount(accountCryptoService.encrypt(rawVirtualAccount))
 				.memberRole(memberRole)
