@@ -45,6 +45,7 @@ jobs:
             chmod +x gradlew
             ./gradlew clean build -x test
 
+            # 기존 앱 종료
             if [ -f app.pid ]; then
               OLD_PID=$(cat app.pid)
               if ps -p "$OLD_PID" > /dev/null 2>&1; then
