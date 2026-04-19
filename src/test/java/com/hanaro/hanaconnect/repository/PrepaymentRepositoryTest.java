@@ -87,7 +87,6 @@ class PrepaymentRepositoryTest {
 			.password(passwordEncoder.encode("123456"))
 			.birthday(LocalDate.of(2010, 1, 2))
 			.virtualAccount(generateAccount())
-			.walletMoney(new BigDecimal("50000"))
 			.memberRole(memberRole)
 			.role(Role.USER)
 			.build();

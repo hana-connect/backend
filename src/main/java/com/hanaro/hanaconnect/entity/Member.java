@@ -42,10 +42,6 @@ public class Member extends BaseEntity {
 	@Column(name = "virtual_account", nullable = false, unique = true, length = 100)
 	private String virtualAccount;
 
-	@Column(name = "wallet_money", nullable = false)
-	@Builder.Default
-	private BigDecimal walletMoney = BigDecimal.ZERO;
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "member_role", nullable = false)
 	private MemberRole memberRole;

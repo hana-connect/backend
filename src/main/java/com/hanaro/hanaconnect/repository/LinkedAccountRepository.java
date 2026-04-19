@@ -20,10 +20,17 @@ public interface LinkedAccountRepository extends JpaRepository<LinkedAccount, Lo
 	Optional<LinkedAccount> findByMemberIdAndAccountId(Long memberId, Long accountId);
 
 	@EntityGraph(attributePaths = "account")
-	List<LinkedAccount> findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(Long memberId);
+	List<LinkedAccount> findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(
+		Long memberId,
+		Long accountOwnerId
+	);
 
 	@EntityGraph(attributePaths = "account")
-	List<LinkedAccount> findByMemberIdAndAccount_IsEndFalseOrderByCreatedAtDesc(Long memberId, Pageable pageable);
+	List<LinkedAccount> findByMemberIdAndAccount_Member_IdAndAccount_IsEndFalseOrderByCreatedAtDesc(
+		Long memberId,
+		Long accountOwnerId,
+		Pageable pageable
+	);
 
 	@EntityGraph(attributePaths = "account")
 	List<LinkedAccount> findByMemberIdAndAccount_Member_MemberRoleAndAccount_IsEndFalseOrderByCreatedAtDesc(
@@ -52,4 +59,6 @@ public interface LinkedAccountRepository extends JpaRepository<LinkedAccount, Lo
 
 	@EntityGraph(attributePaths = "account")
 	Optional<LinkedAccount> findByMemberIdAndAccount_IsRewardTrue(Long memberId);
+
+	Optional<LinkedAccount> findByAccountIdAndMemberId(Long accountId, Long memberId);
 }

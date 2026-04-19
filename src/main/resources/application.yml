@@ -5,17 +5,14 @@ spring:
   config:
     import:
       - classpath:security.yml
-      - classpath:db.properties
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: false
     defer-datasource-initialization: true
     properties:
       hibernate:

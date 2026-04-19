@@ -37,7 +37,6 @@ class RelationRepositoryTest extends BaseRepositoryTest {
 				.password("123456")
 				.birthday(LocalDate.of(2000, 1, 1))
 				.virtualAccount(generateAccount())
-				.walletMoney(BigDecimal.ZERO)
 				.memberRole(memberRole)
 				.role(Role.USER)
 				.build()

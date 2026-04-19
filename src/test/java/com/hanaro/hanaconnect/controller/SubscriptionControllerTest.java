@@ -13,8 +13,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +24,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanaro.hanaconnect.common.enums.MemberRole;
+import com.hanaro.hanaconnect.common.enums.Role;
 import com.hanaro.hanaconnect.common.security.TokenMemberPrincipal;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionInfoResponseDto;
 import com.hanaro.hanaconnect.dto.subscription.SubscriptionRequestDto;
@@ -49,15 +54,27 @@ class SubscriptionControllerTest {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
 	@MockitoBean
 	private SubscriptionService subscriptionService;
+
+	private Member parentMember;
+	private Member kidMember;
+
+	private static long accountSeq = 99900000000L;
+
+	@BeforeEach
+	void setUp() {
+		parentMember = createMember("김엄마", MemberRole.PARENT);
+		kidMember = createMember("홍길동", MemberRole.KID);
+	}
 
 	@Test
 	@DisplayName("청약 납입 정보 조회 성공 - 이번 달 납입 이력 있음")
 	void getSubscriptionPaymentInfo_success_hasPaidThisMonth() throws Exception {
-		Member member = memberRepository.findByName("김청약")
-			.orElseThrow(() -> new IllegalArgumentException("회원이 없습니다."));
-		Long memberId = member.getId();
+		Long memberId = kidMember.getId();
 		Long subscriptionId = 10L;
 
 		SubscriptionInfoResponseDto response = new SubscriptionInfoResponseDto(
@@ -92,9 +109,7 @@ class SubscriptionControllerTest {
 	@Test
 	@DisplayName("청약 납입 정보 조회 성공 - 이번 달 납입 이력 없음")
 	void getSubscriptionPaymentInfo_success_notPaidThisMonth() throws Exception {
-		Member member = memberRepository.findByName("홍길동")
-			.orElseThrow(() -> new IllegalArgumentException("회원이 없습니다."));
-		Long memberId = member.getId();
+		Long memberId = kidMember.getId();
 		Long subscriptionId = 20L;
 
 		SubscriptionInfoResponseDto response = new SubscriptionInfoResponseDto(
@@ -140,9 +155,7 @@ class SubscriptionControllerTest {
 	@Test
 	@DisplayName("청약 납입 실행 성공")
 	void paySubscription_success() throws Exception {
-		Member member = memberRepository.findByName("김엄마")
-			.orElseThrow(() -> new IllegalArgumentException("회원이 없습니다."));
-		Long memberId = member.getId();
+		Long memberId = parentMember.getId();
 		Long subscriptionId = 3L;
 
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
@@ -185,9 +198,7 @@ class SubscriptionControllerTest {
 	@Test
 	@DisplayName("청약 납입 실행 성공 - 리워드 계좌 포함")
 	void paySubscription_success_withReward() throws Exception {
-		Member member = memberRepository.findByName("김엄마")
-			.orElseThrow(() -> new IllegalArgumentException("회원이 없습니다."));
-		Long memberId = member.getId();
+		Long memberId = parentMember.getId();
 		Long subscriptionId = 3L;
 
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
@@ -218,7 +229,8 @@ class SubscriptionControllerTest {
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
-			.andExpect(jsonPath("$.message").value("청약 납입이 완료되었으며, 초과 금액은 리워드 계좌로 입금되었습니다."))			.andExpect(jsonPath("$.data.subscriptionId").value(3))
+			.andExpect(jsonPath("$.message").value("청약 납입이 완료되었으며, 초과 금액은 리워드 계좌로 입금되었습니다."))
+			.andExpect(jsonPath("$.data.subscriptionId").value(3))
 			.andExpect(jsonPath("$.data.subscriptionAccountNumber").value("77788889999"))
 			.andExpect(jsonPath("$.data.subscriptionAmount").value(250000))
 			.andExpect(jsonPath("$.data.rewardAccountNumber").value("22233336666"))
@@ -230,15 +242,13 @@ class SubscriptionControllerTest {
 	@Test
 	@DisplayName("청약 납입 실행 실패 - 요청값 검증 실패")
 	void paySubscription_fail_validation() throws Exception {
-		Member member = memberRepository.findByName("김엄마")
-			.orElseThrow(() -> new IllegalArgumentException("회원이 없습니다."));
-		Long memberId = member.getId();
+		Long memberId = parentMember.getId();
 		Long subscriptionId = 3L;
 
 		SubscriptionRequestDto request = new SubscriptionRequestDto();
-		request.setAmount(BigDecimal.ZERO); // 0원 -> validation 실패
+		request.setAmount(BigDecimal.ZERO);
 		request.setPrepaymentCount(null);
-		request.setPassword("123"); // 6자리 아님 -> validation 실패
+		request.setPassword("123");
 
 		mvc.perform(post("/api/subscriptions/{subscriptionId}/payments", subscriptionId)
 				.with(authentication(createAuthentication(memberId)))
@@ -265,6 +275,21 @@ class SubscriptionControllerTest {
 			.andExpect(status().isUnauthorized());
 
 		verify(subscriptionService, never()).paySubscription(any(), any(), any());
+	}
+
+	private Member createMember(String name, MemberRole memberRole) {
+		String virtualAccount = String.valueOf(accountSeq++);
+
+		return memberRepository.save(
+			Member.builder()
+				.name(name)
+				.password(passwordEncoder.encode("123456"))
+				.birthday(LocalDate.of(2000, 1, 1))
+				.virtualAccount(virtualAccount)
+				.memberRole(memberRole)
+				.role(Role.USER)
+				.build()
+		);
 	}
 
 	private UsernamePasswordAuthenticationToken createAuthentication(Long memberId) {

@@ -45,6 +45,8 @@ class AssetAIServiceTest {
 		AssetSummaryResponseDTO summary = AssetSummaryResponseDTO.builder()
 			.totalAssets(new BigDecimal("1000000"))
 			.depositSavings(new BigDecimal("800000"))
+			.depositWithdrawal(BigDecimal.ZERO)
+			.investment(BigDecimal.ZERO)
 			.pension(new BigDecimal("200000"))
 			.build();
 
@@ -88,6 +90,8 @@ class AssetAIServiceTest {
 		AssetSummaryResponseDTO summary = AssetSummaryResponseDTO.builder()
 			.totalAssets(new BigDecimal("1000000"))
 			.depositSavings(BigDecimal.ZERO)
+			.depositWithdrawal(BigDecimal.ZERO)
+			.investment(BigDecimal.ZERO)
 			.pension(BigDecimal.ZERO)
 			.build();
 
@@ -123,6 +127,8 @@ class AssetAIServiceTest {
 		AssetSummaryResponseDTO summary = AssetSummaryResponseDTO.builder()
 			.totalAssets(new BigDecimal("500000"))
 			.depositSavings(BigDecimal.ZERO)
+			.depositWithdrawal(BigDecimal.ZERO)
+			.investment(BigDecimal.ZERO)
 			.pension(BigDecimal.ZERO)
 			.build();
 

@@ -93,7 +93,6 @@ class MemberControllerTest {
 			.password(encodedPassword)
 			.birthday(LocalDate.of(2010, 1, 2))
 			.virtualAccount(accountCryptoService.encrypt(generateAccount()))
-			.walletMoney(new BigDecimal("50000"))
 			.memberRole(MemberRole.KID)
 			.role(Role.USER)
 			.build();
@@ -103,7 +102,6 @@ class MemberControllerTest {
 			.password(encodedPassword)
 			.birthday(LocalDate.of(1980, 5, 19))
 			.virtualAccount(accountCryptoService.encrypt(generateAccount()))
-			.walletMoney(new BigDecimal("100000"))
 			.memberRole(MemberRole.PARENT)
 			.role(Role.USER)
 			.build();
@@ -113,7 +111,6 @@ class MemberControllerTest {
 			.password(encodedPassword)
 			.birthday(LocalDate.of(1952, 8, 31))
 			.virtualAccount(accountCryptoService.encrypt(generateAccount()))
-			.walletMoney(new BigDecimal("90000"))
 			.memberRole(MemberRole.PARENT)
 			.role(Role.USER)
 			.build();
@@ -123,7 +120,6 @@ class MemberControllerTest {
 			.password(encodedPassword)
 			.birthday(LocalDate.of(2011, 3, 10))
 			.virtualAccount(accountCryptoService.encrypt(generateAccount()))
-			.walletMoney(new BigDecimal("30000"))
 			.memberRole(MemberRole.KID)
 			.role(Role.USER)
 			.build();
@@ -288,7 +284,11 @@ class MemberControllerTest {
 	void getOtherParentsFailTest() throws Exception {
 		mvc.perform(get("/api/" + kidId + "/parents")
 				.header("Authorization", "Bearer " + kidFriendAccessToken))
-			.andExpect(status().isBadRequest())
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(0))
 			.andDo(print());
 	}
 

@@ -575,7 +575,6 @@ class TransferServiceTest {
 				.password(passwordEncoder.encode("123456"))
 				.birthday(birthday)
 				.virtualAccount(accountCryptoService.encrypt(rawVirtualAccount))
-				.walletMoney(BigDecimal.ZERO)
 				.memberRole(memberRole)
 				.role(Role.USER)
 				.build()

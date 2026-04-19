@@ -86,8 +86,9 @@ jacoco {
 }
 
 
-tasks.named('test') {
+tasks.named('test', Test) {
     useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'local'
     jvmArgs '-XX:+EnableDynamicAgentLoading'
     finalizedBy jacocoTestReport
 }

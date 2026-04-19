@@ -35,7 +35,7 @@ public class Account extends BaseEntity {
 	@Column(nullable = false, length = 31)
 	private String name;
 
-	@Column(name = "account_number", nullable = false, unique = true, length = 100)
+	@Column(name = "account_number", nullable = false, unique = true, length = 255)
 	private String accountNumber;
 
 	@Column(name = "account_number_hash", nullable = false, length = 64)
@@ -58,14 +58,11 @@ public class Account extends BaseEntity {
 	@Builder.Default
 	private BigDecimal balance = BigDecimal.ZERO;
 
-	@Column(length = 50)
-	private String nickname;
-
 	@Column(name = "is_reward", nullable = false)
 	@Builder.Default
 	private Boolean isReward = false;
 
-	@Column(name = "is_end")
+	@Column(name = "is_end", nullable = false)
 	@Builder.Default
 	private Boolean isEnd = false;
 
