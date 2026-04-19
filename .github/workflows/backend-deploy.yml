@@ -2,7 +2,7 @@ name: Backend Deploy
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -28,11 +28,9 @@ jobs:
 
             cd /home/ec2-user/workspace/backend
 
-            rm -f src/main/resources/application-prod.yml
-
             git fetch origin
             git checkout main
-            git pull origin main
+            git reset --hard origin/main
 
             mkdir -p src/main/resources
 
@@ -55,6 +53,9 @@ jobs:
               fi
               rm -f app.pid
             fi
+
+            sudo fuser -k 8080/tcp || true
+            sleep 3
 
             nohup bash -c "java -jar build/libs/hanaconnect-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod" > app.log 2>&1 < /dev/null &
             echo $! > app.pid
