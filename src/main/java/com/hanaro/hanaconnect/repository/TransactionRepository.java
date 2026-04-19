@@ -43,6 +43,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 		LocalDateTime end
 	);
 
+	long countByReceiverAccountIdAndTransactionType(
+		Long receiverAccountId,
+		TransactionType transactionType
+	);
+
 	@Query("""
 		select coalesce(sum(t.transactionMoney), 0)
 		from Transaction t

@@ -234,7 +234,7 @@ public class InitLoader implements ApplicationRunner {
 				.level(7)
 				.totalCount(83)
 				.monthlyPayment(new BigDecimal("200000"))
-				.startDate(LocalDate.of(2019, 5, 25)) // 84회 납입 날짜 맞추기
+				.startDate(LocalDate.of(2019, 4, 25)) // 84회 납입 날짜 맞추기
 				.build()
 		);
 
@@ -297,7 +297,7 @@ public class InitLoader implements ApplicationRunner {
 		// 별돌이 청약 히스토리 + 거래내역 추가
 		createCheongyakTransactions(parent1WalletAccount, kid1SubscriptionAccount);
 
-		// 할별송 2만원 5번 + 3만원 3번 TODO 여기는 편지 안 씀?
+		// 할별송 2만원 5번 + 3만원 3번
 		for (int i = 0; i < 5; i++) {
 			createTransaction(
 				parent1WalletAccount,

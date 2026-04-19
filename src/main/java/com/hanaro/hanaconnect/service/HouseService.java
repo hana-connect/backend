@@ -172,8 +172,14 @@ public class HouseService {
 	}
 
 	private int resolveTotalCount(House house, LocalDate paidAt) {
+		// 항상 transaction 기준으로 계산
 		if (paidAt == null) {
-			return house.getTotalCount() != null ? house.getTotalCount() : 0;
+			long count = transactionRepository
+				.countByReceiverAccountIdAndTransactionType(
+					house.getAccount().getId(),
+					TransactionType.SUBSCRIPTION
+				);
+			return (int)count;
 		}
 
 		long count = transactionRepository
@@ -183,18 +189,26 @@ public class HouseService {
 				paidAt.atTime(23, 59, 59)
 			);
 
-		return (int) count;
+		return (int)count;
 	}
 
 	private BigDecimal resolveMonthlyPayment(House house, LocalDate paidAt) {
-		if (paidAt == null) {
-			return house.getMonthlyPayment() != null
-				? house.getMonthlyPayment()
-				: BigDecimal.ZERO;
+		LocalDate targetDate;
+
+		if (paidAt != null) {
+			targetDate = paidAt;
+		} else {
+			Optional<Transaction> latestPaymentOpt = resolveLatestPayment(house, null);
+
+			if (latestPaymentOpt.isEmpty()) {
+				return BigDecimal.ZERO;
+			}
+
+			targetDate = latestPaymentOpt.get().getCreatedAt().toLocalDate();
 		}
 
-		LocalDate firstDay = paidAt.withDayOfMonth(1);
-		LocalDate lastDay = paidAt.withDayOfMonth(paidAt.lengthOfMonth());
+		LocalDate firstDay = targetDate.withDayOfMonth(1);
+		LocalDate lastDay = targetDate.withDayOfMonth(targetDate.lengthOfMonth());
 
 		BigDecimal amount = transactionRepository.sumMonthlyPaymentAmount(
 			house.getAccount().getId(),
