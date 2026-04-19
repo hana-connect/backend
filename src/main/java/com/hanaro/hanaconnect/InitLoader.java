@@ -104,6 +104,17 @@ public class InitLoader implements ApplicationRunner {
 		"사랑해 아들"
 	);
 
+	List<String> parent1SavingsMessages = List.of(
+		"차곡차곡 모아보자",
+		"할머니가 응원해",
+		"우리 별돌이 파이팅",
+		"조금씩 모이면 커져",
+		"오늘도 한 걸음씩",
+		"더 큰 꿈을 위해",
+		"반짝이는 내일로",
+		"할머니 마음이야"
+	);
+
 	@Override
 	@Transactional
 	public void run(@Nullable ApplicationArguments args) {
@@ -297,25 +308,27 @@ public class InitLoader implements ApplicationRunner {
 		// 별돌이 청약 히스토리 + 거래내역 추가
 		createCheongyakTransactions(parent1WalletAccount, kid1SubscriptionAccount);
 
-		// 할별송 2만원 5번 + 3만원 3번
+		// 할별송 2만원 5번 + 3만원 3번 + 메시지
 		for (int i = 0; i < 5; i++) {
-			createTransaction(
+			createSavingsWithLetter(
 				parent1WalletAccount,
 				kid1SavingsAccount,
 				BigDecimal.valueOf(20000),
-				TransactionType.SAVINGS_WITHDRAW,
-				LocalDateTime.of(2025, 8, 7, 11, 0).plusMonths(i) // 달마다 납부
+				parent1SavingsMessages.get(i),
+				LocalDateTime.of(2025, 8, 7, 11, 0).plusMonths(i)
 			);
+
 		}
 
 		for (int i = 0; i < 3; i++) {
-			createTransaction(
+			createSavingsWithLetter(
 				parent1WalletAccount,
 				kid1SavingsAccount,
 				BigDecimal.valueOf(30000),
-				TransactionType.SAVINGS_WITHDRAW,
+				parent1SavingsMessages.get(i + 5),
 				LocalDateTime.of(2026, 1, 7, 11, 0).plusMonths(i)
 			);
+
 		}
 
 		// 할별송 예금
