@@ -10,14 +10,14 @@
 </div>
 
 ---
-## 팀원 구성
+<div align="center"><h2>👨‍👩‍👧‍👦 팀원 구성</h2></div>
 
 | **김도이** | **김선주** | **김채현** | **유지현** | **이민지** | **한수정** |
 | :---: | :---: | :---: | :---: | :---: | :---: |
 | 팀원 | 팀원 | 팀장 | 팀원 | 팀원 | 팀원 |
 | [<img src="https://avatars.githubusercontent.com/u/90411434?v=4" height="150" width="150"><br/>](https://github.com/kim00) | [<img src="https://avatars.githubusercontent.com/u/157812913?v=4" height="150" width="150"><br/>](https://github.com/seonjuuu) | [<img src="https://avatars.githubusercontent.com/u/90364711?v=4" height="150" width="150"><br/>](https://github.com/imddoy) | [<img src="https://avatars.githubusercontent.com/u/95465048?v=4" height="150" width="150"><br/>](https://github.com/ujii) | [<img src="https://avatars.githubusercontent.com/u/165538889?v=4" height="150" width="150"><br/>](https://github.com/thisminji) | [<img src="https://avatars.githubusercontent.com/u/90364839?v=4" height="150" width="150"><br/>](https://github.com/hansoojeongsj) |
 ---
-## 프로젝트 소개
+ <div align="center"><h2>🚀 프로젝트 소개</h2></div>
 **하나커넥트**는 금융을 통해 가족을 연결하고, 손주에게 마음과 미래를 함께 전하는 참여형 금융 서비스입니다. <br/>
 
 액티브 시니어의 금융 자산은 4300조로 추정되고 있습니다. 액티브 시니어의 주된 관심사 중 하나는 손주입니다. 그들은 손주를 위해 기꺼이 자산을 소비하는 성향을 가지고 있습니다.
@@ -33,7 +33,7 @@
 
 
 ---
-## 핵심 기능
+<div align="center"><h2>✨ 핵심 기능</h2></div>
 
 #### 1️⃣ 청약 납입 및 청약 리포트
 * 조부모는 등록된 아이의 청약 계좌에 청약을 납입할 수 있습니다. 가점 인정 금액 상한선인 25만원을 초과하여 납입하는 경우 알림창으로 안내하며 조부모의 연금 계좌로 납부할 수 있습니다.
@@ -122,7 +122,7 @@
 
 
 ---
-## 프로젝트 구성도
+<div align="center"><h2>🏗 아키텍처</h2></div>
 <img width="1920" height="1080" alt="3-1 프로젝트 구성도" src="https://github.com/user-attachments/assets/aaef4df5-e6d6-43bf-a608-a1021252c393" />
 
 
@@ -130,7 +130,7 @@
 
 
 ---
-## ERD
+<div align="center"><h2>🗄 ERD</h2></div>
 <img width="390" height="551" alt="KakaoTalk_20260420_092708182" src="https://github.com/user-attachments/assets/13b8a048-523c-4fa5-8e19-ff98a2f10624" />
 
 <br>
