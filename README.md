@@ -12,16 +12,13 @@
 
 ## 👨‍👩‍👧‍👦 팀원 구성
 
-| 이름 | 역할 | GitHub |
-|---|---|---|
-| 김도이 | 팀원 | [바로가기](https://github.com/kim00) |
-| 김선주 | 팀원 | [바로가기](https://github.com/seonjuuu) |
-| 김채현 | 팀장 | [바로가기](https://github.com/imddoy) |
-| 유지현 | 팀원 | [바로가기](https://github.com/ujii) |
-| 이민지 | 팀원 | [바로가기](https://github.com/thisminji) |
-| 한수정 | 팀원 | [바로가기](https://github.com/hansoojeongsj) |
 
+| **김도이** | **김선주** | **김채현** | **유지현** | **이민지** | **한수정** |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| 팀원 | 팀원 | 팀장 | 팀원 | 팀원 | 팀원 |
+| [<img src="https://avatars.githubusercontent.com/u/90411434?v=4" height="150" width="150"><br/>](https://github.com/kim00) | [<img src="https://avatars.githubusercontent.com/u/157812913?v=4" height="150" width="150"><br/>](https://github.com/seonjuuu) | [<img src="https://avatars.githubusercontent.com/u/90364711?v=4" height="150" width="150"><br/>](https://github.com/imddoy) | [<img src="https://avatars.githubusercontent.com/u/95465048?v=4" height="150" width="150"><br/>](https://github.com/ujii) | [<img src="https://avatars.githubusercontent.com/u/165538889?v=4" height="150" width="150"><br/>](https://github.com/thisminji) | [<img src="https://avatars.githubusercontent.com/u/90364839?v=4" height="150" width="150"><br/>](https://github.com/hansoojeongsj) |
 ---
+
 
 ## 🚀 프로젝트 소개
 
