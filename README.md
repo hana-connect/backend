@@ -63,7 +63,7 @@
 
 
 ---
-## Roles & Responsibilities
+<div align="center"><h2>👨‍👩‍👧‍👦 Roles & Responsibilities</h2></div>
 | 이름 | R & R |
 |---|---|
 | 김도이 | - 적금, 송금 및 메시지 최근 내역 확인 기능 API 개발 및 연동<br>- OpenAI API를 활용한 AI 자산관리 UI 개발 및 API 연동<br>- 프로젝트 시연 영상 기획 및 제작 |
